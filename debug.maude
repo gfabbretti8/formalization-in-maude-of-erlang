@@ -1,0 +1,7 @@
+load framework.maude
+load tests/receive.erl
+cont .
+(fwd-step)
+cont .
+
+
