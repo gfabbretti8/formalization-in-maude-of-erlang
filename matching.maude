@@ -193,9 +193,6 @@ fmod SEM_MATCH_MAILBOX is
  	   #mailboxMatch(CLAUSES | CLAUSES | MBOX2) .
 
 
-
-
-
 	eq #extractMessage(MBOX | {P, LIT}) = #extractMessage(#empty-mbox | {P, LIT} | MBOX) .
 	eq #extractMessage(MBOX1 | {P, LIT} | {P, LIT} :: MBOX2) = MBOX1 :: MBOX2 .
 	eq #extractMessage(MBOX1 | {P, LIT} | #empty-mbox) = MBOX1 .
