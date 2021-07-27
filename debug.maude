@@ -1,7 +1,7 @@
 load framework.maude
 load tests/receive.erl
-cont .
+(pprint-sys)
 (fwd-step)
-cont .
+(pprint-sys)
 
 

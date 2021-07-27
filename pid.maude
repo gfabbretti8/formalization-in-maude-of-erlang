@@ -11,11 +11,13 @@
 		* inserting a new PID in a sequence of PIDS
 ***)
 
-fmod SEM_PID is
+mod SEM_PID is
 	protecting INT .
-	protecting MAUDE-SYNTAX-UP .
+	protecting MAUDE-SYNTAX-UPDOWN .
+  protecting SEM_ENTITY .
 
 	sort Pid .
+  subsort Pid < Entity .
 	op pid : Int -> Pid [ctor] .
 
 	*******************************
@@ -32,14 +34,16 @@ fmod SEM_PID is
 
 	*** Lowering the meta-representation level of pids
 	eq #downPid('pid[T]) = pid(#downInt(T)) .
-endfm
+endm
 
-fmod SEM_PID_SEQUENCE is
+mod SEM_PID_SEQUENCE is
 	protecting SEM_PID .
 	protecting MAUDE-SYNTAX-UPDOWN .
+  protecting SEM_ENTITY .
 
 	sort PidSequence .
 	subsort Pid < PidSequence .
+  subsort PidSequence < Entity .
 
 	op #empty-pid-seq : -> PidSequence [ctor] .
 	op _,_ : PidSequence PidSequence -> PidSequence [ctor assoc comm id: #empty-pid-seq] .
@@ -60,7 +64,7 @@ fmod SEM_PID_SEQUENCE is
 		if not (I < I1) .
 	ceq #getNewPid(pid(I), PIDS, I1) = #getNewPid(PIDS, I1)
 		if (I < I1) .
-	ceq #getNewPid(pid(I), PIDS, I1) = #getNewPid(PIDS, I2) 
+	ceq #getNewPid(pid(I), PIDS, I1) = #getNewPid(PIDS, I2)
 		if not( I < I1)
 		/\ I2 := I + 1 .
 
@@ -78,7 +82,7 @@ fmod SEM_PID_SEQUENCE is
 	op #downPidSequence : Term -> PidSequence [memo] .
 
 	var INT : Int .
-	vars T T1 T2 : Term .
+	vars T T1 T2 T3 : Term .
 	var SUB : Substitution .
 	var PIDSEQ : PidSequence .
 
@@ -88,8 +92,15 @@ fmod SEM_PID_SEQUENCE is
 	  if PIDSEQ =/= #empty-pid-seq .
 
 	*** Lowering the meta-representation level of pid sequences
+
+  ceq #downEntity(T1) = #downPidSequence('_`,_[T2,T3])
+    	if SUB := metaMatch(GRAMMAR, '_`,_['P:Pid, 'PS:PidSequence], T1, nil, 0)
+		/\ 'P:Pid <- T2 ; 'PS:PidSequence <- T3 := SUB .
+  eq #downEntity(T) = #downPid(T) [owise] .
+
 	eq #downPidSequence('#empty-pid-seq.PidSequence) = #empty-pid-seq .
-	ceq #downPidSequence(T) = #downPid(T1), #downPidSequence(T2) 
-		if SUB := metaMatch(GRAMMAR, '_`,_['P:Pid, 'PS:PidSequence], T, nil, 0)
-		/\ 'P:Pid <- T1 ; 'PS:PidSequence <- T2 := SUB .
-endfm
+	ceq #downPidSequence(T1) = #downPid(T2), #downPidSequence(T3)
+		if SUB := metaMatch(GRAMMAR, '_`,_['P:Pid, 'PS:PidSequence], T1, nil, 0)
+		/\ 'P:Pid <- T2 ; 'PS:PidSequence <- T3 := SUB .
+
+endm

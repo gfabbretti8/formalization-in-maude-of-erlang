@@ -1,4 +1,4 @@
-fmod SEM_HELPER is
+mod SEM_HELPER is
 	protecting SEM_LABEL .
 	protecting SYNTAX .
 
@@ -26,13 +26,13 @@ fmod SEM_HELPER is
 	op #filterExit : Label -> Label [memo] .
 	eq #filterExit(EL) = EL .
 
-endfm
+endm
 
 
-fmod SEM_NORMALISATION is
+mod SEM_NORMALISATION is
 	protecting SYNTAX .
   protecting SEM_HELPER .
-  protecting SEM_PROCESSESENVIRONMENT .
+  protecting SEM_ENTITIES .
 
 	vars EX EX1 EX2 EX3 EX' EX1' EX2' GUARD : Exp .
 	vars A1 A2 : Atom .
@@ -43,40 +43,45 @@ fmod SEM_NORMALISATION is
   var CLSEQ : ClauseSeq .
   var L : Literal .
   var RES RES1 : SysResult .
-  var PID : Pid .
-  var MBOX : Mailbox .
+  var P : Pid .
 	var ESL : StopLabel .
   var EL : Label .
+  var ME : ModEnv .
+  var ASET ASET' : AttributeSet .
 
   *** Case 1: the if clause has evaluate to true, then we proceed with the
   *** corresponding expression.
-  eq [norm-if] : < tau | RES | if atom("true") -> EX ; CLSEQ end | PID  >
-  = < tau | RES | EX | PID  > .
+  eq [norm-if] :
+    < P | label: tau, exp: if atom("true") -> EX ; CLSEQ end, ASET > =
+    < P | label: tau, exp: EX, ASET > [print P " norm-if1" ] .
 
   *** Case 2: the if clause has evaluate to false, then we proceed with the
   *** remaining clauses.
-  eq [norm-if] : < tau | RES | if atom("false") -> EX ; CLSEQ end | PID >
-     = < tau | RES | if CLSEQ end | PID > .
+  eq [norm-if] :
+     < P | label: tau, exp: if atom("false") -> EX ; CLSEQ end, ASET > =
+     < P | label: tau, exp: if CLSEQ end, ASET > [print P " norm-if2" ] .
 
   *** Case 3: the if clause has evaluate to true and it is the last claude,
   ***  then we proceed with the corresponding expression.
-  eq [norm-if] : < tau | RES | if atom("true") -> EX  end | PID >
-     = < tau | RES | EX | PID > .
+  eq [norm-if] :
+     < P | label: tau, exp: if atom("true") -> EX  end, ASET > =
+     < P | label: tau, exp: EX, ASET > [print P " norm-if3" ] .
 
   *** Case 4: the if clause has evaluate to false and it is the last one, then
   *** we need to raise an error.
-  eq [norm-if] : < tau | RES | if atom("false") -> EX end | PID >
-     = < tau | RES | atom("error_no_true_case_inside_if") | PID > .
+  eq [norm-if] :
+     < P | label: tau, exp: if atom("false") -> EX end, ASET > =
+     < P | label: tau, exp: atom("error_no_true_case_inside_if"), ASET > [print P " norm-if4" ] .
 
-
-  ceq [norm-seq] : < tau | RES | EX1, EX2 | PID >
-     = < EL | RES1 | EX1', EX2 | PID >
+  ceq [norm-seq] :
+       < P | label: tau, exp: EX1, EX2, ASET > =
+       < P | label: EL, exp: EX1', EX2, ASET' >
      if not (EX1 :: Literal)
-     /\ < EL | RES1 | EX1' | PID > :=
-        < tau | RES | EX1 | PID > .
+     /\ < P | label: EL, exp: EX1', ASET' > :=
+        < P | label: tau, exp: EX1, ASET > [print P " norm-seq " ASET "\nEX1 = " EX1 "\nEX1' = " EX1'] .
 
-   eq [norm-seq] : < tau | RES | L, EX | PID >
-      = < tau | RES | EX | PID > .
+   eq [norm-seq] :
+      < P | label: tau, sys-res: #no-res, exp: L, EX, ASET > =
+      < P | label: tau, sys-res: #no-res, exp: EX, ASET > [print P " norm-eq "  ] .
 
-
-endfm
+endm

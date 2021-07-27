@@ -6,7 +6,7 @@
 	that operates upon the equivalence classes that are defined by the underlying
 	equational theory (given in the functional modules SEM_EQUATIONS and its submodules).
 
-	In contrast to the oriented equations and equational attributes that constitute 
+	In contrast to the oriented equations and equational attributes that constitute
 	the MEL theory, the rewriting rules do not have to terminate or to be Church Rosser.
 
 	They represent the observable actions that the system can do. In our approach, we try
@@ -30,13 +30,12 @@
 mod SEM_TRANSITIONS is
 	protecting SYNTAX .
 	protecting SEM_LABEL .
-	protecting SEM_PROCESSESENVIRONMENT .
+	protecting SEM_ENTITIES .
 	protecting SEM_SYSLABEL .
-  protecting SEM_MATCH_MAILBOX .
+  protecting SEM_MATCH_ENTITY .
 
-	vars EX EX1 EX2 : Exp .
-	vars PID PID1 : Pid .
-	vars MBOX MBOX' MBOX1 : Mailbox .
+	vars EX EX' EX1 EX2 : Exp .
+	vars P P' : Pid .
 	vars LINKS LINKS1 : PidSequence .
   var L : Literal .
 	vars TRAP TRAP1 : Bool .
@@ -45,61 +44,36 @@ mod SEM_TRANSITIONS is
 	vars A : Atom .
 	var SL : SysLabel .
 	var EL EL1 EL1' : Label .
-	var PRCS : Processes .
 	var PIDS : PidSequence .
 	var RES : SysResult .
   var CLSEQ : ClauseSeq .
+  var MSG : Message .
+  var ASET : AttributeSet .
 
-	*** Spawning of a new processes
-	*** The evaluation within the equational theory yields a process whose process label indicates
-	*** that the built-in function "spawn" has been evaluated. The following rule calculates an unused
-	*** process identifier, introduces a new process and returns the PID of the newly created process
-	*** via the return component of the creator process. The new process evaluates the inter-module
-	*** call, that is originally specified in the arguments of the spawn statement and then propagated
-	*** via the process label.
-	crl [sys-spawn] : (SL, MBOX, < spawn(A) | #no-res | EX | PID > || PRCS, ME, PIDS) =>
-		 	  (sys-newproc(PID, pid(INT), A), MBOX,
-			   < tau | #res-spawn(INT) | EX | PID > ||
-			   < tau | #no-res | EX1 | pid(INT) > || PRCS, ME, pid(INT), PIDS)
+< P | _ > exp * mod-env * label * res
+
+	crl [sys-spawn] :
+        < P | label: spawn(A), sys-res: #no-res, mod-env: ME, ASET > || PIDS  =>
+		 	  < P | label: tau, sys-res: #res-spawn(INT), mod-env: ME, ASET > ||
+			  < pid(INT) | label: tau, sys-res: #no-res, exp: EX1, mod-env: ME > || pid(INT), PIDS
 		if INT := #getNewPid(PIDS)
-		/\ EX1 := #get-function(A, ME) .
+		/\ EX1 := #get-function(A, ME) [print P " sys-spawn " ASET ] .
 
-
-	*** Message passing
-	*** A process of the process system was normalized by the equational theory and its label
-	*** indicates, that it will send a message to another process. As this is a side-effect,
-	*** it is modelled by an appropriate transition on the system level.
-	*** Note: The send operation can fail if the specified receiver process does not exist.
-	***       Therefore, we indicate success by returning a flag (#res-send({true|false})) 
-	***       in the sender's result component.
-	*** First, we deal with the case of an existing receiver process:
-	*** Note: In this case, we have to check if the receiving process is in the "blocked"
-	***	  or "waiting" state (this is indicated by appropriate process labels). 
-	***       This would denote that it was evaluating a receive statement and has not
-	***	  found a matching message in its mailbox. Now it receives a message, and the
-	***	  check has to be done again - we unblock the process by setting the label
-	***	  back to tau, thereby restarting evaluation of the receive statement with
-	***	  the (now extended) mailbox within the equational theory.
 	rl [sys-send] :
-      (SL, MBOX, < pid(INT) ! A | #no-res | EX | PID > || PRCS, ME, PIDS)       =>
-		  (sys-sendmsg(PID, pid(INT),A), {pid(INT), A} :: MBOX, < tau | #res-send(true) | EX | PID > || PRCS, ME, PIDS) .
-
+      < P | label: P' ! A, sys-res: #no-res, ASET >  =>
+		  < P | label: tau, sys-res: #res-send(true), ASET > || < sender: P, receiver: P', payload: A >  [print P " sys-send" ].
 
   crl [sys-receive] :
-      (SL, MBOX, < receive CLSEQ | #no-res | EX | PID > || PRCS, ME, PIDS)   =>
-      (sys-receive(pid(0), L), MBOX', < tau | #no-res | EX1 | PID > || PRCS, ME, PIDS)
-      if #mailboxMatchSuccess(EX1 | L) := #mailboxMatch(CLSEQ | MBOX)
-      /\ MBOX' := #extractMessage(MBOX | {PID, L}).
-
+      < P | label: receive CLSEQ, sys-res: #no-res, exp: EX, ASET > || MSG =>
+      < P | sys-res: #no-res, exp: EX', ASET >
+    if #entityMatchSuccess(EX' | MSG ) := #entityMatch(CLSEQ | MSG ) [print P " sys-receive" ] .
 endm
 
-
-fmod SEM_EQUATIONS is
+mod SEM_EQUATIONS is
 	protecting SYNTAX .
 	protecting SEM_NORMALISATION .
   protecting SEM_COREBIB .
-endfm
-
+endm
 
 mod THEORY is
 	protecting SYNTAX .

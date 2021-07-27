@@ -1,0 +1,41 @@
+mod PRETTY_PRINT is
+
+  protecting QID .
+  protecting SEM_ENTITIES .
+	protecting META-LEVEL .
+
+  op #pretty-print-sys : Entities -> Qid .
+  op #pretty-print-ent : Entity -> Qid .
+
+  var ENTS : Entities .
+  var PIDS : PidSequence .
+  var SUB : Substitution .
+  var LABEL : Label .
+  var RES : SysResult .
+  var EX : Exp .
+  var ME : ModEnv .
+  var P P' : Pid .
+  var ENT : Entity .
+  var MSG : Atom .
+  var T1 T2 : Term .
+  var PIDSEQ : PidSequence .
+  var ASET : AttributeSet .
+
+  ceq #pretty-print-sys(ENTS) =
+     #pretty-print-ent(#downEntity(T1)) '\n #pretty-print-sys(#downEntities(T2))
+     if SUB := metaMatch(GRAMMAR, '_||_['ENT:Entity, 'ENTS:Entities], #up(ENTS), nil, 0)
+     /\ 'ENT:Entity <- T1 ; 'ENTS:Entities <- T2 := SUB .
+
+  eq #pretty-print-ent(< P | label: LABEL, sys-res: RES, exp: EX, ASET > ) =
+     '< metaPrettyPrint(['SEM_PROCESS], #up(LABEL)) '|
+        metaPrettyPrint(['SEM_PROCESS], #up(RES)) '|
+        metaPrettyPrint(['SEM_PROCESS], #up(EX)) '|
+        metaPrettyPrint(['SEM_PROCESS], #up(P)) '> .
+
+  eq #pretty-print-ent(< sender: P, receiver: P', payload: MSG > ) =
+      '< metaPrettyPrint(['SEM_MESSAGE], #up(P)) '|
+         metaPrettyPrint(['SEM_MESSAGE], #up(P')) '|
+         metaPrettyPrint(['SEM_MESSAGE], #up(MSG)) '> .
+
+  eq #pretty-print-ent(PIDSEQ) = ' .
+endm

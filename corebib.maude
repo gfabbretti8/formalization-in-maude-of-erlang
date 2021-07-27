@@ -1,89 +1,37 @@
-***(
-
-	COREBIB.MAUDE
-
-	This file contains the functional module SEM_COREBIB that is part
-	of the equational theory and specifies the semantics of the most
-	important functions of Core-Erlang's standard library.
-
-	Note: Many of these functions yield a side-effect during evaluation!
-	      As soon as a side-effect occurs, the corresponding process term
-	      reaches normal form with respect to the equational theory.
-	      Therefore, to fully capture the semantics, one has to consider
-	      the corresponding rewrite rules (which can be found in the module
-	      SEM_TRANSITIONS).
-
-	Additionally, a subset of the functions that are defined in the built-in
-	module lists is implemented in the SEM_LISTBIB module. The built-in
-	functions for appending lists and checking membership in a list are
-	specified there.
-
-	The third functional module contained in this file is called "SEM_IOBIB".
-	It encapsulated some of the output functions of Core-Erlang's IO library.
-	These functions always succeed and the output is discarded.
-***)
-
-fmod SEM_COREBIB is
+mod SEM_COREBIB is
 	protecting BOOL .
 	protecting NAT .
 	protecting STRING .
-	protecting SEM_PROCESSESENVIRONMENT .
-
+	protecting SEM_ENTITIES .
 
 	vars INT INT1 : Int .
 	vars A A1 A2 : Atom .
-	var PID : Pid .
+	var P : Pid .
 	var LINKS : PidSequence .
 	var ME : ModEnv .
 	var BOOL : Bool .
   var CLSEQ : ClauseSeq .
+  var ASET : AttributeSet .
 
-	*** spawn statement
-	*** Evaluating the spawn statements yields a new process that instantly begins to
-	*** evaluate the function given in the arguments to the spawn statement.
-	*** Note: We cannot calculate the (new) process identifier for the process that is created
-	***       within the equational theory: The set of currently used process identifiers
 
-	***	  belongs to the system level (rewrite rules from SEM_TRANSITION)!
-	***       Therefore we have a bidirectional communication: We indicate the occurrence of
-	***	  a side-effect by changing the process's label first:
 	eq [spawn] :
-	   < tau | #no-res | atom("erlang") : atom("spawn") (A) | PID > =
-	   < spawn A | #no-res | atom("erlang") : atom("spawn") (A) | PID > .
+     < P | label: tau, sys-res: #no-res, exp: atom("erlang") : atom("spawn") (A), ASET > =
+	   < P | label: spawn A, sys-res: #no-res, exp: atom("erlang") : atom("spawn") (A), ASET > [print P " spawn " ASET] .
 
-	*** On the system level (see the rewrite-rules labelled with "sys-spawn"), we look up a new (unused)
-	*** process identifier and propagate it back using the second communication channel (2nd component
-	*** of the process tuple). The new PID thus provided is the result of the evaluation of the
-	*** spawn function call.
 	eq [core-spawn] :
-	   < tau | #res-spawn(INT) | atom("erlang") : atom("spawn") (A) | PID > =
-	   < tau | #no-res | int(INT) | PID > .
+	   < P | label: tau, sys-res: #res-spawn(INT), exp: atom("erlang") : atom("spawn") (A), ASET > =
+	   < P | label: tau, sys-res: #no-res, exp: int(INT), ASET > [print P " core-spawn" ASET ] .
 
-	*** send statement
-	*** Evaluating the standard-library function 'erlang':'!' results in passing the
-	*** specified constant (the message) to the mailbox of the process that is specified by the 
-	*** PID in the first argument.
-	*** Note: Sending of messages to another process is obviously a side-effect. Therefore
-	***       we have to stop the normalisation within the equational theory and indicate the
-	***	  side-effect to the rewrite-rules of the system level (see the rewrite rules
-	***	  labelled "sys-send" in the module SEM_TRANSITION for the rewriting part of
-	***       the send semantics).
 	eq [core-send] :
-	   < tau | #no-res | int(INT) ! A | PID  > =
-	   < pid(INT) ! A | #no-res | int(INT) ! A  | PID > .
+	   < P | label: tau, sys-res: #no-res, exp:  int(INT) ! A, ASET > =
+	   < P | label: pid(INT) ! A, sys-res: #no-res, exp: int(INT) ! A, ASET > [print P " core-send-1"] .
 
-	*** The send operation is "performed" on the system level (i.e. the message is appended to
-	*** the mailbox of the receiving process). If the receiving process exists, success is
-	*** signalled back in the second communication channel:
 	eq [core-send] :
-	   < tau | #res-send(true) | int(INT) ! A | PID > =
-	   < tau | #no-res | A | PID > .
-
+	   < P | sys-res: #res-send(true), exp: int(INT) ! A, ASET > =
+	   < P | sys-res: #no-res, exp: A, ASET > [print P " core-send-2"] .
 
    eq [core-receive] :
-     < tau | #no-res | receive CLSEQ end | PID > =
-     < receive CLSEQ | #no-res | receive CLSEQ end | PID > .
+     < P | label: tau, sys-res: #no-res, exp: receive CLSEQ end, ASET > =
+     < P | label: receive CLSEQ, sys-res: #no-res, exp: receive CLSEQ end, ASET > [print P " core-receive"] .
 
-
-
-endfm
+endm

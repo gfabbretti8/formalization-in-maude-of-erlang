@@ -142,7 +142,6 @@ fmod SYNTAX-HELPER is
 endfm
 
 
-
 fmod COMMON-SYNTAX-DOWN is
 	protecting SYNTAX .
 	protecting QID .
@@ -252,7 +251,7 @@ fmod PARSING-SYNTAX-DOWN is
 			including 'QID-LIST .
 			including 'COMMAND-GRAMMAR .
 			including 'PARSING-SYNTAX .
-      including 'SEM_PROCESSESENVIRONMENT .
+      including 'SEM_ENTITIES .
       including 'SEM_MODENV .
 			sorts none .
 			none
@@ -277,8 +276,6 @@ fmod PARSING-SYNTAX-DOWN is
 		if syntaxCheckInt('token[T]) .
 	eq #downExp('token[T]) = #downAtom('token[T]) [owise] .
 
-
-
 endfm
 
 fmod MAUDE-SYNTAX-DOWN is
@@ -289,7 +286,6 @@ fmod MAUDE-SYNTAX-DOWN is
 		(mod 'GRAMMAR is
 			including 'QID-LIST .
 			including 'SYNTAX .
-			including 'SEM_PROCESS .
 			sorts none .
 			none
 			none

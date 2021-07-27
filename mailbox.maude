@@ -10,16 +10,12 @@
 
 ***)
 
-fmod SEM_MAILBOX is
+mod SEM_MAILBOX is
 	protecting SYNTAX .
 	protecting MAUDE-SYNTAX-UPDOWN .
   protecting SEM_PID .
 
 	sort Mailbox .
-  sort Message .
-
-  op {_,_} : Pid Atom -> Message .
-	subsort Message < Mailbox .
 
 	*** In order to simplify concatenation of mailboxes and to reduce the number of cases
 	*** we have to consider (for example in the specification of how messages are received),
@@ -62,4 +58,4 @@ fmod SEM_MAILBOX is
 	ceq #downMailbox(T) = #downMessage(T1) :: #downMailbox(T2)
 		if SUB := metaMatch(GRAMMAR, '_::_['M:Message, 'MBOX:Mailbox], T, nil, 0)
 		/\ 'M:Message <- T1 ; 'MBOX:Mailbox <- T2 := SUB .
-endfm
+endm

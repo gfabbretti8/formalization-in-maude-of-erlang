@@ -22,7 +22,7 @@
 
 ***)
 
-fmod SEM_LABEL is
+mod SEM_LABEL is
 	protecting SYNTAX .
 	protecting SEM_PID .
 	protecting MAUDE-SYNTAX-UPDOWN .
@@ -89,9 +89,9 @@ fmod SEM_LABEL is
 	eq #downLabel('receive_[T]) = receive #downClauseSeq(T) .
 	eq #downLabel('blocked.StopLabel) = blocked .
 	eq #downLabel('spawn_[T]) = spawn #downAtom(T) .
-endfm
+endm
 
-fmod SEM_SYSLABEL is
+mod SEM_SYSLABEL is
 	protecting SYNTAX .
 	protecting SEM_PID .
 	protecting MAUDE-SYNTAX-UPDOWN .
@@ -152,4 +152,4 @@ fmod SEM_SYSLABEL is
 	eq #downSysLabel('sys-sendmsg[T1,T2,T3])
 		= sys-sendmsg(#downPid(T1), #downPid(T2), #downExp(T3)) .
 	eq #downSysLabel('sys-receive[T1,T2]) = sys-receive(#downPid(T1), #downExp(T2)) .
-endfm
+endm
