@@ -1,7 +1,0 @@
-load framework.maude
-load tests/receive.erl
-(pprint-sys)
-(fwd-step)
-(pprint-sys)
-
-
