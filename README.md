@@ -1,7 +1,7 @@
-# erlang-verifier
+#A formalization in Maude of Erlang and the automatic generation of a reversible semantics
 
-This is academic code meant to model (part of) the Erlang language. 
-This project is heavily reusing what has been already done by Martin Neuhaeusser at: https://github.com/martin-neuhaeusser/erlang-verifier 
+The purpose of the project is twofold: i) having a mechanized semantics of the Erlang programming language and ii) having an automatic method to derive a reversible mechanized semantics given a "standard" one.
 
+Inside the folder `erlang-model` one can find the formalization of Erlang. 
 
-The code is dirty, far from clean and polished and comments are missing, this must be considered the smallest possible running example.
+Inside the folder `code-transformation` one can find the code to derive the reversible semantics given a forward one.

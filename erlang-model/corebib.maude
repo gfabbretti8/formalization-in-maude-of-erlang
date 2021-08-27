@@ -1,0 +1,37 @@
+mod SEM_COREBIB is
+	protecting BOOL .
+	protecting NAT .
+	protecting STRING .
+	protecting SEM_ENTITIES .
+
+	vars INT INT1 : Int .
+	vars A A1 A2 : Atom .
+	var P : Pid .
+	var LINKS : PidSequence .
+	var ME : ModEnv .
+	var BOOL : Bool .
+  var CLSEQ : ClauseSeq .
+  var ASET : AttributeSet .
+
+
+	eq [spawn] :
+     < P | label: tau, sys-res: #no-res, exp: atom("erlang") : atom("spawn") (A), ASET > =
+	   < P | label: spawn A, sys-res: #no-res, exp: atom("erlang") : atom("spawn") (A), ASET > [print P " spawn " ASET] .
+
+	eq [core-spawn] :
+	   < P | label: tau, sys-res: #res-spawn(INT), exp: atom("erlang") : atom("spawn") (A), ASET > =
+	   < P | label: tau, sys-res: #no-res, exp: int(INT), ASET > [print P " core-spawn" ASET ] .
+
+	eq [core-send] :
+	   < P | label: tau, sys-res: #no-res, exp:  int(INT) ! A, ASET > =
+	   < P | label: pid(INT) ! A, sys-res: #no-res, exp: int(INT) ! A, ASET > [print P " core-send-1"] .
+
+	eq [core-send] :
+	   < P | sys-res: #res-send(true), exp: int(INT) ! A, ASET > =
+	   < P | sys-res: #no-res, exp: A, ASET > [print P " core-send-2"] .
+
+   eq [core-receive] :
+     < P | label: tau, sys-res: #no-res, exp: receive CLSEQ end, ASET > =
+     < P | label: receive CLSEQ, sys-res: #no-res, exp: receive CLSEQ end, ASET > [print P " core-receive"] .
+
+endm

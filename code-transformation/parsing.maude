@@ -1,0 +1,138 @@
+----------------------------------------------------------------------------------------------------
+---
+--- PRINT-SYNTAX-ERROR
+---
+--- Some functions to print out the position at which a syntax error is reported by
+--- the metaParse function. This code is taken from the Full-Mode implementation.
+---
+----------------------------------------------------------------------------------------------------
+
+fmod PRINT-SYNTAX-ERROR is
+	protecting META-LEVEL .
+	protecting INT .
+
+	var  QIL : QidList .
+	var  Q : Qid .
+	var  N : Nat .
+	vars RP RP' : ResultPair .
+	var  RP? : [ResultPair?] .
+
+	op printN : Nat QidList -> QidList .  *** first N qid's in a qidList
+	eq printN(N, nil) = nil .
+	eq printN(0, QIL) = nil .
+	eq printN(s N, Q QIL) = Q printN(N, QIL) .
+
+	op removeFront : Nat QidList -> QidList .  *** removes first N qid's
+	eq removeFront(N, nil) = nil .
+	eq removeFront(0, QIL) = QIL .
+	eq removeFront(s N, Q QIL) = removeFront(N, QIL) .
+
+	op printSyntaxError : [ResultPair?] QidList -> QidList .
+	eq printSyntaxError(noParse(N), QIL)
+		= '\r 'Parse 'error 'in '\o '\s printN(N + 1, QIL) '\r '<---*HERE* '\o .
+	eq printSyntaxError(ambiguity(RP, RP'), QIL)
+		= '\r 'Ambiguous 'parsing 'for '\o '\s QIL '\o .
+	eq printSyntaxError(RP?, QIL) = QIL [owise] .
+endfm
+
+fmod ERLANG-SIM is
+   protecting META-LEVEL .
+
+   vars T T1 T2 T3 : Term .
+   vars TL TL' TL1 TL2 : TermList .
+   var QI : Qid .
+   var QIL : QidList .
+   var F : Qid .
+   var M : Module .
+   var I : Import .
+
+   vars IL : ImportList .
+   var S : Sort .
+   vars SS : SortSet .
+   var SsS : SubsortDeclSet .
+   var OD : OpDecl .
+   var ODS : OpDeclSet .
+   var MbS : MembAxSet .
+   vars EqS EqS' : EquationSet .
+
+
+   sort EmptyFmodule .
+   op #empty-mod : -> EmptyFmodule .
+
+   subsort EmptyFmodule < FModule .
+
+   op processModule : Term ~> FModule .
+   eq processModule(T) = solveBubbles(T, extractSignature(T)) .
+
+   ---- extractSignature
+   op extractSignature : Term ~> FModule .
+   op extractSignature : Term FModule ~> FModule .
+
+   eq extractSignature('fmod_is_endfm['token[QI], T])
+    = extractSignature(T,fmod downTerm(QI, 'error) is nil sorts none . none none none none endfm) .
+
+   eq extractSignature('__[T1, T2], M)
+    = extractSignature(T2, extractSignature(T1, M)) .
+
+   eq extractSignature('sort_.['token[T]], M) = addSort(M, downTerm(T, 'error)) .
+
+   eq extractSignature('op_:_->_.['token[T1], 'neTokenList[TL], 'token[T2]], M)
+    = addOpDecl(M, op downTerm(T1, 'error) : downTerm(TL, nil) -> downTerm(T2, 'error) [none] .) .
+
+   eq extractSignature('op_:`->_.['token[T1], 'token[T2]], M)
+    = addOpDecl(M, op downTerm(T1, 'error) : nil -> downTerm(T2, 'error) [none] .) .
+
+   eq extractSignature('op_:_->_`[_`].['token[T1], 'neTokenList[TL1], 'token[T2], 'neTokenList[TL2]], M)
+    = addOpDecl(M, op downTerm(T1, 'error) : downTerm(TL1, nil) -> downTerm(T2, 'error) [
+
+     downTerm(getTerm(metaParse(M, downTerm(TL2, nil), anyType)), none)  ] .) .
+
+   eq extractSignature('including_.['token[T]], M)
+    = addImport(M, including downTerm(T, 'error) .) .
+
+   eq extractSignature(T, M) = M [owise] .
+
+   ---- solveBubbles
+   op solveBubbles : Term FModule ~> FModule .
+   op solveBubblesAux : Term FModule ~> EquationSet .
+
+   eq solveBubbles('fmod_is_endfm['token[QI], T], M)
+     = addEquations(M, solveBubblesAux(T, M)) .
+
+   eq solveBubblesAux('eq_=_.[T1, T2], M)
+     = (eq getTerm(processTerm(T1, M)) = getTerm(processTerm(T2, M)) [none] .) .
+
+   eq solveBubblesAux('__['eq_=_.[T1, T2], T3], M)
+     = (eq getTerm(processTerm(T1, M)) = getTerm(processTerm(T2, M)) [none] .
+       solveBubblesAux(T3, M)) .
+
+   ceq solveBubblesAux('__[F[TL], T2], M)
+     = solveBubblesAux(T2, M)
+     if F =/= 'eq_=_. .
+
+   ceq solveBubblesAux(F[TL], M)
+     = none
+     if F =/= '__ /\ F =/= 'eq_=_. .
+
+   op processTerm : Term Module ~> ResultPair .
+   eq processTerm('bubble[T], M)
+     = metaParse(M, downTerm(T, nil), anyType) .
+
+   op addSort : FModule Sort -> FModule .
+   eq addSort(fmod QI is IL sorts SS . SsS ODS MbS EqS endfm, S)
+   = fmod QI is IL sorts SS ; S . SsS ODS MbS EqS endfm .
+
+   op addOpDecl : FModule OpDecl -> FModule .
+   eq addOpDecl(fmod QI is IL sorts SS . SsS ODS MbS EqS endfm, OD)
+    = fmod QI is IL sorts SS . SsS (OD ODS) MbS EqS endfm .
+
+   op addImport : FModule Import -> FModule .
+   eq addImport(fmod QI is IL sorts SS . SsS ODS MbS EqS endfm, I)
+    = fmod QI is IL I sorts SS . SsS ODS MbS EqS endfm .
+
+   op addEquations : FModule EquationSet -> FModule .
+
+   eq addEquations(fmod QI is IL sorts SS . SsS ODS MbS EqS endfm, EqS')
+    = fmod QI is IL sorts SS . SsS ODS MbS EqS EqS' endfm .
+
+ endfm

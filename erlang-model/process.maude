@@ -1,0 +1,62 @@
+mod SEM_PROCESS is
+  protecting MAUDE-SYNTAX-UPDOWN .
+	protecting SEM_LABEL .
+  protecting SEM_SYSLABEL .
+	protecting SEM_RESULT .
+	protecting SYNTAX .
+  protecting SEM_MODENV .
+  protecting SEM_ENTITY .
+
+	sort Process .
+  subsort Process < Entity .
+
+  op <_|_> : Pid AttributeSet -> Process .
+
+  op label:_ : Label -> LabelAtt [ctor gather (&)] .
+  op sys-res:_ : SysResult -> SysResultAtt [ctor gather (&)] .
+  op exp:_ : Exp -> ExpAtt [ctor gather (&)] .
+  op mod-env:_ : ModEnv -> ModEnvAtt [ctor gather (&)] .
+
+  sorts LabelAtt SysResultAtt ExpAtt ModEnvAtt .
+  subsorts LabelAtt SysResultAtt ExpAtt ModEnvAtt < Attribute .
+
+  *******************************
+  *** METAREPRESENTATION PART ***
+	*******************************
+	op #up : Process -> Term [memo] .
+	op #downProcess : Term -> Process [memo] .
+
+	var EX EX1 EX2 : Exp .
+	vars T1 T2 T3 T4 T5 : Term .
+  var RES : SysResult .
+  var PID P P' : Pid .
+  var L : Label .
+  var MSG : Atom .
+  var ME : ModEnv .
+  var A : Attribute .
+  var ASET : AttributeSet .
+  var SUB : Substitution .
+
+	eq #up(< P | ASET >) = '<_|_>[#up(P),#up(ASET)] .
+
+  ceq #up(A, ASET) = '_`,_[#up(A), #up(ASET)]
+   if A =/= (none).AttributeSet /\ ASET =/= (none).AttributeSet .
+
+  eq #up(label: L) = 'label:_[#up(L)] .
+  eq #up(sys-res: RES) = 'sys-res:_[#up(RES)] .
+  eq #up(exp: EX) = 'exp:_[#up(EX)] .
+  eq #up(mod-env: ME) = 'mod-env:_[#up(ME)] .
+
+  eq #downEntity('<_|_>[T1,T2]) = < #downPid(T1) | #downAttributeSet(T2) > .
+  ceq #downAttributeSet(T1) = #downAttribute(T2), #downAttributeSet(T3)
+      if SUB := metaMatch(GRAMMAR, '_`,_['A:Attribute, 'ASET:AttributeSet], T1, nil, 0)
+         /\ 'A:Attribute <- T2 ; 'ASET:AttributeSet <- T3 := SUB .
+
+  eq #downAttributeSet(T1) = #downAttribute(T1) [owise] .
+
+  eq #downAttribute('label:_[T1]) = label: #downLabel(T1) .
+  eq #downAttribute('sys-res:_[T1]) = sys-res: #downSysResult(T1) .
+  eq #downAttribute('exp:_[T1]) = exp: #downExp(T1) .
+  eq #downAttribute('mod-env:_[T1]) = mod-env: #downModEnv(T1) .
+
+endm

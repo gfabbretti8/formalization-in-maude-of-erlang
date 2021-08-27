@@ -1,0 +1,87 @@
+mod SEM_HELPER is
+	protecting SEM_LABEL .
+	protecting SYNTAX .
+
+	var EX : Exp .
+	var EL : Label .
+	var A : Atom .
+	var INT : ErlInt .
+
+	vars FDEFSEQ FDEFSEQ1 FDEFSEQ2 : FunDefSeq .
+
+
+	*** Subexpressions are often evaluated within the conditions of an equation that
+	*** applies to the whole expression. For example when considering the sequencing
+	*** operator: The first subexpression is evaluated entirely within the conditions
+	*** of the outer "do"-equation.
+	*** The evaluation can terminate normally (i.e. the expression was evaluated to
+	*** a constant value) or by a side-effect or an exception.
+	*** In the latter cases, the label indicates the exception / side effect and
+	*** also becomes the label of the "surrounding" process.
+	*** In the case of normal termination, the evaluation is continued and we do
+	*** not signal termination just because the evaluation within the conditions
+	*** terminated. The #filterExit function allows to subsume these two cases:
+	*** If the label indicates normal termination, we continue with a tau label.
+	*** Otherwise, we indicate the side-effect and stop normalisation.
+	op #filterExit : Label -> Label [memo] .
+	eq #filterExit(EL) = EL .
+
+endm
+
+
+mod SEM_NORMALISATION is
+	protecting SYNTAX .
+  protecting SEM_HELPER .
+  protecting SEM_ENTITIES .
+
+	vars EX EX1 EX2 EX3 EX' EX1' EX2' GUARD : Exp .
+	vars A1 A2 : Atom .
+
+	var INT : Int .
+	var STR : String .
+  var CL : Clause .
+  var CLSEQ : ClauseSeq .
+  var L : Literal .
+  var RES RES1 : SysResult .
+  var P : Pid .
+	var ESL : StopLabel .
+  var EL : Label .
+  var ME : ModEnv .
+  var ASET ASET' : AttributeSet .
+
+  *** Case 1: the if clause has evaluate to true, then we proceed with the
+  *** corresponding expression.
+  eq [norm-if] :
+    < P | label: tau, exp: if atom("true") -> EX ; CLSEQ end, ASET > =
+    < P | label: tau, exp: EX, ASET > [print P " norm-if1" ] .
+
+  *** Case 2: the if clause has evaluate to false, then we proceed with the
+  *** remaining clauses.
+  eq [norm-if] :
+     < P | label: tau, exp: if atom("false") -> EX ; CLSEQ end, ASET > =
+     < P | label: tau, exp: if CLSEQ end, ASET > [print P " norm-if2" ] .
+
+  *** Case 3: the if clause has evaluate to true and it is the last claude,
+  ***  then we proceed with the corresponding expression.
+  eq [norm-if] :
+     < P | label: tau, exp: if atom("true") -> EX  end, ASET > =
+     < P | label: tau, exp: EX, ASET > [print P " norm-if3" ] .
+
+  *** Case 4: the if clause has evaluate to false and it is the last one, then
+  *** we need to raise an error.
+  eq [norm-if] :
+     < P | label: tau, exp: if atom("false") -> EX end, ASET > =
+     < P | label: tau, exp: atom("error_no_true_case_inside_if"), ASET > [print P " norm-if4" ] .
+
+  ceq [norm-seq] :
+       < P | label: tau, exp: EX1, EX2, ASET > =
+       < P | label: EL, exp: EX1', EX2, ASET' >
+     if not (EX1 :: Literal)
+     /\ < P | label: EL, exp: EX1', ASET' > :=
+        < P | label: tau, exp: EX1, ASET > [print P " norm-seq " ASET "\nEX1 = " EX1 "\nEX1' = " EX1'] .
+
+   eq [norm-seq] :
+      < P | label: tau, sys-res: #no-res, exp: L, EX, ASET > =
+      < P | label: tau, sys-res: #no-res, exp: EX, ASET > [print P " norm-eq "  ] .
+
+endm

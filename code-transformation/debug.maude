@@ -1,0 +1,4 @@
+load ../erlang-verifier/framework.maude
+load framework.maude
+(load-module('SEM_ENTITIES))
+(transform-mod)

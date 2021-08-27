@@ -1,0 +1,92 @@
+fmod PRINT-SYNTAX-ERROR is
+	protecting META-LEVEL .
+	protecting INT .
+
+	var  QIL : QidList .
+	var  Q : Qid .
+	var  N : Nat .
+	vars RP RP' : ResultPair .
+	var  RP? : [ResultPair?] .
+
+	op printN : Nat QidList -> QidList .  *** first N qid's in a qidList
+	eq printN(N, nil) = nil .
+	eq printN(0, QIL) = nil .
+	eq printN(s N, Q QIL) = Q printN(N, QIL) .
+
+	op removeFront : Nat QidList -> QidList .  *** removes first N qid's
+	eq removeFront(N, nil) = nil .
+	eq removeFront(0, QIL) = QIL .
+	eq removeFront(s N, Q QIL) = removeFront(N, QIL) .
+
+	op printSyntaxError : [ResultPair?] QidList -> QidList .
+	eq printSyntaxError(noParse(N), QIL)
+		= '\r 'Parse 'error 'in '\o '\s printN(N + 1, QIL) '\r '<---*HERE* '\o .
+	eq printSyntaxError(ambiguity(RP, RP'), QIL)
+		= '\r 'Ambiguous 'parsing 'for '\o '\s QIL '\o .
+	eq printSyntaxError(RP?, QIL) = QIL [owise] .
+endfm
+
+
+fmod COMMAND-GRAMMAR is
+
+  protecting QID .
+	*** The commands that may be issued to the system are terms of sort Command.
+	sort Command .
+
+	op load-module : Qid -> Command [ctor] .
+
+  op transform-mod : -> Command [ctor] .
+
+endfm
+
+mod MAIN-LOOP is
+	protecting QID .
+	including LOOP-MODE .
+	protecting PRINT-SYNTAX-ERROR .
+***  protecting ERLANG-SIM .
+  protecting META-LEVEL .
+  protecting CODE-MANIPULATION .
+
+
+  sort Phase .
+	op idle : -> Phase .
+	op parsed : -> Phase .
+	op error : -> Phase .
+
+  op #empty-mod : -> FModule .
+
+	sort ParseResult .
+	subsort Term < ParseResult .
+	op #no-parse : -> ParseResult .
+
+	*** the state-component of the loop-mode tuple
+	op <_,_,_> : Phase ParseResult FModule  -> State [frozen] .
+
+  op init : -> System .
+	rl [init] :
+     init => [nil, < idle, #no-parse, #empty-mod >, nil] .
+
+	vars QIL QIL' : QidList .
+	vars T T1 T2 : Term .
+  var M : Module .
+
+	var Result : ResultPair? .
+
+	crl [in] : [QIL, < idle, #no-parse, M >, QIL']
+		=> if Result :: ResultPair
+		   then
+			[nil, < parsed, getTerm(Result), M >, 'command 'parsed 'complete '\n]
+		   else
+			[nil, < error, #no-parse, M >, printSyntaxError(Result, QIL)]
+		   fi
+	    if QIL =/= nil /\
+	       Result := metaParse(upModule('COMMAND-GRAMMAR, false), QIL, 'Command) .
+
+	rl [load-module] : [nil, < parsed, 'load-module[T1], M >, QIL']
+		=> [nil, < idle, #no-parse, upModule(downTerm(T1, 'ERROR), false) >, QIL' 'module 'included ] .
+
+  rl [transform-mod] : [nil, < parsed, 'transform-mod.Command, M >, QIL']
+    => [nil, < idle, #no-parse, #transform-mod(M) >, QIL' 'module 'transformed ] .
+
+endm
+

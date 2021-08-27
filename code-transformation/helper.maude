@@ -1,0 +1,35 @@
+
+
+*** This module contains functions that manipulate data structure and transform them from one to
+*** another.
+
+  fmod HELPER is
+
+  protecting META-LEVEL .
+  protecting LEXICAL .
+
+  sort NeEquationList EquationList .
+
+  subsort Equation < NeEquationList .
+  subsort NeEquationList < EquationList .
+
+  op #empty-list : -> EquationList [ctor] .
+
+  op _,_ : EquationList EquationList -> EquationList [ctor id: #empty-list] .
+
+  op #set-to-list : EquationSet -> EquationList .
+
+  op #conc : Qid Qid -> Qid .
+
+  var Q1 Q2 : Qid .
+  var EQ : Equation .
+  var EQS : EquationSet .
+
+  ceq #set-to-list(EQ EQS) = EQ, #set-to-list(EQS)
+      if EQS =/= none .
+
+  eq #set-to-list(EQ) = EQ [owise] .
+
+  eq #conc(Q1, Q2) = qid(string(Q1) + string(Q2)) .
+
+  endfm

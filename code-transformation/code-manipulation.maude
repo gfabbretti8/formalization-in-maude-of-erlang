@@ -1,0 +1,123 @@
+
+*** This module takes in input another maude module, which follows the standard defined in \cite{..},
+*** and transforms it in a module that preserves the semantics but also includes the concept of keys.
+***
+
+fmod CODE-MANIPULATION is
+
+  protecting META-LEVEL .
+  protecting HELPER .
+  protecting STRING .
+
+  vars FMOD : FModule .
+  vars T1 T2 T3 T4 : Term .
+  vars ARG ARGS Q OPNAME OPNAME1 OPNAME2 : Qid .
+  var PDL : ParameterDeclList .
+  var H : Header .
+  var M : Module .
+  var IL : ImportList .
+  vars SS SS' : SortSet .
+  var SSDS : SubsortDeclSet .
+  var OPDS : OpDeclSet .
+  var MAS : MembAxSet .
+  var EQ : Equation .
+  var EQL : EquationList .
+  var EQS EQS' : EquationSet .
+  vars EQCOND EQCOND1 EQCOND2 : EqCondition .
+  var RLS : RuleSet .
+  var ATT : AttrSet .
+  var TERMS TERMS' : TermList .
+  var SUB : Substitution .
+  var VARIABLE : Variable .
+  var CONST : Constant .
+  var QID : Qid .
+
+  op #transform-mod : Module -> Module .
+  op #transform-eqs : Module -> Module .
+  op #transform-eqs : EquationList -> EquationSet .
+  op #transform-eq-ceq : Equation -> Equation .
+  op #transform-eq : Equation -> Equation .
+  op #transform-ceq : Equation -> Equation .
+  op #transform-op : Term -> Term .
+  op #transform-eqconds : EqCondition -> EqCondition .
+  op #transform-term : Term -> Term .
+  op #transform-terms : TermList -> TermList .
+  op #addSorts : Module SortSet ~> Module .
+
+  eq #transform-mod(M) = #transform-eqs(#addSorts(M, 'EntityWithKey)) .
+
+  eq #transform-eqs(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm) =
+    mod H is
+     IL
+     sorts SS .
+     (SSDS subsort 'EntityWithKey < 'Entities .)
+     OPDS
+     MAS
+     #transform-eqs( #set-to-list(EQS))
+     RLS
+    endm .
+
+  eq #addSorts(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm, SS')
+      = mod H is IL sorts SS ; SS' . SSDS OPDS MAS EQS RLS endm .
+
+  ceq #transform-eqs(EQ, EQL)
+     = #transform-eq-ceq(EQ) #transform-eqs(EQL)
+      if EQL =/= #empty-list [print "transform-eqs = " EQ] .
+
+  eq #transform-eqs(EQ) = #transform-eq-ceq(EQ) [owise] .
+
+  eq #transform-eq-ceq(eq T1 = T2 [ATT] .) = #transform-eq(eq T1 = T2 [ATT] .) .
+
+  eq #transform-eq-ceq(ceq T1 = T2 if EQCOND [ATT] .) = #transform-ceq(ceq T1 = T2 if EQCOND [ATT] .) .
+
+  eq #transform-eq(eq T1 = T2 [ATT] .)
+     = eq #transform-term( T1 ) = #transform-term( T2 ) [ATT] . [print "transform-eq"] .
+
+  eq #transform-ceq(ceq T1 = T2 if EQCOND [ATT] .)
+     = ceq #transform-term( T1 ) = #transform-term( T2 ) if #transform-eqconds(EQCOND) [ATT] . [print "transform-eq"] .
+
+  eq #transform-op( OPNAME[TERMS] )
+     = OPNAME[ #transform-terms(TERMS) ] [print "transform-op" ] .
+
+  *** The transform-eqconds set of equations below parse a conjuctions of `EqConditions` updating
+  *** eventual use of the variable with sort `Entity` to a variable with sort `EntityWithKey`
+
+  ceq #transform-eqconds(EQCOND1 /\ EQCOND2)
+     = #transform-eqconds(EQCOND1) /\ #transform-eqconds(EQCOND2)
+    if EQCOND1 =/= nil /\ EQCOND2 =/= nil .
+
+  eq #transform-eqconds(nil) = nil .
+
+  eq #transform-eqconds(T1 = T2) = #transform-term(T1) = #transform-term(T2) .
+
+  eq #transform-eqconds(T1 : T2) = #transform-term(T1) = T2 .
+
+  eq #transform-eqconds(T1 := T2) = #transform-term(T1) := #transform-term(T2) .
+
+  eq #transform-eqconds(T1 => T2) = #transform-term(T1) => #transform-term(T2) .
+
+  *** The transform-terms set of equations below parse a list of terms and transform each term
+
+  ceq #transform-terms(TERMS)
+     = #transform-term(T1), #transform-terms(TERMS')
+    if T1, TERMS' := TERMS /\ TERMS' =/= empty [print "transform-terms"] .
+
+  eq #transform-terms(T1) = #transform-term(T1) [owise] .
+
+  *** The transform-term set of equations below parse a single term and, if
+  *** the term is a variable and its sort is `Entity`, updates it to `EntityWithKey`.
+
+  eq #transform-term(OPNAME[TERMS]) = #transform-op(OPNAME[TERMS]) .
+
+  eq #transform-term('E:Entity) = 'E:EntityWithKey [print "yes"] .
+
+  eq #transform-term(CONST) = #conc(#transform-term(getName(CONST)), #conc('., getType(CONST))) [print CONST].
+
+  ceq #transform-term(VARIABLE) = #conc(getName(VARIABLE), ':EntityWithKey)
+      if getType(VARIABLE) = 'Entity .
+
+  eq #transform-term(VARIABLE) = VARIABLE [owise] .
+
+  eq #transform-term(QID) = QID .
+
+endfm
