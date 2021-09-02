@@ -55,7 +55,7 @@ fmod CODE-MANIPULATION is
   eq #transform-mod(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm) =
     mod H is
      IL
-     sorts SS ; 'EntityWithKey.
+     sorts (SS ; 'EntityWithKey) .
      (SSDS subsort 'EntityWithKey < 'Entities .)
      OPDS
      MAS
