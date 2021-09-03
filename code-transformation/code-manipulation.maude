@@ -1,7 +1,10 @@
 
 *** This module takes in input another maude module, which follows the standard defined in \cite{..},
 *** and transforms it in a module that preserves the semantics but also includes the concept of keys.
-***
+*** The transformation adds the sort 'EntityWithKey' to the sorts of the module, extends the set of
+*** subsorts by extending the sort 'Entities' with 'EnitityWithKey' and then traverses the equations and
+*** rules of the module and replaces each occurrence of the var 'Entity' and replaces it with a variable
+*** 'EntityWithKey'.
 
 fmod CODE-MANIPULATION is
 
@@ -44,12 +47,15 @@ fmod CODE-MANIPULATION is
   op #transform-terms : TermList -> TermList .
   op #addSorts : Module SortSet ~> Module .
 
-  eq #transform-mod(M) = #transform-eqs(#addSorts(M, 'EntityWithKey)) .
-
-  eq #transform-eqs(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm) =
+*** transform-mod acts as entry point for the transformation, takes in
+*** input a module, adds the sort 'EntityWithKey' and proceed by
+*** transforming the equations.
+*** Before being transformed the equations from a set are transformed
+*** to a list, since it easier to manipulate it later.
+  eq #transform-mod(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm) =
     mod H is
      IL
-     sorts SS .
+     sorts (SS ; 'EntityWithKey) .
      (SSDS subsort 'EntityWithKey < 'Entities .)
      OPDS
      MAS
@@ -57,15 +63,15 @@ fmod CODE-MANIPULATION is
      RLS
     endm .
 
-  eq #addSorts(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm, SS')
-      = mod H is IL sorts SS ; SS' . SSDS OPDS MAS EQS RLS endm .
-
   ceq #transform-eqs(EQ, EQL)
      = #transform-eq-ceq(EQ) #transform-eqs(EQL)
       if EQL =/= #empty-list [print "transform-eqs = " EQ] .
 
   eq #transform-eqs(EQ) = #transform-eq-ceq(EQ) [owise] .
 
+*** The following function analyses the kind of equation (if conditional or not)
+*** and then proceeds to the appropriate transformation. The only difference
+*** is that in a conditional equation we must also consider the if clause.
   eq #transform-eq-ceq(eq T1 = T2 [ATT] .) = #transform-eq(eq T1 = T2 [ATT] .) .
 
   eq #transform-eq-ceq(ceq T1 = T2 if EQCOND [ATT] .) = #transform-ceq(ceq T1 = T2 if EQCOND [ATT] .) .
@@ -81,7 +87,6 @@ fmod CODE-MANIPULATION is
 
   *** The transform-eqconds set of equations below parse a conjuctions of `EqConditions` updating
   *** eventual use of the variable with sort `Entity` to a variable with sort `EntityWithKey`
-
   ceq #transform-eqconds(EQCOND1 /\ EQCOND2)
      = #transform-eqconds(EQCOND1) /\ #transform-eqconds(EQCOND2)
     if EQCOND1 =/= nil /\ EQCOND2 =/= nil .
@@ -97,7 +102,6 @@ fmod CODE-MANIPULATION is
   eq #transform-eqconds(T1 => T2) = #transform-term(T1) => #transform-term(T2) .
 
   *** The transform-terms set of equations below parse a list of terms and transform each term
-
   ceq #transform-terms(TERMS)
      = #transform-term(T1), #transform-terms(TERMS')
     if T1, TERMS' := TERMS /\ TERMS' =/= empty [print "transform-terms"] .
@@ -106,7 +110,6 @@ fmod CODE-MANIPULATION is
 
   *** The transform-term set of equations below parse a single term and, if
   *** the term is a variable and its sort is `Entity`, updates it to `EntityWithKey`.
-
   eq #transform-term(OPNAME[TERMS]) = #transform-op(OPNAME[TERMS]) .
 
   eq #transform-term('E:Entity) = 'E:EntityWithKey [print "yes"] .
