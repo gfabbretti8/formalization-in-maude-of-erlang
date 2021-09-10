@@ -1,126 +1,38 @@
 
-*** This module takes in input another maude module, which follows the standard defined in \cite{..},
-*** and transforms it in a module that preserves the semantics but also includes the concept of keys.
-*** The transformation adds the sort 'EntityWithKey' to the sorts of the module, extends the set of
-*** subsorts by extending the sort 'Entities' with 'EnitityWithKey' and then traverses the equations and
-*** rules of the module and replaces each occurrence of the var 'Entity' and replaces it with a variable
-*** 'EntityWithKey'.
+*** This module bundles the modules that define how to produce a
+*** reversible semantics given a non reversible one.
+*** In particular, the transformation of the syntax of the semantics
+*** is defined by function-name(..) while the transformation of the
+*** operational semantics is defined by function-name(..)
+
 
 fmod CODE-MANIPULATION is
 
-  protecting META-LEVEL .
-  protecting HELPER .
-  protecting STRING .
+ protecting META-LEVEL .
+ protecting SYNTAX-TRANSFORM .
+ protecting PRODUCE-FWD-SEM .
+ protecting PRODUCE-BWD-SEM .
 
-  vars FMOD : FModule .
-  vars T1 T2 T3 T4 : Term .
-  vars ARG ARGS Q OPNAME OPNAME1 OPNAME2 : Qid .
-  var PDL : ParameterDeclList .
   var H : Header .
-  var M : Module .
   var IL : ImportList .
-  vars SS SS' : SortSet .
+  var SS : SortSet .
   var SSDS : SubsortDeclSet .
   var OPDS : OpDeclSet .
   var MAS : MembAxSet .
-  var EQ : Equation .
-  var EQL : EquationList .
-  var EQS EQS' : EquationSet .
-  vars EQCOND EQCOND1 EQCOND2 : EqCondition .
+  var EQS : EquationSet .
   var RLS : RuleSet .
-  var ATT : AttrSet .
-  var TERMS TERMS' : TermList .
-  var SUB : Substitution .
-  var VARIABLE : Variable .
-  var CONST : Constant .
-  var QID : Qid .
+  var Q : Qid .
+*** The operation #transform-mod, according to the header of the module, decides
+*** which kind of transformations must be performed on the module.
+ op #transform-mod : Module Qid -> Module .
+ eq #transform-mod(mod 'SEM_ENTITIES is IL sorts SS . SSDS OPDS MAS EQS RLS endm, Q)
+    = #transform-syntax-mod(mod 'SEM_ENTITIES is IL sorts SS . SSDS OPDS MAS EQS RLS endm) .
 
-  op #transform-mod : Module -> Module .
-  op #transform-eqs : Module -> Module .
-  op #transform-eqs : EquationList -> EquationSet .
-  op #transform-eq-ceq : Equation -> Equation .
-  op #transform-eq : Equation -> Equation .
-  op #transform-ceq : Equation -> Equation .
-  op #transform-op : Term -> Term .
-  op #transform-eqconds : EqCondition -> EqCondition .
-  op #transform-term : Term -> Term .
-  op #transform-terms : TermList -> TermList .
-  op #addSorts : Module SortSet ~> Module .
+ eq #transform-mod(mod 'SEM_TRANSITIONS is IL sorts SS . SSDS OPDS MAS EQS RLS endm, ''FWD.Qid)
+    = #produce-fwd-sem(mod 'SEM_TRANSITIONS is IL sorts SS . SSDS OPDS MAS EQS RLS endm) .
 
-*** transform-mod acts as entry point for the transformation, takes in
-*** input a module, adds the sort 'EntityWithKey' and proceed by
-*** transforming the equations.
-*** Before being transformed the equations from a set are transformed
-*** to a list, since it easier to manipulate it later.
-  eq #transform-mod(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm) =
-    mod H is
-     IL
-     sorts (SS ; 'EntityWithKey) .
-     (SSDS subsort 'EntityWithKey < 'Entities .)
-     OPDS
-     MAS
-     #transform-eqs( #set-to-list(EQS))
-     RLS
-    endm .
 
-  ceq #transform-eqs(EQ, EQL)
-     = #transform-eq-ceq(EQ) #transform-eqs(EQL)
-      if EQL =/= #empty-list [print "transform-eqs = " EQ] .
-
-  eq #transform-eqs(EQ) = #transform-eq-ceq(EQ) [owise] .
-
-*** The following function analyses the kind of equation (if conditional or not)
-*** and then proceeds to the appropriate transformation. The only difference
-*** is that in a conditional equation we must also consider the if clause.
-  eq #transform-eq-ceq(eq T1 = T2 [ATT] .) = #transform-eq(eq T1 = T2 [ATT] .) .
-
-  eq #transform-eq-ceq(ceq T1 = T2 if EQCOND [ATT] .) = #transform-ceq(ceq T1 = T2 if EQCOND [ATT] .) .
-
-  eq #transform-eq(eq T1 = T2 [ATT] .)
-     = eq #transform-term( T1 ) = #transform-term( T2 ) [ATT] . [print "transform-eq"] .
-
-  eq #transform-ceq(ceq T1 = T2 if EQCOND [ATT] .)
-     = ceq #transform-term( T1 ) = #transform-term( T2 ) if #transform-eqconds(EQCOND) [ATT] . [print "transform-eq"] .
-
-  eq #transform-op( OPNAME[TERMS] )
-     = OPNAME[ #transform-terms(TERMS) ] [print "transform-op" ] .
-
-  *** The transform-eqconds set of equations below parse a conjuctions of `EqConditions` updating
-  *** eventual use of the variable with sort `Entity` to a variable with sort `EntityWithKey`
-  ceq #transform-eqconds(EQCOND1 /\ EQCOND2)
-     = #transform-eqconds(EQCOND1) /\ #transform-eqconds(EQCOND2)
-    if EQCOND1 =/= nil /\ EQCOND2 =/= nil .
-
-  eq #transform-eqconds(nil) = nil .
-
-  eq #transform-eqconds(T1 = T2) = #transform-term(T1) = #transform-term(T2) .
-
-  eq #transform-eqconds(T1 : T2) = #transform-term(T1) = T2 .
-
-  eq #transform-eqconds(T1 := T2) = #transform-term(T1) := #transform-term(T2) .
-
-  eq #transform-eqconds(T1 => T2) = #transform-term(T1) => #transform-term(T2) .
-
-  *** The transform-terms set of equations below parse a list of terms and transform each term
-  ceq #transform-terms(TERMS)
-     = #transform-term(T1), #transform-terms(TERMS')
-    if T1, TERMS' := TERMS /\ TERMS' =/= empty [print "transform-terms"] .
-
-  eq #transform-terms(T1) = #transform-term(T1) [owise] .
-
-  *** The transform-term set of equations below parse a single term and, if
-  *** the term is a variable and its sort is `Entity`, updates it to `EntityWithKey`.
-  eq #transform-term(OPNAME[TERMS]) = #transform-op(OPNAME[TERMS]) .
-
-  eq #transform-term('E:Entity) = 'E:EntityWithKey [print "yes"] .
-
-  eq #transform-term(CONST) = #conc(#transform-term(getName(CONST)), #conc('., getType(CONST))) [print CONST].
-
-  ceq #transform-term(VARIABLE) = #conc(getName(VARIABLE), ':EntityWithKey)
-      if getType(VARIABLE) = 'Entity .
-
-  eq #transform-term(VARIABLE) = VARIABLE [owise] .
-
-  eq #transform-term(QID) = QID .
+ eq #transform-mod(mod 'SEM_TRANSITIONS is IL sorts SS . SSDS OPDS MAS EQS RLS endm, ''BWD.Qid)
+    = #produce-bwd-sem(mod 'SEM_TRANSITIONS is IL sorts SS . SSDS OPDS MAS EQS RLS endm) .
 
 endfm

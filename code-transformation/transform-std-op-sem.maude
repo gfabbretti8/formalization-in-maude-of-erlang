@@ -1,0 +1,19 @@
+
+
+load ../erlang-model/framework.maude
+
+load ./erlang-rev-model/entity-with-key.maude
+load ./erlang-rev-model/entities.maude
+
+load framework.maude
+
+load full-maude31.maude
+load code-manipulation-mod-expr.maude
+
+
+set show advisories off .
+set show loop stats off .
+set print attribute off .
+
+(show module CODE-MANIPULATION[SEM_TRANSITIONS, 'FWD] .)
+quit

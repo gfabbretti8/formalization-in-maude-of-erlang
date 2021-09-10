@@ -1,0 +1,171 @@
+fmod PRODUCE-FWD-SEM is
+
+ protecting META-LEVEL .
+ protecting HELPER .
+ protecting QID .
+ protecting META-TERM .
+ protecting NAT .
+
+  sort TermWithKeys .
+
+  sort TermIdAndPlaceHolder .
+
+  op _*_ : Term QidList -> TermWithKeys [ctor prec 81].
+  op _x_x_ : GTermList Nat GTermList -> TermIdAndPlaceHolder [ctor prec 81] .
+
+  vars K T T' T1 T2 T2' T3 : Term .
+  vars TERMS PL1 PL2 TERMS' TERMS'' : GTermList .
+  vars M M' : Module .
+  var SUB : Substitution .
+  var H : Header .
+  vars I I' : Import .
+  var IL : ImportList .
+  var SS : SortSet .
+  var SSDS : SubsortDeclSet .
+  var OPDS : OpDeclSet .
+  var MAS : MembAxSet .
+  var EQS : EquationSet .
+  var ATT : AttrSet .
+  vars OPNAME FKEY : Qid .
+  vars KEYS KEYS' OTHERS : QidList .
+  var RL : Rule .
+  var RLL : RuleList .
+  vars RLS RLS' : RuleSet .
+  vars RLCOND : Condition .
+  vars ID ID' ID'' : Nat .
+
+  op #produce-fwd-sem : Module -> Module .
+  eq #produce-fwd-sem(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm) =
+    mod H is
+     #transform-import-list(IL)
+     sorts SS .
+     SSDS
+     OPDS
+     MAS
+     EQS
+     #transform-rls(#set-to-list(RLS))
+    endm .
+
+*** On the import list we update the module 'SEM_ENTITY with
+*** 'SEM_ENTITY_WITH_KEY
+
+  op #transform-import-list : ImportList -> ImportList .
+  eq #transform-import-list(IL)
+     = (protecting 'SEM_ENTITY_WITH_KEY .) IL .
+
+*** We iterate on the rules available and we transform each one of them.
+
+  op #transform-rls : RuleList -> RuleSet .
+  ceq #transform-rls(RL, RLL)
+     = #transform-rl-crl(RL) #transform-rls(RLL)
+     if RLL =/= #empty-list .
+  eq #transform-rls(RL) = #transform-rl-crl(RL) [owise] .
+
+*** The following function analyses the kind of rule (if conditional or not)
+*** and then proceeds to the appropriate transformation. The only difference
+*** is that in a conditional rule we must also consider the if clause.
+  op #transform-rl-crl : Rule -> Rule .
+  eq #transform-rl-crl(rl T1 => T2 [ATT] .)
+     = #transform-rl(rl T1 => T2 [ATT] .) .
+  eq #transform-rl-crl(crl T1 => T2 if RLCOND [ATT] .)
+     = #transform-crl(crl T1 => T2 if RLCOND [ATT] .) .
+
+  op #transform-rl : Rule -> Rule .
+  eq #transform-rl(rl T1 => T2 [ATT] .)
+     = #call-right-transform( #transform-rl-left-term(T1, 'N:NatList), T2, ATT) .
+
+  op #transform-crl : Rule -> Rule .
+  eq #transform-crl(crl T1 => T2 if RLCOND [ATT] .)
+     = #call-right-transform(#transform-rl-left-term(T1, 'N:NatList), T2, RLCOND, ATT) .
+
+****  The following equations perform a depth first visit on the subtree of
+****  the left term of the rule. During such visit each entity is tagged with
+****  a key (actually a variable that represents it) and each key used
+****  is collected and then returned. Keys must be returned so that we can put
+****  in relations the elements of left side with the ones in the right side.
+
+  op #call-right-transform : TermWithKeys Term AttrSet -> Rule .
+  ceq #call-right-transform(T1 * KEYS, T2, ATT)
+     = rl T1 => '_||_[TERMS, '`[_;_`][T1,TERMS']] [ATT] .
+     if TERMS x ID x TERMS' := #transform-rl-right-term(T2, 0, KEYS) .
+
+  op #call-right-transform : TermWithKeys Term Condition AttrSet  -> Rule .
+  ceq #call-right-transform(T1 * KEYS, T2, RLCOND, ATT)
+     = crl T1 => '_||_[TERMS, '`[_;_`][T1,TERMS']] if RLCOND [ATT] .
+     if TERMS x ID x TERMS' := #transform-rl-right-term(T2, 0, KEYS) .
+
+	********************************
+  *** LEFT TERM TRANSFORMATION ***
+	********************************
+
+*** #transform-rl-left-term checks the form of the term that appears in
+*** the tree of left terms of the rule, two possible scenarios exist.
+*** The first one, when declared-in is true, is when the term under
+*** analysis is a top-level operator, declared inside the module SEM_ENTITIES.
+*** In that case we must proceed recursively on its arguments, in fact the goal
+*** here is to tag each single entity.
+*** In the other scenario, when declared-in is false, we are dealing with an
+*** Entity of the lower level of the syntax, in that case we must tag it with
+***  a key.
+  op #transform-rl-left-term : Term QidList -> TermWithKeys .
+  ceq #transform-rl-left-term(OPNAME[TERMS], KEYS) = (OPNAME[TERMS']) * KEYS'
+    if #declared-in(upModule('SEM_ENTITIES, false), OPNAME) /\
+       TERMS' * KEYS' := #transform-rl-left-terms(TERMS, KEYS)  .
+  eq #transform-rl-left-term(T, FKEY OTHERS)
+     =  ('_*_[T,'key_[FKEY]]) * (FKEY OTHERS) [owise] .
+
+
+*** The transform-terms set of equations below parse a list of terms and
+*** transform each term. The set of keys produced is then passed to the
+*** recursive call that will tag the "brothers" of the term.
+
+  op #transform-rl-left-terms : Term QidList -> TermWithKeys .
+  ceq #transform-rl-left-terms(TERMS, KEYS)
+     = (T2,T3) * KEYS'
+    if T1, TERMS' := TERMS /\
+       TERMS' =/= empty /\
+       T2 * (FKEY OTHERS) := #transform-rl-left-term(T1, KEYS) /\
+       T3 * KEYS' := #transform-rl-left-terms(TERMS', qid( substr(string(FKEY), 0, find(string(FKEY), ":", 0)) + "'" + ":NatList") FKEY OTHERS) .
+  eq #transform-rl-left-terms(T1, KEYS) = #transform-rl-left-term(T1, KEYS) [owise] .
+
+	*********************************
+  *** RIGHT TERM TRANSFORMATION ***
+	*********************************
+
+*** The following set of equations transform the right side of the rule.
+*** The only difference w.r.t. the left side is that we need to freshly generate
+*** a new id
+
+  op #transform-rl-right-term : Term Nat QidList -> TermIdAndPlaceHolder .
+  ceq #transform-rl-right-term(OPNAME[TERMS], ID, KEYS)
+    = OPNAME[TERMS'] x ID x OPNAME[PL1]
+    if #declared-in(upModule('SEM_ENTITIES, false), OPNAME) /\
+       TERMS' x ID' x PL1 := #transform-rl-right-terms(TERMS, ID, KEYS)  .
+  eq #transform-rl-right-term(T, ID, KEYS)
+      = '_*_[T, 'key_['__[upTerm(ID), #add-commas(KEYS)]]] x
+        ID x
+        '@:_['key_['__[upTerm(ID), #add-commas(KEYS)]]] .
+
+  op #add-commas : QidList -> GTermList .
+  ceq #add-commas(FKEY OTHERS) = FKEY , #add-commas(OTHERS)
+      if OTHERS =/= nil .
+  eq #add-commas(FKEY) = FKEY [owise] .
+
+*** The transform-terms set of equations below parse a list of terms and
+*** transform each term. To generate a unique ID locally we use a Nat that
+*** is passed around and increased each time an entity is tagged with it.
+*** Also here we perform a depth first visit.
+  op #transform-rl-right-terms : GTermList Nat QidList -> TermIdAndPlaceHolder .
+  ceq #transform-rl-right-terms(TERMS, ID, KEYS)
+     = (T', TERMS'') x ID'' x (PL1, PL2)
+     if T, TERMS' := TERMS /\
+        TERMS' =/= empty /\
+        T' x ID' x PL1 := #transform-rl-right-term(T, ID, KEYS) /\
+        TERMS'' x ID'' x PL2 := #transform-rl-right-terms(TERMS', ID' + 1, KEYS) .
+  eq #transform-rl-right-terms(TERMS, ID, KEYS)
+     = #transform-rl-right-term(TERMS, ID, KEYS) [owise] .
+
+endfm
+
+
+

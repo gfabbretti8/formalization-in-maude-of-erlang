@@ -12,7 +12,7 @@
 
   fmod CODE-MANIPULATION-SIGN is
     ex FULL-MAUDE-SIGN .
-    op CODE-MANIPULATION`[_`] : @ModExp@ -> @ModExp@ .
+    op CODE-MANIPULATION`[_,_`] : @ModExp@ Qid -> @ModExp@ .
   endfm
 
   fmod CODE-MANIPULATION-META-SIGN is
@@ -50,7 +50,7 @@
     var  VIS : Set{ViewInfo} .
     var  QIL : QidList .
     var  VDS : VariableSet .
-
+    var  Q : Qid . 
   *** As for TUPLE, the equation for the \texttt{evalModExp} is reduced to the
   *** creation of a new module. A module expression POW[n]{Nat} produces a
   *** module
@@ -64,59 +64,59 @@
   *** Some auxiliary functions are defined in order
   *** to generate the different declarations in the module.
 
-    op CODE-MANIPULATION`[_`] : ModuleExpression -> ModuleExpression .
+    op CODE-MANIPULATION`[_,_`] : ModuleExpression Qid -> ModuleExpression .
 
-    ceq evalModExp(CODE-MANIPULATION[ME], PDL, DB)
-      = if unitInDb(CODE-MANIPULATION[ME], DB')
-        then < DB' ; CODE-MANIPULATION[ME] >
+    ceq evalModExp(CODE-MANIPULATION[ME, Q], PDL, DB)
+      = if unitInDb(CODE-MANIPULATION[ME, Q], DB')
+        then < DB' ; qid(string(ME)) >
         else < evalModule(
                  setName(
-                   #transform-mod(upModule(ME',false)),
-                   CODE-MANIPULATION[ME]),
+                   #transform-mod(upModule(ME',false), Q),
+                   qid(string(ME))),
                  none, DB') ;
-               CODE-MANIPULATION[ME] >
+               qid(string(ME))>
         fi
       if ME' := modExp(evalModExp(ME, PDL, DB))
-         /\ DB' := database(evalModExp(ME, PDL, DB)) [print "ciao2" ] .
+         /\ DB' := database(evalModExp(ME, PDL, DB)) .
 
   *** The equations for the \texttt{header2QidList},
   *** \texttt{parseModExp}, \texttt{prepHeader}, and
   *** \texttt{setUpModExpDeps} functions on the $n$-tuple module
   *** expression are as follows:
 
-    eq parseModExp('CODE-MANIPULATION`[_`][T])
-      = CODE-MANIPULATION[parseModExp(T)] .
+    eq parseModExp('CODE-MANIPULATION`[_`,_`][T, T'])
+      = CODE-MANIPULATION[parseModExp(T), T'] .
 
-    eq solveUps('upModule['CODE-MANIPULATION`[_`][T]], DB)
-      = solveUpsModExp('upModule['CODE-MANIPULATION`[_`][T]], DB) .
+    eq solveUps('upModule['CODE-MANIPULATION`[_`,_`][T, T']], DB)
+      = solveUpsModExp('upModule['CODE-MANIPULATION`[_`,_`][T, T']], DB) .
 
-    eq solveUps('upTerm['CODE-MANIPULATION`[_`][T], 'bubble[T'']], DB)
-      = solveUpsModExp('upTerm['CODE-MANIPULATION`[_`][T], 'bubble[T'']], DB) .
+    eq solveUps('upTerm['CODE-MANIPULATION`[_`,_`][T,T'], 'bubble[T'']], DB)
+      = solveUpsModExp('upTerm['CODE-MANIPULATION`[_`,_`][T,T'], 'bubble[T'']], DB) .
 
-    eq labelInModExp(X, CODE-MANIPULATION[ME]) = false .
+    eq labelInModExp(X, CODE-MANIPULATION[ME, Q]) = false .
 
-    eq header2Qid(CODE-MANIPULATION[ME])
+    eq header2Qid(CODE-MANIPULATION[ME, Q])
       = qid("CODE-MANIPULATION[" + string(header2Qid(ME)) + "]") .
 
-    eq header2QidList(CODE-MANIPULATION[ME])
+    eq header2QidList(CODE-MANIPULATION[ME, Q])
       = ('CODE-MANIPULATION '`[ header2QidList(ME) '`]) .
 
-    eq prepModExp(CODE-MANIPULATION[ME], VEPS)
-      = CODE-MANIPULATION[prepModExp(ME, VEPS)] .
+    eq prepModExp(CODE-MANIPULATION[ME, Q], VEPS)
+      = CODE-MANIPULATION[prepModExp(ME, VEPS), Q] .
 
-    eq setUpModExpDeps(CODE-MANIPULATION[ME],
+    eq setUpModExpDeps(CODE-MANIPULATION[ME, Q],
          db(< ME ; DT ; U ; U' ; M ; VDS ; MNS ; VES > MIS,
             MNS', VIS, VES', MNS'', MNS3, MNS4, QIL))
-      = db(< ME ; DT ; U ; U' ; M ; VDS ; MNS . CODE-MANIPULATION[ME] ; VES > MIS,
+      = db(< ME ; DT ; U ; U' ; M ; VDS ; MNS . CODE-MANIPULATION[ME, Q] ; VES > MIS,
            MNS', VIS, VES', MNS'', MNS3, MNS4, QIL) .
 
-    eq setUpModExpDeps(CODE-MANIPULATION[ME],
+    eq setUpModExpDeps(CODE-MANIPULATION[ME, Q],
          db(< ME ; DM ; U ; U' ; M ; VDS ; MNS ; VES > MIS,
             MNS', VIS, VES', MNS'', MNS3, MNS4, QIL))
-      = db(< ME ; DM ; U ; U' ; M ; VDS ; MNS . CODE-MANIPULATION[ME] ; VES > MIS,
+      = db(< ME ; DM ; U ; U' ; M ; VDS ; MNS . CODE-MANIPULATION[ME, Q] ; VES > MIS,
            MNS', VIS, VES', MNS'', MNS3, MNS4, QIL) .
 
-    eq setUpModExpDeps(CODE-MANIPULATION[ME], DB)
+    eq setUpModExpDeps(CODE-MANIPULATION[ME, Q], DB)
       = warning(DB,
           '\r 'Error: '\o 'Module header2QidList(ME) 'not 'in 'database. '\n)
       [owise] .
@@ -161,7 +161,7 @@ mod FULL-MAUDE is
             db : initialDatabase,
             input : nilTermList, output : nil,
             default : 'CONVERSION >,
-         ('\t string2qidList(code-manipulation-banner) '\n)] .
+         nil] .
 
   rl [in] :
     [QI QIL,
@@ -200,10 +200,6 @@ endm
 loop init .
 
 trace exclude FULL-MAUDE .
-
-set show loop stats on .
-set show loop timing on .
-set show advisories on .
 
 ---(
 ---(

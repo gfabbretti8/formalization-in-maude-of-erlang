@@ -2,7 +2,10 @@
 
 
 load helper.maude .
+load syntax-transform.maude .
+load produce-fwd-sem.maude .
+load produce-bwd-sem.maude .
 load code-manipulation.maude .
-load loop.maude .
 
-loop init .
+
+

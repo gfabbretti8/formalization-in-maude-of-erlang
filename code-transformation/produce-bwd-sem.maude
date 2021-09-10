@@ -1,0 +1,61 @@
+fmod PRODUCE-BWD-SEM is
+
+  protecting META-LEVEL .
+  protecting HELPER .
+
+  var H : Header .
+  var I : Import .
+  var IL : ImportList .
+  var SS : SortSet .
+  var SSDS : SubsortDeclSet .
+  var OPDS : OpDeclSet .
+  var MAS : MembAxSet .
+  var EQS : EquationSet .
+  var RL : Rule .
+  var RLL : RuleList .
+  vars RLS RLS' : RuleSet .
+  var T1 T2 : Term .
+  var ATT : AttrSet .
+  vars RLCOND : Condition .
+
+  op #produce-bwd-sem : Module -> Module .
+
+  var M : Module .
+
+  eq #produce-bwd-sem(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm) =
+    mod 'AN-PENS is
+     IL
+     sorts SS .
+     SSDS
+     OPDS
+     MAS
+     EQS
+     #transform-fwd-rls( #set-to-list(RLS))
+    endm .
+
+*** We iterate on the rules available and we transform each one of them.
+
+  op #transform-fwd-rls : RuleList -> RuleSet .
+  ceq #transform-fwd-rls(RL, RLL)
+     = #transform-fwd-rl-crl(RL) #transform-fwd-rls(RLL)
+     if RLL =/= #empty-list .
+  eq #transform-fwd-rls(RL) = #transform-fwd-rl-crl(RL) [owise] .
+
+*** The following function analyses the kind of rule (if conditional or not)
+*** and then proceeds to the appropriate transformation. The only difference
+*** is that in a conditional rule we must also consider the if clause.
+  op #transform-fwd-rl-crl : Rule -> Rule .
+  eq #transform-fwd-rl-crl(rl T1 => T2 [ATT] .)
+     = #transform-fwd-rl(rl T1 => T2 [ATT] .) .
+  eq #transform-fwd-rl-crl(crl T1 => T2 if RLCOND [ATT] .)
+     = #transform-fwd-crl(crl T1 => T2 if RLCOND [ATT] .) .
+
+  op #transform-fwd-rl : Rule -> Rule .
+  eq #transform-fwd-rl(rl T1 => T2 [ATT] .)
+     = rl T2 => T1 [ATT] . .
+
+  op #transform-fwd-crl : Rule -> Rule .
+  eq #transform-fwd-crl(crl T1 => T2 if RLCOND [ATT] .)
+     = rl T2 => T1 [ATT] . .
+
+endfm

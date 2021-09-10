@@ -1,0 +1,156 @@
+
+*** This module takes in input another maude module, which follows the standard defined in \cite{..},
+*** and transforms it in a module that preserves the semantics but also includes the concept of keys.
+*** The transformation adds the sort 'EntityWithKey' to the sorts of the module, extends the set of
+*** subsorts by extending the sort 'Entities' with 'EnitityWithKey' and then traverses the equations and
+*** rules of the module and replaces each occurrence of the var 'Entity' and replaces it with a variable
+*** 'EntityWithKey'.
+
+fmod SYNTAX-TRANSFORM is
+
+  protecting META-LEVEL .
+  protecting HELPER .
+  protecting STRING .
+
+  vars FMOD : FModule .
+  vars T1 T2 : Term .
+  vars QID OPNAME : Qid .
+  var H : Header .
+  var M : Module .
+  vars I I' : Import .
+  var IL : ImportList .
+  var SS : SortSet .
+  var SSDS : SubsortDeclSet .
+  var OPDS : OpDeclSet .
+  var MAS : MembAxSet .
+  var EQ : Equation .
+  var EQL : EquationList .
+  vars EQS : EquationSet .
+  vars EQCOND EQCOND' EQCOND'' : EqCondition .
+  var RLS : RuleSet .
+  var ATT : AttrSet .
+  vars TERMS TERMS' : TermList .
+  var VAR : Variable .
+  var CONST : Constant .
+
+
+*** transform-syntax-mod acts as entry point for the transformation, takes in
+*** input a module, adds the sort 'EntityWithKey' and proceed by
+*** transforming the equations.
+*** Before being transformed the equations from a set are transformed
+*** to a list, since it easier to manipulate it later.
+  op #transform-syntax-mod : Module -> Module .
+  eq #transform-syntax-mod(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm) =
+    mod H is
+     #updateImportList(IL)
+     sorts #addSort(SS) .
+     #updateSubsortDeclSet(SSDS)
+     #updateOperatorDeclSet(OPDS)
+     MAS
+     #transform-eqs( #set-to-list(EQS))
+     RLS
+    endm .
+
+  op #updateImportList : ImportList -> ImportList .
+  op #updateImportList : Import ImportList -> ImportList .
+  eq #updateImportList(IL)
+     = (protecting 'SEM_ENTITY_WITH_KEY .) IL .
+
+  op #updateOperatorDeclSet : OpDeclSet -> OpDeclSet .
+  eq #updateOperatorDeclSet(OPDS)
+     = (op '@:_ : 'Key -> 'PlaceHolder [ctor prec(10) ] .
+        op '`[_;_`] : ('Entities 'PlaceHolder) -> 'Memory
+         [ctor frozen(1 2) prec(40) format('sg! 'o 'g! 'o 'g! 'o) ] .
+        OPDS) .
+
+  op #addSort : SortSet -> SortSet .
+  eq #addSort(SS)
+     = SS ; 'Memory ; 'PlaceHolder .
+
+  op #updateSubsortDeclSet : SubsortDeclSet -> SubsortDeclSet .
+  eq #updateSubsortDeclSet(SSDS)
+     = (subsort 'EntityWithKey < 'Entities .
+        subsort 'Memory < 'Entities .
+        subsort 'PlaceHolder < 'Entities . SSDS) .
+
+  op #transform-eqs : EquationList -> EquationSet .
+  ceq #transform-eqs(EQ, EQL)
+     = #transform-eq-ceq(EQ) #transform-eqs(EQL)
+     if EQL =/= #empty-list .
+  eq #transform-eqs(EQ)
+     = #transform-eq-ceq(EQ) [owise] .
+
+*** The following function analyses the kind of equation (if conditional or not)
+*** and then proceeds to the appropriate transformation. The only difference
+*** is that in a conditional equation we must also consider the if clause.
+  op #transform-eq-ceq : Equation -> Equation .
+  eq #transform-eq-ceq(eq T1 = T2 [ATT] .)
+     = #transform-eq(eq T1 = T2 [ATT] .) .
+  eq #transform-eq-ceq(ceq T1 = T2 if EQCOND [ATT] .)
+     = #transform-ceq(ceq T1 = T2 if EQCOND [ATT] .) .
+
+  op #transform-eq : Equation -> Equation .
+  eq #transform-eq(eq T1 = T2 [ATT] .)
+     = eq #transform-eq-term( T1 ) = #transform-eq-term( T2 ) [ATT] . .
+
+  op #transform-ceq : Equation -> Equation .
+  eq #transform-ceq(ceq T1 = T2 if EQCOND [ATT] .)
+     = ceq #transform-eq-term( T1 ) = #transform-eq-term( T2 ) if #transform-eqconds(EQCOND) [ATT] . .
+
+  op #transform-op : Term -> Term .
+  eq #transform-op( OPNAME[TERMS] )
+     = #transform-op-name(OPNAME)[ #transform-terms(TERMS) ] .
+
+  op #transform-op-name : Qid -> Qid .
+  ceq #transform-op-name( OPNAME )
+    = '#downEntityWithKey
+    if OPNAME == '#downEntity .
+  eq #transform-op-name( OPNAME )
+    = OPNAME .
+
+
+*** The transform-eqconds set of equations below parse a
+*** conjuctions of `EqConditions` updating eventual use of
+*** the variable with sort `Entity` to a variable with sort `EntityWithKey`
+  op #transform-eqconds : EqCondition -> EqCondition .
+  ceq #transform-eqconds(EQCOND' /\ EQCOND'')
+     = #transform-eqconds(EQCOND') /\ #transform-eqconds(EQCOND'')
+    if EQCOND' =/= nil /\ EQCOND'' =/= nil .
+  eq #transform-eqconds(nil) = nil .
+  eq #transform-eqconds(T1 = T2)
+     = #transform-eq-term(T1) = #transform-eq-term(T2) .
+  eq #transform-eqconds(T1 : T2)
+     = #transform-eq-term(T1) = T2 .
+  eq #transform-eqconds(T1 := T2)
+     = #transform-eq-term(T1) := #transform-eq-term(T2) .
+  eq #transform-eqconds(T1 => T2)
+     = #transform-eq-term(T1) => #transform-eq-term(T2) .
+
+*** The transform-terms set of equations below parse a list of terms
+***  and transform each term.
+  op #transform-terms : TermList -> TermList .
+  ceq #transform-terms(TERMS)
+     = #transform-eq-term(T1), #transform-terms(TERMS')
+    if T1, TERMS' := TERMS /\ TERMS' =/= empty .
+  eq #transform-terms(T1)
+     = #transform-eq-term(T1) [owise] .
+
+*** The transform-term set of equations below parse a single term and, if
+*** the term is a variable and its sort is `Entity`, updates
+***  it to `EntityWithKey`.
+  op #transform-eq-term : Term -> Term .
+  eq #transform-eq-term(OPNAME[TERMS])
+     = #transform-op(OPNAME[TERMS]) .
+  eq #transform-eq-term('E:Entity)
+     = 'E:EntityWithKey .
+  eq #transform-eq-term(CONST)
+     = #conc(#transform-eq-term(getName(CONST)), #conc('., getType(CONST))) .
+  ceq #transform-eq-term(VAR)
+     = #conc(getName(VAR), ':EntityWithKey)
+     if getType(VAR) = 'Entity .
+  eq #transform-eq-term(VAR)
+     = VAR [owise] .
+  eq #transform-eq-term(QID)
+     = QID .
+
+endfm
