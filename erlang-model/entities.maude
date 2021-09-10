@@ -1,4 +1,6 @@
 mod SEM_ENTITIES is
+
+  protecting META-LEVEL .
 	protecting MAUDE-SYNTAX-UPDOWN .
 	protecting SEM_ENTITY .
   protecting SEM_PROCESS .
@@ -9,29 +11,22 @@ mod SEM_ENTITIES is
   subsort Entity < Entities .
 
 	op #empty-entities : -> Entities [ctor] .
-	op _||_ : Entities Entities -> Entities [ctor assoc comm id: #empty-entities] .
+	op _||_ : Entities Entities -> Entities [ctor assoc comm id: #empty-entities prec 90 format(d sm! o d) ] .
 
   op #setup-first-proc : Entities FunName FunDefSeq -> Entities .
 
-  var ENTRYPOINT : FunName .
-  var ENTS : Entities .
-  var MOD : FunDefSeq .
-  var EX : Exp .
-  var ME : ModEnv .
-
-  ceq #setup-first-proc(ENTS, ENTRYPOINT, MOD) =
-      < pid(0) | label: tau, sys-res: #no-res, exp: EX, mod-env: ME > || pid(0)
-    if ME := #extract-functions(MOD) /\
-       EX := #get-function(ENTRYPOINT, ME) .
 
 	*******************************
   *** METAREPRESENTATION PART ***
 	*******************************
 
-	op #up : Entities -> Term [memo] .
+
 	op #downEntities : Term -> Entities [memo] .
 
   var E : Entity .
+  var ENTS : Entities .
+  var EX : Exp .
+  var ME : ModEnv .
 	var SUB : Substitution .
 	vars T T1 T2 : Term .
 

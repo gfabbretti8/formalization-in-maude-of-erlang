@@ -49,6 +49,24 @@ mod SEM_TRANSITIONS is
   var CLSEQ : ClauseSeq .
   var MSG : Message .
   var ASET : AttributeSet .
+  var ENTS : Entities .
+
+
+  var ENTRYPOINT : FunName .
+  var MOD : FunDefSeq .
+
+
+	*******************************
+  ******** INIT FUNCTION ********
+	*******************************
+  ceq #setup-first-proc(ENTS, ENTRYPOINT, MOD) =
+      < pid(0) | label: tau, sys-res: #no-res, exp: EX, mod-env: ME > || pid(0)
+    if ME := #extract-functions(MOD) /\
+       EX := #get-function(ENTRYPOINT, ME) .
+
+	*******************************
+  ******** SYSTEM RULES  ********
+	*******************************
 
 	crl [sys-spawn] :
         < P | label: spawn(A), sys-res: #no-res, mod-env: ME, ASET > || PIDS  =>

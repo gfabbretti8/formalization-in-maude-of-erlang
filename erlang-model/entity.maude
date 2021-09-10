@@ -1,6 +1,7 @@
+
 mod SEM_ENTITY is
   protecting MAUDE-SYNTAX-UPDOWN .
-  inc CONFIGURATION .
+  protecting CONFIGURATION .
   sort Entity .
 
   op #up : Entity -> Term [memo] .
