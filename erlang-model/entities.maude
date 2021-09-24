@@ -5,7 +5,7 @@ mod SEM_ENTITIES is
 	protecting SEM_ENTITY .
   protecting SEM_PROCESS .
   protecting SEM_MESSAGE .
-  protecting SEM_PID_SEQUENCE .
+  protecting SEM_PID .
 
   sort Entities .
   subsort Entity < Entities .
@@ -13,13 +13,9 @@ mod SEM_ENTITIES is
 	op #empty-entities : -> Entities [ctor] .
 	op _||_ : Entities Entities -> Entities [ctor assoc comm id: #empty-entities prec 90 format(d sm! o d) ] .
 
-  op #setup-first-proc : Entities FunName FunDefSeq -> Entities .
-
-
 	*******************************
   *** METAREPRESENTATION PART ***
 	*******************************
-
 
 	op #downEntities : Term -> Entities [memo] .
 

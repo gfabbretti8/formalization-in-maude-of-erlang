@@ -16,91 +16,33 @@ mod SEM_PID is
 	protecting MAUDE-SYNTAX-UPDOWN .
   protecting SEM_ENTITY .
 
-	sort Pid .
-  subsort Pid < Entity .
+	sort PidGen Pid .
+  subsort PidGen < Entity .
 	op pid : Int -> Pid [ctor] .
+  op pidGen : Int -> PidGen [ctor] .
 
-	*******************************
-  *** METAREPRESENTATION PART ***
-	*******************************
-	op #up : Pid -> Term [memo] .
-	op #downPid : Term -> Pid [memo] .
+	op #empty-pid : -> PidGen [ctor] .
 
-	var INT : Int .
+	vars INT INT1 INT2 : Int .
 	var T : Term .
 
-	*** Meta-representing pids
-	eq #up(pid(INT)) = 'pid[#up(INT)] .
+  op #existsPid : Pid PidGen -> Bool .
+  eq #existsPid(pid(INT1), pidGen(INT2)) = INT1 <= INT2 .
 
-	*** Lowering the meta-representation level of pids
-	eq #downPid('pid[T]) = pid(#downInt(T)) .
-endm
-
-mod SEM_PID_SEQUENCE is
-	protecting SEM_PID .
-	protecting MAUDE-SYNTAX-UPDOWN .
-  protecting SEM_ENTITY .
-
-	sort PidSequence .
-	subsort Pid < PidSequence .
-  subsort PidSequence < Entity .
-
-	op #empty-pid-seq : -> PidSequence [ctor] .
-	op _,_ : PidSequence PidSequence -> PidSequence [ctor assoc comm id: #empty-pid-seq] .
-
-	op #getNewPid : PidSequence -> Int .
-	op #getNewPid : PidSequence Int -> Int .
-	op #existsPid : PidSequence Int -> Bool [memo] .
-	op #insertPidUnique : PidSequence Int -> PidSequence .
-
-	var PIDS : PidSequence .
-	vars I I1 I2 : Int .
-
-	eq #getNewPid(PIDS) = #getNewPid(PIDS, 0) .
-	eq #getNewPid(#empty-pid-seq, I) = I .
-	ceq #getNewPid(pid(I), I1) = I1
-		if (I < I1) .
-	ceq #getNewPid(pid(I), I1) = I + 1
-		if not (I < I1) .
-	ceq #getNewPid(pid(I), PIDS, I1) = #getNewPid(PIDS, I1)
-		if (I < I1) .
-	ceq #getNewPid(pid(I), PIDS, I1) = #getNewPid(PIDS, I2)
-		if not( I < I1)
-		/\ I2 := I + 1 .
-
-	eq #existsPid(#empty-pid-seq, I) = false .
-	eq #existsPid(pid(I), PIDS, I) = true .
-	eq #existsPid(PIDS, I) = false [owise] .
-
-	eq #insertPidUnique(pid(I), PIDS, I) = pid(I), PIDS .
-	eq #insertPidUnique(PIDS, I) = pid(I), PIDS [owise] .
-
-	*******************************
   *** METAREPRESENTATION PART ***
 	*******************************
-	op #up : PidSequence -> Term [memo] .
-	op #downPidSequence : Term -> PidSequence [memo] .
 
-	var INT : Int .
-	vars T T1 T2 T3 : Term .
-	var SUB : Substitution .
-	var PIDSEQ : PidSequence .
+	op #up : Pid -> Term [memo] .
+	op #up : PidGen -> Term [memo] .
+	*** Meta-representing pids
+	eq #up(pid(INT)) = 'pid[#up(INT)] .
+  eq #up(pidGen(INT)) = 'pidGen[#up(INT)] .
 
-	*** Meta-representing pid sequences
-	eq #up(#empty-pid-seq) = '#empty-pid-seq.PidSequence .
-	ceq #up(pid(INT), PIDSEQ) = '_`,_[#up(pid(INT)), #up(PIDSEQ)]
-	  if PIDSEQ =/= #empty-pid-seq .
-
-	*** Lowering the meta-representation level of pid sequences
-
-  ceq #downEntity(T1) = #downPidSequence('_`,_[T2,T3])
-    	if SUB := metaMatch(GRAMMAR, '_`,_['P:Pid, 'PS:PidSequence], T1, nil, 0)
-		/\ 'P:Pid <- T2 ; 'PS:PidSequence <- T3 := SUB .
-  eq #downEntity(T) = #downPid(T) [owise] .
-
-	eq #downPidSequence('#empty-pid-seq.PidSequence) = #empty-pid-seq .
-	ceq #downPidSequence(T1) = #downPid(T2), #downPidSequence(T3)
-		if SUB := metaMatch(GRAMMAR, '_`,_['P:Pid, 'PS:PidSequence], T1, nil, 0)
-		/\ 'P:Pid <- T2 ; 'PS:PidSequence <- T3 := SUB .
+	op #downPid : Term -> Pid [memo] .
+  op #downPidGen : Term -> PidGen [memo] .
+	*** Lowering the meta-representation level of pids
+	eq #downPid('pid[T]) = pid(#downInt(T)) .
+  eq #downEntity('pidGen[T]) = #downPidGen('pidGen[T]).
+  eq #downPidGen('pidGen[T]) = pidGen(#downInt(T)) .
 
 endm

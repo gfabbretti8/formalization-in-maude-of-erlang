@@ -1,11 +1,11 @@
 (add-module(
 
 fun start() ->
-    erlang : spawn(do-receive),
+    erlang : spawn(doreceive),
     1 ! true,
     1 ! ciao .
 
-fun do-receive() ->
+fun doreceive() ->
   receive
     ciao -> ciao ;
     true -> true

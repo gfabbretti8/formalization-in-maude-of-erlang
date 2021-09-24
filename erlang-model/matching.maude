@@ -10,7 +10,7 @@
 	First, ordinary pattern matching is specified in the SEM_MATCH functional
 	module. The #match operation takes a pattern and a constant and tries to
 	match the pattern against the constant.
-	
+
 	Second, the SEM_MATCH_ENTITY functional module defines the more subtle
 	operations needed to match the clauses of a receive statement against
 	the contents of a entity.
@@ -32,50 +32,61 @@
 
 mod SEM_MATCH is
 	protecting SYNTAX .
+  protecting SEM_STORE .
 
-
-	*** As most of the pattern matching operations are partial functions
-	*** because of possible matching failures, we declare an error supersort of Env:
-  sort Env .
-  op #not-empty-env : -> Env [ctor] .
-	op #empty-env : -> Env [ctor] .
-	op _,_ : Env Env -> Env [ctor assoc comm id: #empty-env prec 60] .
-	sort Env? .
-	subsort Env < Env? .
+  sort Store? .
+  subsort Store < Store? .
 
 	*** The #nomatch constructor indicates the failure of a matching
 	*** operation. If it is included in a variable environment and since
 	*** it is not of sort Env, the resulting term is of kind [Env?].
 	*** In this way, we distinguish between successful and unsuccessful
 	*** matching operations.
-	op #nomatch : -> Env? [ctor] .
+	op #nomatch : -> Store? [ctor] .
 
 	*** The #match operation tries to match the given pattern with the
 	*** constant provided as second argument. Because there may be many
 	*** variables that have to be bound to unify the two terms, the
 	*** result term is of sort Env (and not just a single Binding).
-	op #match : Pattern Literal ~> Env .
+	op #match : Pattern GroundValues Store ~> Store .
 
-
-	var LIT : Literal .
+	vars GVALUE GVALUE1 GVALUE2 : GroundValues .
 	var PATSEQ : Pattern .
 	vars PAT PAT1 PAT2 : Pattern .
-	vars L L1 L2 : Literal .
-
+  var STORE : Store .
+  var VAR : Var .
 
 	*** The second case: Two identical terms are unified (without the need to
 	*** bind any variables)
 	*** Note: The cases of matching two empty lists [] or two 0-ary tuples {}
 	***       are implicitly covered here, too.
-	eq #match(LIT, LIT) = #not-empty-env .
+	eq #match(GVALUE, GVALUE, STORE) = STORE .
 
 	*** A pattern may be a list. Therefore we match a list of patterns
 	*** against a list of constants by pairwise matching the list elements.
-	eq #match([PAT1 | PAT2], [L1 | L2]) = #match(PAT1, L1), #match(PAT2, L2) .
+	eq #match([PAT1 | PAT2], [GVALUE1 | GVALUE2], STORE)
+     = #match(PAT1, GVALUE1, STORE), #match(PAT2, GVALUE2, STORE) .
 
+  *** A var can be undefined, that means that it is fresh and we must bind it to
+  *** the new value and then we return the updated store.
+  ceq #match(VAR, GVALUE, STORE)
+      = insert(VAR, GVALUE, STORE)
+      if STORE[VAR] == undefined [print "binding "] .
+
+  *** A var can be defined, if the value matches the ground value(s) then potentially
+  *** there is a match and we return the store
+  ceq #match(VAR, GVALUE, STORE)
+      = STORE
+      if STORE[VAR] =/= undefined /\ STORE[VAR] == GVALUE [print "already there"] .
+
+  *** A var can be defined, if the value does not match the ground value(s) then there is
+  *** no match with this branch of the receive
+  ceq #match(VAR, GVALUE, STORE)
+      = #nomatch
+      if STORE[VAR] =/= undefined /\ STORE[VAR] =/= GVALUE [print "nomatch"] .
 
 	*** All other cases lead to an incorrect matching.
-	eq #match(PAT, LIT) = #nomatch [owise] .
+	eq #match(PAT, GVALUE, STORE) = #nomatch [owise print "No Match"] .
 
 endm
 
@@ -88,40 +99,32 @@ mod SEM_MATCH_ENTITY is
 
   op #empty-clauselist : -> ClauseSeq [ctor] .
 
-	op #entityMatch(_|_) : ClauseSeq Message -> ClauseMatchResult .
-
-	op #entityMatch(_|_|_) : ClauseSeq ClauseSeq Message -> ClauseMatchResult .
-
-	op #entityMatchSuccess(_|_) : Exp Message -> ClauseMatchResult [ctor] .
+	op #entityMatchSuccess(_|_) : Exp Store -> ClauseMatchResult [ctor] .
 
 	op #entityMatchFailure : -> ClauseMatchResult [ctor] .
 
-  var MSG : Message .
 	var CLAUSE : Clause .
-	var NECLLIST : ClauseSeq .
-	vars CLAUSES CLAUSES1 : ClauseSeq .
+	var CLSEQ : ClauseSeq .
 	var PAT : Pattern .
-	vars EX EX1 : Exp .
+	var EX : Exp .
   var E : Entity .
-	vars ENTS ENTS1 ENTS2 : Entities .
-	vars ENV : Env .
-	var GUARD : Exp .
-  vars P P' : Pid .
-  var ASET : AttributeSet .
-  var LIT : Atom .
+  var MSG : GroundValues .
+  var STORE STORE' : Store .
 
-	eq #entityMatch(CLAUSES | MSG) = #entityMatch(CLAUSES | CLAUSES | MSG) .
 
-	ceq #entityMatch(CLAUSES | CLAUSE ; CLAUSES1 | < payload: LIT, ASET >) =
-      #entityMatch(CLAUSES | CLAUSES1 | < payload: LIT, ASET >)
-		if (PAT -> EX) := CLAUSE
-		/\ not(#match(PAT, LIT) :: Env) .
+	op #entityMatch(_|_|_) : ClauseSeq GroundValues Store -> ClauseMatchResult .
+  eq #entityMatch(CLAUSE | MSG | STORE)
+     = #entityMatch(CLAUSE | #empty-clauselist | MSG | STORE) .
+  eq #entityMatch(CLAUSE ; CLSEQ | MSG | STORE)
+     = #entityMatch(CLAUSE | CLSEQ | MSG | STORE) .
+	eq #entityMatch(#empty-clauselist | MSG | STORE) = #entityMatchFailure [print "Dovrebbe"] .
 
-	ceq #entityMatch(CLAUSES | CLAUSE ; CLAUSES1 | < payload: LIT, ASET >) =
-	    #entityMatchSuccess(EX | < payload: LIT, ASET >)
-		if (PAT  -> EX) := CLAUSE
-		/\ ENV := #match(PAT, LIT) .
+	op #entityMatch(_|_|_|_) : Clause ClauseSeq GroundValues Store -> ClauseMatchResult .
+	ceq #entityMatch(CLAUSE | CLSEQ | MSG | STORE) =
+      #entityMatch(CLSEQ | MSG | STORE)
+		if PAT -> EX := CLAUSE /\ not(#match(PAT, MSG, STORE) :: Store) [print "Ok"] .
 
-	eq #entityMatch(CLAUSES | #empty-clauselist | MSG ) = #entityMatchFailure .
-
+	ceq #entityMatch(CLAUSE | CLSEQ | MSG | STORE) =
+	    #entityMatchSuccess(EX | STORE')
+		if PAT -> EX := CLAUSE /\ STORE' := #match(PAT, MSG, STORE) [print "Ok1"] .
 endm

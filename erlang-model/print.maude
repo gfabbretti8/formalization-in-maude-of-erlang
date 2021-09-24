@@ -8,34 +8,32 @@ mod PRETTY_PRINT is
   op #pretty-print-ent : Entity -> Qid .
 
   var ENTS : Entities .
-  var PIDS : PidSequence .
   var SUB : Substitution .
   var LABEL : Label .
   var RES : SysResult .
   var EX : Exp .
+  var EXSEQ : ExpSeq .
   var ME : ModEnv .
   var P P' : Pid .
   var ENT : Entity .
-  var MSG : Atom .
+  var MSG : GroundValues .
   var T1 T2 : Term .
-  var PIDSEQ : PidSequence .
+  var PIDGEN : PidGen .
   var ASET : AttributeSet .
 
   ceq #pretty-print-sys(ENTS) =
      #pretty-print-ent(#downEntity(T1)) '\n #pretty-print-sys(#downEntities(T2))
      if SUB := metaMatch(GRAMMAR, '_||_['ENT:Entity, 'ENTS:Entities], #up(ENTS), nil, 0)
-     /\ 'ENT:Entity <- T1 ; 'ENTS:Entities <- T2 := SUB .
+     /\ 'ENT:Entity <- T1 ; 'ENTS:Entities <- T2 := SUB [print] .
 
-  eq #pretty-print-ent(< P | label: LABEL, sys-res: RES, exp: EX, ASET > ) =
-     '< metaPrettyPrint(['SEM_PROCESS], #up(LABEL)) '|
-        metaPrettyPrint(['SEM_PROCESS], #up(RES)) '|
-        metaPrettyPrint(['SEM_PROCESS], #up(EX)) '|
-        metaPrettyPrint(['SEM_PROCESS], #up(P)) '> .
+  eq #pretty-print-ent(< P | exp: EXSEQ, ASET > ) =
+      '< metaPrettyPrint(['SEM_PROCESS], #up(EXSEQ)) '| 
+         metaPrettyPrint(['SEM_PROCESS], #up(P)) '> .
 
   eq #pretty-print-ent(< sender: P, receiver: P', payload: MSG > ) =
       '< metaPrettyPrint(['SEM_MESSAGE], #up(P)) '|
          metaPrettyPrint(['SEM_MESSAGE], #up(P')) '|
          metaPrettyPrint(['SEM_MESSAGE], #up(MSG)) '> .
 
-  eq #pretty-print-ent(PIDSEQ) = ' .
+  eq #pretty-print-ent(PIDGEN) = ' .
 endm

@@ -1,37 +1,30 @@
 mod SEM_COREBIB is
-	protecting BOOL .
 	protecting NAT .
 	protecting STRING .
 	protecting SEM_ENTITIES .
 
-	vars INT INT1 : Int .
-	vars A A1 A2 : Atom .
+	var INT : Int .
+  var P' : ErlInt .
+	var A : Atom .
 	var P : Pid .
-	var LINKS : PidSequence .
-	var ME : ModEnv .
-	var BOOL : Bool .
   var CLSEQ : ClauseSeq .
   var ASET : AttributeSet .
+  vars EX EX1 EX2 : Exp .
+  var EXSEQ : ExpSeq .
+  var GVALUE : GroundValues .
 
 
-	eq [spawn] :
-     < P | label: tau, sys-res: #no-res, exp: atom("erlang") : atom("spawn") (A), ASET > =
-	   < P | label: spawn A, sys-res: #no-res, exp: atom("erlang") : atom("spawn") (A), ASET > [print P " spawn " ASET] .
-
-	eq [core-spawn] :
-	   < P | label: tau, sys-res: #res-spawn(INT), exp: atom("erlang") : atom("spawn") (A), ASET > =
-	   < P | label: tau, sys-res: #no-res, exp: int(INT), ASET > [print P " core-spawn" ASET ] .
-
-	eq [core-send] :
-	   < P | label: tau, sys-res: #no-res, exp:  int(INT) ! A, ASET > =
-	   < P | label: pid(INT) ! A, sys-res: #no-res, exp: int(INT) ! A, ASET > [print P " core-send-1"] .
+	ceq [core-send] :
+	   < P | exp: EX1 ! EX2 ,EXSEQ, ASET > =
+	   < P | exp: EX1, #hole ! EX2, EXSEQ, ASET >
+     if not(EX1 :: ErlInt) [print P " core-send-ex'-ex'"] .
 
 	eq [core-send] :
-	   < P | sys-res: #res-send(true), exp: int(INT) ! A, ASET > =
-	   < P | sys-res: #no-res, exp: A, ASET > [print P " core-send-2"] .
+	   < P | exp: P', #hole ! EX, EXSEQ, ASET > =
+	   < P | exp: EX, P' ! #hole, EXSEQ, ASET > .
 
-   eq [core-receive] :
-     < P | label: tau, sys-res: #no-res, exp: receive CLSEQ end, ASET > =
-     < P | label: receive CLSEQ, sys-res: #no-res, exp: receive CLSEQ end, ASET > [print P " core-receive"] .
+	eq [core-send] :
+	   < P | exp: GVALUE, P' ! #hole, EXSEQ, ASET > =
+	   < P | exp: P' ! GVALUE, EXSEQ, ASET > .
 
 endm

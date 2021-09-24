@@ -51,7 +51,6 @@ mod FORWARD-EXPLORATION is
 
   eq #computeFwdSteps(SYS) = #downEntities(getTerm(metaRewrite(['THEORY], #up(SYS), unbounded))) .
 
-
 endm
 
 mod ERLANG-LOOP is
@@ -64,7 +63,7 @@ mod ERLANG-LOOP is
   protecting SEM_ENTITIES .
   protecting FORWARD-EXPLORATION .
   protecting PRETTY_PRINT .
-
+  protecting SEM_TRANSITIONS .
 
 	*** This system module is a simple interface to Maude's LOOP-MODE module.
 	*** We use LOOP-MODE as the input/output facility. If a command according
@@ -94,7 +93,6 @@ mod ERLANG-LOOP is
 	vars T T1 T2 : Term .
 	var Result : ResultPair? .
   var ENTS : Entities .
-
 
 	crl [in] : [QIL, < idle, #no-parse, ENTS >, QIL']
 		=> if Result :: ResultPair

@@ -24,9 +24,7 @@ fmod SEM_MODENV is
 	protecting MAUDE-SYNTAX-UPDOWN .
 
 	sort ModEnvMap .
-	op _==>_ : FunName Exp -> ModEnvMap [ctor prec 70] .
-
-	op #extract-functions : FunDefSeq -> ModEnv .
+	op _==>_ : FunName ExpSeq -> ModEnvMap [ctor prec 70] .
 
   sort ModEnv .
 	subsort ModEnvMap < ModEnv .
@@ -34,9 +32,7 @@ fmod SEM_MODENV is
 	op #empty-modenv : -> ModEnv [ctor] .
 	op _,_ : ModEnv ModEnv -> ModEnv [ctor assoc comm prec 71 id: #empty-modenv] .
 
-	op #get-function : Atom ModEnv -> Exp .
-
-	var FUN : Exp .
+	var FUNBODY : ExpSeq .
 	var MN : Atom .
   var FDEF : FunDef .
 	var FDLIST : FunDefSeq .
@@ -45,17 +41,23 @@ fmod SEM_MODENV is
 	var FARITY : ErlInt .
 	var FN : FunName .
 	var MAP : ModEnv .
+  var EX : Exp .
+
+	op #extract-functions : FunDefSeq -> ModEnv .
 
 	eq #extract-functions(FDEF FDLIST)
      = #extract-functions(FDEF), #extract-functions(FDLIST) .
-	eq #extract-functions(fun FNAME ()-> FUN .)
-		= FNAME ==> FUN .
+	eq #extract-functions(fun FNAME ()-> FUNBODY .)
+		= FNAME ==> FUNBODY .
 
-  ceq #get-function(FNAME1, FNAME2 ==> FUN, MAP) = FUN
+	op #get-function : Atom ModEnv -> ExpSeq .
+
+  ceq #get-function(FNAME1, FNAME2 ==> FUNBODY, MAP) = FUNBODY, #bottom
+     if FNAME1 == FNAME2 /\ EX, EXSEQ := FUNBODY .
+  ceq #get-function(FNAME1, FNAME2 ==> FUNBODY, MAP) = FUNBODY, #bottom
      if FNAME1 == FNAME2 .
-  eq #get-function(FNAME1, FNAME2 ==> FUN, MAP)
+  eq #get-function(FNAME1, FNAME2 ==> FUNBODY, MAP)
      = #get-function(FNAME1, MAP) [owise] .
-
 
 	*******************************
   *** METAREPRESENTATION PART ***
@@ -67,21 +69,18 @@ fmod SEM_MODENV is
 	op #downModEnv : Term -> ModEnv [memo] .
  	op #downModEnvMap : Term -> ModEnv [memo] .
 
-
-	var EX : Exp .
+	var EXSEQ : ExpSeq .
 	vars T T1 T2 : Term .
 	var SUB : Substitution .
   var ME : ModEnv .
 
 	*** Meta-representing the module environment:
 	eq #up(#empty-modenv) = '#empty-modenv.ModEnv .
-	eq #up(FNAME ==> EX) = '_==>_[#up(FNAME), #up(EX)] .
-	eq #up(FNAME ==> EX, ME) = '_`,_[#up(FNAME ==> EX), #up(ME)] .
-
-
+	eq #up(FNAME ==> EXSEQ) = '_==>_[#up(FNAME), #up(EXSEQ)] .
+	eq #up(FNAME ==> EXSEQ, ME) = '_`,_[#up(FNAME ==> EXSEQ), #up(ME)] .
 
 	*** Lowering the meta-representation level of module environments:
-	eq #downModEnvMap('_==>_[T1,T2]) = #downExp(T1) ==> #downExp(T2) .
+	eq #downModEnvMap('_==>_[T1,T2]) = #downExp(T1) ==> #downExpSeq(T2) .
 	eq #downModEnv('#empty-modenv.ModEnv) = #empty-modenv .
 	ceq #downModEnv(T) = #downModEnvMap(T1),  #downModEnv(T2)
 		if SUB := metaMatch(GRAMMAR, '_`,_['MAP:ModEnvMap, 'ME:ModEnv], T, nil, 0)

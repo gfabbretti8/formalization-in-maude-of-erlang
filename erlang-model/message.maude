@@ -9,7 +9,7 @@ mod SEM_MESSAGE is
 
   op sender:_ :  Pid -> Attribute [ctor gather (&)] .
   op receiver:_ :  Pid -> Attribute [ctor gather (&)] .
-  op payload:_ : Atom -> Attribute [ctor gather (&)] .
+  op payload:_ : GroundValues -> Attribute [ctor gather (&)] .
 
   subsort Message < Entity .
 
@@ -22,7 +22,7 @@ mod SEM_MESSAGE is
 
   vars P P' : Pid .
   var MSG : Message .
-  var PAYLOAD : Atom .
+  var PAYLOAD : GroundValues .
   vars T1 T2 T3 : Term .
   var A : Attribute .
   var ASET : AttributeSet .
@@ -46,6 +46,6 @@ mod SEM_MESSAGE is
 
   eq #downAttribute('sender:_[T1]) = sender: #downPid(T1) .
   eq #downAttribute('receiver:_[T1]) = receiver: #downPid(T1) .
-  eq #downAttribute('payload:_[T1]) = payload: #downAtom(T1) .
+  eq #downAttribute('payload:_[T1]) = payload: #downExp(T1) .
   eq #downAttribute('none.AttributeSet) = none .
 endm

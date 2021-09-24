@@ -1,14 +1,15 @@
 (add-module(
 
-fun test-send() ->
-  0 ! arrivederci ,
-  0 ! ciao ,
-  erlang : spawn ( test-receive ) .
-: / 
-fun test-receive() ->
+fun testsend() ->
+  1 ! arrivederci ,
+  1 ! ciao ,
+  erlang : spawn ( testreceive ) .
+
+fun testreceive() ->
     receive
       qualcosa -> no ;
-      ciao -> ciao
+      ciao -> ciao ;
+      arrivederci -> tuttobene
     end .
 
-, test-send))
+, testsend))

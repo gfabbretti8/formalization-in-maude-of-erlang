@@ -10,11 +10,13 @@
 
 load updown.maude .
 load syntax.maude .
+load help-syntax.maude .
 load parsing.maude .
 load entity.maude .
 load pid.maude .
 load label.maude .
 load result.maude .
+load store.maude .
 load modenv.maude .
 load message.maude .
 load process.maude .

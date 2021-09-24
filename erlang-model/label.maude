@@ -44,7 +44,7 @@ mod SEM_LABEL is
 	*** constant sent.
 	*** Because sending messages to another process is a side-effect, this label indicates
 	*** a normal form w.r.t. the equational theory.
-	op _!_ : Pid Literal -> StopLabel [ctor] .
+	op _!_ : Pid GroundValues -> StopLabel [ctor] .
 
 	*** To model the reception on the system level, we switch to the "receive"
 	*** expression level label as soon as we find a matching message in the process's mailbox.
@@ -61,6 +61,7 @@ mod SEM_LABEL is
 
 	op spawn_ : Atom -> StopLabel [ctor] .
 
+  op crashed : -> StopLabel [ctor] .
 	*******************************
   *** METAREPRESENTATION PART ***
 	*******************************
@@ -68,7 +69,6 @@ mod SEM_LABEL is
 	op #up : Label -> Term [memo] .
 	op #downLabel : Term -> Label [memo] .
 
-	var EL : Label .
 	var EX : Exp .
 	var PID : Pid .
 	var ATOM : Atom .
@@ -81,6 +81,7 @@ mod SEM_LABEL is
 	eq #up(PID ! EX) = '_!_[#up(PID),#up(EX)] .
 	eq #up(receive(CLSEQ)) = 'receive_[#up(CLSEQ)] .
 	eq #up(blocked) = 'blocked.StopLabel .
+  eq #up(crashed) = 'crashed.StopLabel .
   eq #up(spawn ATOM) = 'spawn[#up(ATOM)] .
 
 	*** Lowering the meta-representation level of expression level labels
@@ -88,6 +89,7 @@ mod SEM_LABEL is
 	eq #downLabel('_!_[T1, T2]) = #downPid(T1) ! #downExp(T2) .
 	eq #downLabel('receive_[T]) = receive #downClauseSeq(T) .
 	eq #downLabel('blocked.StopLabel) = blocked .
+  eq #downLabel('crashed.StopLabel) = crashed .
 	eq #downLabel('spawn_[T]) = spawn #downAtom(T) .
 endm
 
@@ -114,10 +116,10 @@ mod SEM_SYSLABEL is
 
 	*** The process identified by the first argument sends the message to the
 	*** process given by the second argument.
-	op sys-sendmsg : Pid Pid Literal -> SysLabel .
+	op sys-sendmsg : Pid Pid GroundValues -> SysLabel .
 
 	*** The specified process receives the given message.
-	op sys-receive : Pid Literal -> SysLabel .
+	op sys-receive : Pid GroundValues -> SysLabel .
 
 	*******************************
   *** METAREPRESENTATION PART ***
@@ -126,18 +128,18 @@ mod SEM_SYSLABEL is
 	op #up : SysLabel -> Term [memo] .
 	op #downSysLabel : Term -> SysLabel [memo] .
 
-	vars PID1 PID2 : Pid .
-	var L : Literal .
-	vars A1 A2 : Atom .
-	vars T1 T2 T3 T4 T5 : Term .
+	vars P P' : Pid .
+	var GVALUE : GroundValues .
+	vars T1 T2 T3 : Term .
+  var A : Atom .
 
 	*** This function lifts a term of sort SysLabel to the first meta-level
 	*** It is needed to get formatted output of these labels.
 	eq #up(sys-start) = 'sys-start.SysLabel .
 	eq #up(sys-noop) = 'sys-noop.SysLabel .
-	eq #up(sys-newproc(PID1,PID2,A1)) = 'sys-newproc[#up(PID1),#up(PID2),#up(A1)] .
-	eq #up(sys-sendmsg(PID1,PID2,L)) = 'sys-sendmsg[#up(PID1),#up(PID2),#up(L)] .
-	eq #up(sys-receive(PID1, L)) = 'sys-receive[#up(PID1),#up(L)] .
+	eq #up(sys-newproc(P,P',A)) = 'sys-newproc[#up(P),#up(P'),#up(A)] .
+	eq #up(sys-sendmsg(P,P',GVALUE)) = 'sys-sendmsg[#up(P),#up(P'),#up(GVALUE)] .
+	eq #up(sys-receive(P, GVALUE)) = 'sys-receive[#up(P),#up(GVALUE)] .
 
 	*** Lowering the representation level for system labels. This is needed, because
 	*** the result of the lts computation (which takes place on the meta-level)
@@ -146,8 +148,6 @@ mod SEM_SYSLABEL is
 	eq #downSysLabel('sys-noop.SysLabel) = sys-noop .
 	eq #downSysLabel('sys-newproc[T1,T2,T3])
 		= sys-newproc(#downPid(T1), #downPid(T2), #downAtom(T3)) .
-
-
 
 	eq #downSysLabel('sys-sendmsg[T1,T2,T3])
 		= sys-sendmsg(#downPid(T1), #downPid(T2), #downExp(T3)) .

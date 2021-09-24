@@ -1,0 +1,48 @@
+view Var from TRIV to SYNTAX is
+  sort Elt to Var .
+endv
+
+view GroundValues from TRIV to SYNTAX-COMMON is
+  sort Elt to GroundValues .
+endv
+
+fmod SEM_STORE is
+
+  protecting META-LEVEL .
+  protecting SYNTAX .
+  protecting MAUDE-SYNTAX-UP .
+  protecting COMMON-SYNTAX-DOWN .
+
+  protecting MAP{Var, GroundValues} * (sort Entry{Var, GroundValues} to Entry,
+                                       sort Map{Var, GroundValues} to Store ) .
+
+	*******************************
+  *** METAREPRESENTATION PART ***
+	*******************************
+
+  vars STORE STORE' : Store .
+  vars ENTRY ENTRY' : Entry .
+  var PATT : Pattern .
+  var GVALUE : GroundValues .
+  vars T1 T2 : Term .
+
+  op #up : Store -> Term [memo] .
+  op #downStore : Term -> Store [memo] .
+
+  ceq #up((STORE, STORE')) = '_`,_[#up(STORE), #up(STORE')]
+     if STORE' =/= empty /\ STORE =/= empty .
+  eq #up(empty) = 'empty.Store .
+
+  eq #downStore('_`,_[T1, T2]) = #downStore(T1), #downStore(T2) .
+  eq #downStore('_|->_[T1,T2]) = #downEntry('_|->_[T1,T2]) .
+  eq #downStore('empty.Store) = empty .
+
+
+  op #up : Entry -> Term [memo] .
+  op #downEntry : Term -> Store [memo] .
+
+  eq #up(PATT |-> GVALUE) = '_|->_[#up(PATT), #up(GVALUE)] .
+
+  eq #downEntry('_|->_[T1,T2]) = #downExp(T1) |-> #downExp(T2) .
+
+endfm

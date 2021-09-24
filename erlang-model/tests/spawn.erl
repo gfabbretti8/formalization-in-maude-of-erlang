@@ -1,6 +1,7 @@
 (add-module(
        fun testspawn() ->
-           erlang : spawn ( iftest ) .
+               erlang : spawn ( iftest ) ,
+           ok .
 
        fun iftest() ->
          if false ->
@@ -10,8 +11,8 @@
          end .
 
        fun goodbye() ->
-         goobye .
+         goodbye .
 
-       fun get_empty_list() ->
+       fun getemptylist() ->
          [] .
 , testspawn))

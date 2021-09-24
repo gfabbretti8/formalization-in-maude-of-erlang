@@ -1,0 +1,14 @@
+mod HELP-SYNTAX is
+
+  protecting SYNTAX .
+
+  var EX : Exp .
+  var EXSEQ : ExpSeq .
+
+  op #head : ExpSeq -> ExpSeq .
+  eq #head(EX, EXSEQ) = EX, EXSEQ .
+  eq #head(EX) = EX, #empty .
+  eq #head(#empty) = #empty .
+
+
+endm
