@@ -2,10 +2,12 @@ mod SEM_NORMALISATION is
 	protecting SYNTAX .
   protecting HELP-SYNTAX .
   protecting SEM_ENTITIES .
+  protecting SEM_MATCH_ENTITY .
 
-	var EX : Exp .
-  var EXSEQ : ExpSeq .
-	var INT : Int .
+
+	var EX EX' : Exp .
+  var EXSEQ EXSEQ' : ExpSeq .
+	var INT INT' RES : Int .
 	var P' : ErlInt .
   var CL : Clause .
   var CLSEQ : ClauseSeq .
@@ -16,30 +18,23 @@ mod SEM_NORMALISATION is
   var GVALUE : GroundValues .
   vars STORE STORE' : Store .
   var VAR : Var .
+  var FUNNAME : FunName .
+  var ARGS : Args .
+  var STACK : Stack .
 
-  *** Case 1: the if clause has evaluate to true, then we proceed with the
-  *** corresponding expression.
-  rl [norm-if] :
-    < P | exp: if atom("true") -> EX ; CLSEQ end, EXSEQ, ASET > =>
-    < P | exp: EX, EXSEQ, ASET > [print P " norm-if1" ] .
+  ceq [norm-case] :
+     < P | exp: case EX of CLSEQ end, EXSEQ, ASET > =
+     < P | exp: EX, EXSEQ', ASET >
+     if EXSEQ' := (case #hole of CLSEQ end, EXSEQ) .
 
-  *** Case 2: the if clause has evaluate to false, then we proceed with the
-  *** remaining clauses.
-  eq [norm-if] :
-     < P | exp: if atom("false") -> EX ; CLSEQ end, EXSEQ, ASET > =
-     < P | exp: if CLSEQ end, EXSEQ, ASET > [print P " norm-if2" ] .
+  ceq [norm-case] :
+     < P | exp: GVALUE, case #hole of CLSEQ end, EXSEQ', store: STORE, ASET > =
+     < P | exp: EXSEQ, EXSEQ', store: STORE, ASET >
+     if #entityMatchSuccess(EXSEQ | STORE') := #entityMatch(CLSEQ ; #empty-clauselist | GVALUE | STORE ) .
 
-  *** Case 3: the if clause has evaluate to true and it is the last claude,
-  ***  then we proceed with the corresponding expression.
-  eq [norm-if] :
-     < P | exp: if atom("true") -> EX  end, EXSEQ, ASET > =
-     < P | exp: EX, EXSEQ, ASET > [print P " norm-if3" ] .
-
-  *** Case 4: the if clause has evaluate to false and it is the last one, then
-  *** we need to raise an error.
-  eq [norm-if] :
-     < P | exp: if atom("false") -> EX end, EXSEQ, ASET > =
-     < P | exp: atom("error_no_true_case_inside_if"), EXSEQ, ASET > [print P " norm-if4" ] .
+  eq [norm-case] :
+     < P | exp: GVALUE, case #hole of CLSEQ end, EXSEQ, store: STORE, ASET > =
+     < P | exp: #crashed, store: STORE, ASET > [owise] .
 
   *** Case 1: VAR is an unbound variable, in such case we bind it to the ground-value
   *** produced by the evaluation of EX, we update the store and we return the ground value
@@ -51,7 +46,7 @@ mod SEM_NORMALISATION is
   ceq [norm-match] :
      < P | exp: GVALUE, VAR = #hole, EXSEQ, store: STORE, ASET > =
      < P | exp: EXSEQ, store: STORE', ASET >
-     if STORE' :=  insert(VAR, GVALUE, STORE) [print "DAghe"] .
+     if STORE' :=  insert(VAR, GVALUE, STORE) .
 
   *** Case 1: If we try to evaluate a var which is available in the store
   *** then its value is returned.
@@ -67,7 +62,61 @@ mod SEM_NORMALISATION is
      < P | exp: #crashed, store: STORE, ASET >
      if STORE[VAR] == undefined .
 
-  eq < P | exp: GVALUE, EXSEQ, store: STORE, ASET > =
-     < P | exp: EXSEQ, store: STORE, ASET > [owise] .
+  eq [norm-self] :
+     < pid(INT) | exp: atom("self")(), EXSEQ, ASET > =
+     < pid(INT) | exp: int(INT), EXSEQ, ASET > .
+
+  eq [norm-funcall] :
+     < P | exp: FUNNAME(EXSEQ'), EXSEQ, ASET > =
+     < P | exp: EXSEQ', FUNNAME(#hole), EXSEQ, ASET > .
+
+  ceq [norm-funcall] :
+     < P | exp: GVALUE , FUNNAME(#hole), EXSEQ, store: STORE, stack: STACK, mod-env: ME, ASET > =
+     < P | exp: EXSEQ', store: STORE',
+       stack: storeAndExp(STORE, EXSEQ) : STACK, mod-env: ME, ASET >
+     if STORE' := #init-store(#get-formal-args(FUNNAME, ME),GVALUE) /\
+        EXSEQ' := #get-function(FUNNAME, ME) .
+
+  ceq [norm-funcall] :
+     < P | exp: FUNNAME(), EXSEQ, store: STORE, stack: STACK, mod-env: ME, ASET > =
+     < P | exp: EXSEQ', store: STORE',
+       stack: storeAndExp(STORE, EXSEQ) : STACK, mod-env: ME, ASET >
+     if STORE' := empty /\
+        EXSEQ' := #get-function(FUNNAME, ME) .
+
+  eq [norm-funcall] :
+     < P | exp: GVALUE, #bottom, store: STORE, stack: storeAndExp(STORE', EXSEQ) : STACK, ASET > =
+     < P | exp: GVALUE, EXSEQ, store: STORE', stack: STACK, ASET > .
+
+  eq [norm-minus] :
+     < P | exp: EX - EX', EXSEQ, ASET > =
+     < P | exp: EX, #hole - EX', EXSEQ, ASET > .
+
+  eq [norm-minus] :
+     < P | exp: int(INT), #hole - EX, EXSEQ, ASET > =
+     < P | exp: EX, int(INT) - #hole, EXSEQ, ASET > .
+
+  ceq [norm-minus] :
+      < P | exp: int(INT), int(INT') - #hole, EXSEQ, ASET > =
+      < P | exp: int(RES), EXSEQ, ASET >
+      if RES := downTerm(getTerm(metaReduce(upModule('INT, false), '_-_[upTerm(INT'), upTerm(INT)])), INT) .
+
+  eq [norm-mult] :
+     < P | exp: EX * EX', EXSEQ, ASET > =
+     < P | exp: EX, #hole * EX', EXSEQ, ASET > .
+
+  eq [norm-mult] :
+     < P | exp: int(INT), #hole * EX, EXSEQ, ASET > =
+     < P | exp: EX, int(INT) * #hole, EXSEQ, ASET > .
+
+  ceq [norm-mult] :
+      < P | exp: int(INT), int(INT') * #hole, EXSEQ, ASET > =
+      < P | exp: int(RES), EXSEQ, ASET >
+      if RES := downTerm(getTerm(metaReduce(upModule('INT, false), '_*_[upTerm(INT'), upTerm(INT)])), INT) .
+
+  ceq < P | exp: GVALUE, EXSEQ, ASET > =
+      < P | exp: EXSEQ, ASET >
+      if EXSEQ =/= #bottom [owise] .
+
 endm
-``
+

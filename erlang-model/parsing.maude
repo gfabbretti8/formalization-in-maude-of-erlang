@@ -177,7 +177,7 @@ fmod COMMON-SYNTAX-DOWN is
   var EX : Exp .
   var EXSEQ : ExpSeq .
 
-  eq #downProgram(T) = #downExpSeq(T) .
+  eq #downProgram(T) = #downFunDefSeq(T) .
 
   *** LIST
 
@@ -204,7 +204,9 @@ fmod COMMON-SYNTAX-DOWN is
   eq #downExp('`[`].Nil) = #downList('`[`].Nil) .
 	eq #downExp('`[_`][T1]) = #downList('`[_`][T1]) .
 	eq #downExp('`[_|_`][T1,T2]) = #downList('`[_|_`][T1,T2]) .
-  eq #downExp('if_end[T1]) = #downIf('if_end[T1]) .
+  eq #downExp('_*_[T1,T2]) = #downMult('_*_[T1,T2]) .
+  eq #downExp('_-_[T1,T2]) = #downMinus('_-_[T1,T2]) .
+  eq #downExp('case_of_end[T1,T2]) = #downCase('case_of_end[T1,T2]) .
   eq #downExp('_=_[T1, T2]) = #downMatch('_=_[T1, T2]).
   eq #downExp('_`(`)[T]) = #downFunCall('_`(`)[T]) .
   eq #downExp('_`(_`)[T1,T2]) = #downFunCall('_`(_`)[T1,T2]) .
@@ -222,13 +224,21 @@ fmod COMMON-SYNTAX-DOWN is
   op #downMatch : Term -> Match .
   eq #downMatch('_=_[T1, T2]) = (#downPattern(T1) = #downExp(T2)) .
 
-  *** IF
-  op #downIf : Term -> If [memo] .
-  eq #downIf('if_end[T1]) = if #downClauseSeq(T1) end .
+  *** CASE
+  op #downCase : Term -> Case [memo] .
+  eq #downCase('case_of_end[T1,T2]) = case #downExp(T1) of #downClauseSeq(T2) end .
+
+  *** MULT
+  op #downMult : Term -> Mult [memo] .
+  eq #downMult('_*_[T1,T2]) = #downExp(T1) * #downExp(T2) .
+
+  *** MINUS
+  op #downMinus : Term -> Minus [memo] .
+  eq #downMinus('_-_[T1,T2]) = #downExp(T1) - #downExp(T2) .
 
   *** CLAUSE
   op #downClause : Term -> Clause [memo] .
-  eq #downClause('_->_[T1,T2]) = #downExp(T1) -> #downExp(T2) .
+  eq #downClause('_->_[T1,T2]) = #downExp(T1) -> #downExpSeq(T2) .
 
   *** CLAUSESEQ
   op #downClauseSeq : Term -> ClauseSeq [memo] .
@@ -240,6 +250,7 @@ fmod COMMON-SYNTAX-DOWN is
   *** FUN
   op #downFunDef : Term -> FunDef [memo] .
   eq #downFunDef('fun_`(`)->_.[T1,T2]) = fun #downExp(T1)()-> #downExpSeq(T2) . .
+  eq #downFunDef('fun_`(_`)->_.[T1,T2,T3]) = fun #downExp(T1)(#downExpSeq(T2))-> #downExpSeq(T3) . .
 
   *** FUNDEFSEQ
   op #downFunDefSeq : Term -> FunDefSeq [memo] .
@@ -250,7 +261,7 @@ fmod COMMON-SYNTAX-DOWN is
   op #downFunCall : Term -> FunCall [memo] .
   eq #downFunCall('_`(`)[T]) = #downExp(T)() .
   eq #downFunCall('_`(_`)[T1, T2]) = _`(_`)(#downExp(T1),#downExp(T2)) .
-  eq #downFunCall('_:_`(_`)[T1,T2,T3]) = #downExp(T1) : #downExp(T2) (#downExp(T3)) .
+  eq #downFunCall('_:_`(_`)[T1,T2,T3]) = #downExp(T1) : #downExp(T2) (#downExpSeq(T3)) .
 
   *** SEND
   op #downSend : Term -> Send [memo] .
@@ -284,7 +295,7 @@ fmod PARSING-SYNTAX-DOWN is
 				[ctor special(
 					(id-hook('Bubble, '1 '1)
 					 op-hook('qidSymbol, '<Qids>, nil, 'Qid)
-					 id-hook('Exclude, 'if 'end '; '-> '`[ '`] '< '> '`(`) '`. '`( '`) '= )))
+					 id-hook('Exclude, 'case 'of 'end '; '-> '`[ '`| '`] '< '> '`(`) '`. '`( '`) '`= '`- '`* )))
 				format ('b 'o)] .
 			none
 			none

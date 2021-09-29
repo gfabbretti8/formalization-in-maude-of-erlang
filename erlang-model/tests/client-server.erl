@@ -3,12 +3,12 @@
        fun main() ->
                E = erlang : spawn ( echo ),
                T = erlang : spawn ( target ),
-               T ! hello,
+               T ! [ giovanni | [ciao] ],
                E ! T .
 
        fun target() ->
               receive
-                A -> receive
+                [giovanni | [ciao]]  -> receive
                        B -> B
                      end
               end .

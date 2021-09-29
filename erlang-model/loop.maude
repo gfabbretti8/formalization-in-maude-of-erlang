@@ -33,7 +33,7 @@ fmod COMMAND-GRAMMAR is
 	***       tool automatically clears up the syntax. Additionally one has to
 	***       put brackets around the function definitions within the Core-Erlang
 	***	  source-code.
-	op add-module : Program Atom -> Command [ctor] .
+	op add-module : Program Atom Args -> Command [ctor] .
 
   op fwd-step : -> Command [ctor] .
 
@@ -49,7 +49,7 @@ mod FORWARD-EXPLORATION is
   var RES : ResultPair .
   var SYS : Entities .
 
-  eq #computeFwdSteps(SYS) = #downEntities(getTerm(metaRewrite(['THEORY], #up(SYS), unbounded))) .
+  eq #computeFwdSteps(SYS) = #downEntities(getTerm(metaRewrite(['THEORY], #up(SYS), 1))) .
 
 endm
 
@@ -90,26 +90,30 @@ mod ERLANG-LOOP is
 	op <_,_,_> : Phase ParseResult Entities -> State [frozen] .
 
 	vars QIL QIL' : QidList .
-	vars T T1 T2 : Term .
+	vars T T1 T2 T3 : Term .
 	var Result : ResultPair? .
   var ENTS : Entities .
 
 	crl [in] : [QIL, < idle, #no-parse, ENTS >, QIL']
 		=> if Result :: ResultPair
 		   then
-			[nil, < parsed, getTerm(Result), ENTS >, 'command 'parsed 'complete '\n]
+			[nil, < parsed, getTerm(Result), ENTS >, 'command 'parsed 'complete]
 		   else
 			[nil, < error, #no-parse, ENTS >, printSyntaxError(Result, QIL)]
 		   fi
 	    if QIL =/= nil /\
 	       Result := metaParse(GRAMMAR, QIL, 'Command) .
 
-	rl [add-module] : [nil, < parsed, 'add-module[T1,T2], ENTS >, QIL']
-		=> [nil, < idle, #no-parse, #setup-first-proc(ENTS, #downExp(T2), #downFunDefSeq(T1)) >, QIL' 'module 'included '.] .
+	rl [add-module] : [nil, < parsed, 'add-module[T1,T2,T3], ENTS >, QIL']
+		=> [nil, < idle, #no-parse, #setup-first-proc(ENTS, #downExp(T2), #downFunDefSeq(T1), #downExpSeq(T3)) >, QIL' 'module 'included '.] .
 
-  rl [fwd-step] : [nil, < parsed, 'fwd-step.Command, ENTS >, QIL' ]
-     => [nil, < idle, #no-parse, (#computeFwdSteps(ENTS)) >, QIL' 'steps 'performed '\n'] .
+  crl [fwd-step] : [nil, < parsed, 'fwd-step.Command, ENTS >, QIL' ]
+     => [nil, < idle, 'pprint-sys.Command, (#computeFwdSteps(ENTS)) >, QIL' ]
+     if ENTS =/= #computeFwdSteps(ENTS) .
+
+  rl [pprint-sys] : [nil, < idle, 'pprint-sys.Command, ENTS >, QIL' ] =>
+   [nil, <  parsed, 'fwd-step.Command, ENTS >, QIL' #pretty-print-sys(ENTS) ] .
 
   rl [pprint-sys] : [nil, < parsed, 'pprint-sys.Command, ENTS >, QIL' ] =>
-   [nil, < idle, #no-parse, ENTS >, QIL' #pretty-print-sys(ENTS) ] .
+   [nil, <  parsed, 'fwd-step.Command, ENTS >, QIL' ] .
 endm

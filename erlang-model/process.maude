@@ -9,21 +9,20 @@ mod SEM_PROCESS is
   protecting SEM_ENTITY .
   protecting QID .
 
-
   sort StoreAndExp Stack .
   subsort StoreAndExp < Stack .
 
   var STACK STACK' : Stack .
 
-  op storeAndExp(_,_) : Store Exp -> StoreAndExp .
+  op storeAndExp(_,_) : Store ExpSeq -> StoreAndExp .
   op emptyStack : -> Stack .
   op _:_ : Stack Stack -> Stack .
 
   op #up : StoreAndExp -> Term [memo] .
-  eq #up(storeAndExp(STORE, EX)) = 'storeAndExp[#up(STORE), #up(EX)] .
+  eq #up(storeAndExp(STORE, EXSEQ)) = 'storeAndExp`(_`,_`)[#up(STORE), #up(EXSEQ)] .
 
   op #downStoreAndExp : Term -> StoreAndExp .
-  eq #downStoreAndExp('storeAndExp[T1,T2]) = storeAndExp(#downStore(T1), #downExp(T2)) .
+  eq #downStoreAndExp('storeAndExp`(_`,_`)[T1,T2]) = storeAndExp(#downStore(T1), #downExpSeq(T2)) .
 
   op #up : Stack -> Term [memo] .
   eq #up(emptyStack) = 'emptyStack.Stack .
@@ -31,7 +30,7 @@ mod SEM_PROCESS is
 
   op #downStack : Term -> Stack [memo] .
   eq #downStack('_:_[T1, T2]) = #downStack(T1) : #downStack(T2) .
-  eq #downStack('storeAndExp[T1,T2]) = #downStoreAndExp('storeAndExp[T1,T2]) .
+  eq #downStack('storeAndExp`(_`,_`)[T1,T2]) = #downStoreAndExp('storeAndExp`(_`,_`)[T1,T2]) .
   eq #downStack('emptyStack.Stack) = emptyStack .
 
 	sort Process .
@@ -76,7 +75,7 @@ mod SEM_PROCESS is
   eq #up(exp: EXSEQ) = 'exp:_[#up(EXSEQ)] .
   eq #up(store: STORE) = 'store:_[#up(STORE)] .
   eq #up(mod-env: ME) = 'mod-env:_[#up(ME)] .
-  eq #up(stack: STACK) = 'stack_[#up(STACK)] .
+  eq #up(stack: STACK) = 'stack:_[#up(STACK)] .
 
   eq #downEntity('<_|_>[T1,T2]) = < #downPid(T1) | #downAttributeSet(T2) > .
   ceq #downAttributeSet(T1) = #downAttribute(T2), #downAttributeSet(T3)

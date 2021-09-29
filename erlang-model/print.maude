@@ -5,6 +5,7 @@ mod PRETTY_PRINT is
 	protecting META-LEVEL .
 
   op #pretty-print-sys : Entities -> Qid .
+  op #pretty-print-sys1 : Entities -> Qid .
   op #pretty-print-ent : Entity -> Qid .
 
   var ENTS : Entities .
@@ -20,15 +21,25 @@ mod PRETTY_PRINT is
   var T1 T2 : Term .
   var PIDGEN : PidGen .
   var ASET : AttributeSet .
+  var STORE : Store .
 
   ceq #pretty-print-sys(ENTS) =
-     #pretty-print-ent(#downEntity(T1)) '\n #pretty-print-sys(#downEntities(T2))
+     '===================================================== '\n
+     #pretty-print-ent(#downEntity(T1)) '\n #pretty-print-sys1(#downEntities(T2))
      if SUB := metaMatch(GRAMMAR, '_||_['ENT:Entity, 'ENTS:Entities], #up(ENTS), nil, 0)
      /\ 'ENT:Entity <- T1 ; 'ENTS:Entities <- T2 := SUB [print] .
 
-  eq #pretty-print-ent(< P | exp: EXSEQ, ASET > ) =
-      '< metaPrettyPrint(['SEM_PROCESS], #up(EXSEQ)) '| 
-         metaPrettyPrint(['SEM_PROCESS], #up(P)) '> .
+  ceq #pretty-print-sys1(ENTS) =
+     #pretty-print-ent(#downEntity(T1)) '\n #pretty-print-sys1(#downEntities(T2))
+     if SUB := metaMatch(GRAMMAR, '_||_['ENT:Entity, 'ENTS:Entities], #up(ENTS), nil, 0)
+     /\ 'ENT:Entity <- T1 ; 'ENTS:Entities <- T2 := SUB [print] .
+
+  eq #pretty-print-sys1(#empty-entities) = ' .
+
+  eq #pretty-print-ent(< P | exp: EXSEQ, store: STORE, ASET > ) =
+      '< metaPrettyPrint(['SEM_PROCESS], #up(P)) '|
+         metaPrettyPrint(['SEM_PROCESS], #up(EXSEQ)) '|
+         metaPrettyPrint(['SEM_PROCESS], #up(STORE)) '> .
 
   eq #pretty-print-ent(< sender: P, receiver: P', payload: MSG > ) =
       '< metaPrettyPrint(['SEM_MESSAGE], #up(P)) '|

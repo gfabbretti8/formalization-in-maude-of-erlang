@@ -56,11 +56,6 @@ mod SEM_MATCH is
   var STORE : Store .
   var VAR : Var .
 
-	*** The second case: Two identical terms are unified (without the need to
-	*** bind any variables)
-	*** Note: The cases of matching two empty lists [] or two 0-ary tuples {}
-	***       are implicitly covered here, too.
-	eq #match(GVALUE, GVALUE, STORE) = STORE .
 
 	*** A pattern may be a list. Therefore we match a list of patterns
 	*** against a list of constants by pairwise matching the list elements.
@@ -71,22 +66,28 @@ mod SEM_MATCH is
   *** the new value and then we return the updated store.
   ceq #match(VAR, GVALUE, STORE)
       = insert(VAR, GVALUE, STORE)
-      if STORE[VAR] == undefined [print "binding "] .
+      if STORE[VAR] == undefined .
 
   *** A var can be defined, if the value matches the ground value(s) then potentially
   *** there is a match and we return the store
   ceq #match(VAR, GVALUE, STORE)
       = STORE
-      if STORE[VAR] =/= undefined /\ STORE[VAR] == GVALUE [print "already there"] .
+      if STORE[VAR] =/= undefined /\ STORE[VAR] == GVALUE .
 
   *** A var can be defined, if the value does not match the ground value(s) then there is
   *** no match with this branch of the receive
   ceq #match(VAR, GVALUE, STORE)
       = #nomatch
-      if STORE[VAR] =/= undefined /\ STORE[VAR] =/= GVALUE [print "nomatch"] .
+      if STORE[VAR] =/= undefined /\ STORE[VAR] =/= GVALUE .
+
+	*** The second case: Two identical terms are unified (without the need to
+	*** bind any variables)
+	*** Note: The cases of matching two empty lists [] or two 0-ary tuples {}
+	***       are implicitly covered here, too.
+	eq #match(GVALUE, GVALUE, STORE) = STORE .
 
 	*** All other cases lead to an incorrect matching.
-	eq #match(PAT, GVALUE, STORE) = #nomatch [owise print "No Match"] .
+	eq #match(PAT, GVALUE, STORE) = #nomatch [owise] .
 
 endm
 
@@ -106,25 +107,18 @@ mod SEM_MATCH_ENTITY is
 	var CLAUSE : Clause .
 	var CLSEQ : ClauseSeq .
 	var PAT : Pattern .
-	var EX : Exp .
+	var EXSEQ : ExpSeq .
   var E : Entity .
   var MSG : GroundValues .
   var STORE STORE' : Store .
 
 
 	op #entityMatch(_|_|_) : ClauseSeq GroundValues Store -> ClauseMatchResult .
-  eq #entityMatch(CLAUSE | MSG | STORE)
-     = #entityMatch(CLAUSE | #empty-clauselist | MSG | STORE) .
+  ceq #entityMatch(CLAUSE ; CLSEQ | MSG | STORE)
+     = #entityMatchSuccess(EXSEQ | STORE')
+		if PAT -> EXSEQ := CLAUSE /\ STORE' := #match(PAT, MSG, STORE) .
   eq #entityMatch(CLAUSE ; CLSEQ | MSG | STORE)
-     = #entityMatch(CLAUSE | CLSEQ | MSG | STORE) .
-	eq #entityMatch(#empty-clauselist | MSG | STORE) = #entityMatchFailure [print "Dovrebbe"] .
+     = #entityMatch(CLSEQ | MSG | STORE) [owise] .
+	eq #entityMatch(#empty-clauselist | MSG | STORE) = #entityMatchFailure .
 
-	op #entityMatch(_|_|_|_) : Clause ClauseSeq GroundValues Store -> ClauseMatchResult .
-	ceq #entityMatch(CLAUSE | CLSEQ | MSG | STORE) =
-      #entityMatch(CLSEQ | MSG | STORE)
-		if PAT -> EX := CLAUSE /\ not(#match(PAT, MSG, STORE) :: Store) [print "Ok"] .
-
-	ceq #entityMatch(CLAUSE | CLSEQ | MSG | STORE) =
-	    #entityMatchSuccess(EX | STORE')
-		if PAT -> EX := CLAUSE /\ STORE' := #match(PAT, MSG, STORE) [print "Ok1"] .
 endm

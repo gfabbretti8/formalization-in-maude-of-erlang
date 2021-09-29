@@ -1,27 +1,34 @@
 fmod SYNTAX-COMMON is
 
   sort Program .
-  subsort Construct < Program .
+  subsort FunDefSeq < Program .
 
   sort Construct .
 
   sort Exp ExpSeq .
-  subsort Exp < Construct .
   subsort Exp < ExpSeq .
   op #empty : -> ExpSeq .
   op #empty : -> Exp .
   op #hole : -> Exp .
   op #bottom : -> Exp .
   op #crashed : -> Exp .
-  op _,_ : ExpSeq ExpSeq -> ExpSeq [ctor assoc prec 60 gather (e E) format (o m! o o)] .
+  op _,_ : ExpSeq ExpSeq -> ExpSeq [ctor assoc prec 51 gather (e E) format (o m! o o)] .
 
-  sorts List Nil .
+  sorts List ListOfGroundValues ListOfPatterns Nil .
   subsort Nil < List .
   subsort List < Exp .
+  subsort List < GroundValues .
+  subsort List < Pattern .
+
+  subsort ListOfGroundValues < List .
 
   op [] : -> Nil [ctor].
-  op [_] : Pattern -> List [ctor prec 0 gather (&) format (m! o m! o)].
-  op [_|_] : Pattern Pattern -> List [ctor prec 0 gather (& &) format (m! o m! o m! o)] .
+
+  op [_] : Exp -> List [ctor prec 15 gather (&) format (m! o m! o)] .
+  op [_|_] : Exp Exp -> List [ctor prec 20 gather (& &) format (m! o m! o m! o)] .
+
+  op [_] : GroundValues -> ListOfGroundValues [ctor prec 15 gather (&) format (m! o m! o)] .
+  op [_|_] : GroundValues GroundValues -> ListOfGroundValues [ctor prec 20 gather (& &) format (m! o m! o m! o)] .
 
   sort Atom .
   sort ErlInt .
@@ -30,42 +37,55 @@ fmod SYNTAX-COMMON is
   subsort Var < Exp .
 
   sort GroundValues .
-  subsorts List Atom ErlInt < GroundValues .
+  subsorts ListOfGroundValues Atom ErlInt < GroundValues .
+  subsort GroundValues < Exp .
 
   sort Pattern .
   subsorts GroundValues Var < Pattern .
   subsort Pattern < Exp .
 
+  sort Mult .
+  subsort Mult < Exp .
+
+  op _*_ : Exp Exp -> Mult [ctor prec 15] .
+
+  sort Minus .
+  subsort Minus < Exp .
+
+  op _-_ : Exp Exp -> Minus [ctor prec 15] .
+
   sort Match .
   subsort Match < Exp .
-  op _=_ : Pattern Exp -> Match [ctor prec 55 format (o o m! o)] .
+  op _=_ : Pattern Exp -> Match [ctor prec 25 format (o o m! o)] .
 
   sort Clause .
   sort ClauseSeq .
   subsort Clause < ClauseSeq .
 
-  op _->_ : Exp Exp -> Clause [ctor prec 40 format (o m! o o)] .
-  op _;_ : ClauseSeq ClauseSeq -> ClauseSeq [ctor assoc prec 45 format (o o m! o)].
+  op _->_ : Pattern ExpSeq -> Clause [ctor prec 51 format (o m! o o)] .
+  op _;_ : ClauseSeq ClauseSeq -> ClauseSeq [ctor assoc prec 52 format (o o m! o)].
 
-  sorts If IfClause IfClauseSeq .
-  subsort IfClause < Clause .
-  subsort IfClause < IfClauseSeq .
-  subsort IfClauseSeq < ClauseSeq .
-  subsort If < Exp .
+  sort Case .
+  subsort Case < Exp .
 
-  op if_end : ClauseSeq -> If [ctor prec 50 format (m! o m! o)] .
+  op case_of_end : Exp ClauseSeq -> Case [ctor prec 50 format (m! o m! o m! o)] .
 
   sorts FunDef FunName FunDefSeq FunCall .
-  subsort FunDef < Construct .
   subsort Atom < FunName .
   subsort FunDef < FunDefSeq .
   subsort FunCall < Exp .
 
-  op fun_()->_. : FunName ExpSeq -> FunDef [ctor prec 70 gather(e e) format (m! o m! m! m! o m! o)] .
+  sort Args .
+  subsort ExpSeq Pattern GroundValues < Args .
+
+  op _,_ : Args Args -> Args [ctor assoc prec 60 gather (E e) format (o m! o o)] .
+
+  op fun_()->_. : FunName ExpSeq -> FunDef [ctor prec 70 format (m! o m! m! m! o m! o)] .
+  op fun_(_)->_. : FunName Args ExpSeq -> FunDef [ctor prec 70 format (m! o m! o m! m! o m! o)] .
   op __ : FunDefSeq FunDefSeq -> FunDefSeq [ctor assoc prec 71 format(o o o)] .
-  op _() : Exp -> FunCall [ctor prec 50 format (o m! m! o)] .
-  op _(_) : Exp Exp -> FunCall [ctor prec 50 gather (E e) format (o m! o m! o)] .
-  op _:_(_) : Exp Exp Exp -> FunCall [ctor prec 50 gather (E E e) format (o o m! m! o m! o )] .
+  op _() : Exp -> FunCall [ctor prec 10 format (o m! m! o)] .
+  op _(_) : Exp Args -> FunCall [ctor prec 10 format (o m! o m! o)] .
+  op _:_(_) : Exp Exp Args -> FunCall [ctor prec 10 format (o o m! m! o m! o )] .
 
   sort Send .
   subsort Send < Exp .
@@ -140,7 +160,7 @@ fmod MAUDE-SYNTAX-UP is
 
 	var ATOM : Atom .
   var FNAME : FunName .
-  var PAT : Pattern .
+  var PAT ARGS : Pattern .
 	vars EX EX1 EX2 EX3 : Exp .
   var EXSEQ EXSEQ' : ExpSeq .
   vars CLS CLS1 CLS2 : ClauseSeq .
@@ -156,9 +176,16 @@ fmod MAUDE-SYNTAX-UP is
 
   op #up : FunDef -> Term [memo] .
   eq #up(fun FNAME ()-> EXSEQ .) = 'fun_`(`)->_[#up(FNAME), #up(EXSEQ)] .
+  eq #up(fun FNAME (ARGS)-> EXSEQ .) = 'fun_`(_`)->_[#up(FNAME), #up(ARGS), #up(EXSEQ)] .
 
-  op #up : IfClause -> Term [memo] .
-  eq #up(if CLS end) = 'if_end[#up(CLS)] .
+  op #up : Mult -> Term [memo] .
+  eq #up(EX1 * EX2) = '_*_[#up(EX1), #up(EX2)] .
+
+  op #up : Minus -> Term [memo] .
+  eq #up(EX1 - EX2) = '_-_[#up(EX1), #up(EX2)] .
+
+  op #up : Case -> Term [memo] .
+  eq #up(case EX of CLS end) = 'case_of_end[#up(EX),#up(CLS)] .
 
   op #up : List -> Term [memo] .
   eq #up([EX]) = '`[_`][#up(EX)] .
@@ -167,7 +194,7 @@ fmod MAUDE-SYNTAX-UP is
   op #up : Pattern -> Term [memo] .
 
   op #up : Clause -> Term [memo] .
-  eq #up(EX1 -> EX2) = '_->_[#up(EX1), #up(EX2)] .
+  eq #up(EX -> EXSEQ) = '_->_[#up(EX), #up(EXSEQ)] .
 
   op #up : ClauseSeq -> Term [memo] .
   eq #up(CLS1 ; CLS2) = '_;_[#up(CLS1), #up(CLS2)] .
@@ -184,8 +211,8 @@ fmod MAUDE-SYNTAX-UP is
 
   op #up : FunCall -> Term [memo] .
   eq #up(EX()) = '_`(`)[#up(EX)] .
-  eq #up(_`(_`)(EX1, EX2)) = '_`(_`)[#up(EX1), #up(EX2)] .
-  eq #up(EX1 : EX2 (EX3)) = '_:_`(_`)[#up(EX1), #up(EX2), #up(EX3)] .
+  eq #up(_`(_`)(EX, EXSEQ)) = '_`(_`)[#up(EX), #up(EXSEQ)] .
+  eq #up(EX1 : EX2 (EXSEQ)) = '_:_`(_`)[#up(EX1), #up(EX2), #up(EXSEQ)] .
 
   op #up : Send -> Term [memo] .
   eq #up(EX1 ! EX2) = '_!_[#up(EX1), #up(EX2)] .

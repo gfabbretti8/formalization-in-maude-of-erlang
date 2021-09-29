@@ -12,19 +12,19 @@ mod SEM_COREBIB is
   vars EX EX1 EX2 : Exp .
   var EXSEQ : ExpSeq .
   var GVALUE : GroundValues .
-
+  var STORE : Store .
 
 	ceq [core-send] :
 	   < P | exp: EX1 ! EX2 ,EXSEQ, ASET > =
 	   < P | exp: EX1, #hole ! EX2, EXSEQ, ASET >
-     if not(EX1 :: ErlInt) [print P " core-send-ex'-ex'"] .
+     if not(EX1 :: ErlInt) .
 
 	eq [core-send] :
 	   < P | exp: P', #hole ! EX, EXSEQ, ASET > =
 	   < P | exp: EX, P' ! #hole, EXSEQ, ASET > .
 
 	eq [core-send] :
-	   < P | exp: GVALUE, P' ! #hole, EXSEQ, ASET > =
-	   < P | exp: P' ! GVALUE, EXSEQ, ASET > .
+	   < P | exp: GVALUE, P' ! #hole, EXSEQ, store: STORE, ASET > =
+	   < P | exp: P' ! #map-args(GVALUE, STORE), EXSEQ, store: STORE, ASET > .
 
 endm
