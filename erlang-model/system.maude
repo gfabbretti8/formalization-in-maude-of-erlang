@@ -31,8 +31,8 @@ mod SEM_TRANSITIONS is
 	protecting SYNTAX .
 	protecting SEM_LABEL .
 	protecting SEM_ENTITIES .
-	protecting SEM_SYSLABEL .
   protecting SEM_MATCH_ENTITY .
+  protecting SEM_NORMALISATION .
 
 	var EX : Exp .
   var EXSEQ EXSEQ' : ExpSeq .
@@ -50,6 +50,7 @@ mod SEM_TRANSITIONS is
   vars STORE STORE' : Store .
   var ENTRYPOINT : FunName .
   var MOD : FunDefSeq .
+  vars STACK STACK' : Stack .
 
 	*******************************
   ******** INIT FUNCTION ********
@@ -65,26 +66,17 @@ mod SEM_TRANSITIONS is
   ******** SYSTEM RULES  ********
 	*******************************
 
-	crl [sys-spawn] :
-        < P | exp: atom("erlang") : atom("spawn") (A, ARGS), EXSEQ, mod-env: ME, store: STORE, ASET > ||
-        pidGen(INT) =>
-		 	  < P | exp: int(INT + 1), EXSEQ, mod-env: ME, store: STORE, ASET > ||
-        < pid(INT + 1) | exp: EXSEQ', mod-env: ME, store: STORE', stack: emptyStack > ||
-        pidGen(INT + 1)
-   		if EXSEQ' := #get-function(A, ME) /\ ARGS' := #extract-and-map-args(ARGS, STORE) /\
-         STORE' := #init-store(#get-formal-args(A, ME), ARGS') .
+  crl [sys-tau] :
+      < P | exp: EXSEQ, store: STORE, stack: STACK, ASET >  =>
+      < P | exp: EXSEQ', store: STORE', stack: STACK', ASET >
+      if < tau, STORE', EXSEQ', STACK' > :=
+         < empty, STORE, EXSEQ, STACK > .
 
-	rl [sys-send] :
-      < P | exp: int(INT) ! GVALUE, EXSEQ, ASET >  =>
-		  < P | exp: GVALUE, EXSEQ, ASET > ||
-      < sender: P, receiver: pid(INT), payload: GVALUE > .
-
-
-  crl [sys-receive] :
-      < P | exp: receive CLSEQ end, EXSEQ, store: STORE, ASET > ||
-      < receiver: P, payload: GVALUE, ASET' > =>
-      < P | exp: EXSEQ', EXSEQ, store: STORE', ASET >
-     if #entityMatchSuccess(EXSEQ' | STORE') := #entityMatch(CLSEQ ; #empty-clauselist | GVALUE | STORE )  .
+  crl [sys-crash] :
+      < P | exp: EXSEQ, store: STORE, stack: STACK, ASET >  =>
+      < P | exp: #crashed, store: STORE', stack: STACK', ASET >
+      if < crashed, STORE', EXSEQ', STACK' > :=
+         < empty, STORE, EXSEQ, STACK > .
 endm
 
 mod SEM_EQUATIONS is

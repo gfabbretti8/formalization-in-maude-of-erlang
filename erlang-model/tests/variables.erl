@@ -4,4 +4,4 @@
                X = 42,
                Y = X,
                Z .
-, start))
+, start, empty))

@@ -3,120 +3,69 @@ mod SEM_NORMALISATION is
   protecting HELP-SYNTAX .
   protecting SEM_ENTITIES .
   protecting SEM_MATCH_ENTITY .
+  protecting SEM_LABEL .
 
 
-	var EX EX' : Exp .
-  var EXSEQ EXSEQ' : ExpSeq .
-	var INT INT' RES : Int .
-	var P' : ErlInt .
-  var CL : Clause .
-  var CLSEQ : ClauseSeq .
-  var P : Pid .
-  var EL : Label .
-  var ME : ModEnv .
-  var ASET ASET' : AttributeSet .
-  var GVALUE : GroundValues .
+  vars LABEL LABEL' : Label .
   vars STORE STORE' : Store .
+  var EXPSEQ : ExpSeq .
+  var GVALUE : GroundValues .
+  vars STACK STACK' : Stack .
+  vars T1 T2 T3 T4 : Term .
   var VAR : Var .
-  var FUNNAME : FunName .
-  var ARGS : Args .
-  var STACK : Stack .
+  vars EXSEQ EXSEQ' : ExpSeq .
+  var EX EX' : Exp .
 
-  ceq [norm-case] :
-     < P | exp: case EX of CLSEQ end, EXSEQ, ASET > =
-     < P | exp: EX, EXSEQ', ASET >
-     if EXSEQ' := (case #hole of CLSEQ end, EXSEQ) .
+  sort ExpConf .
+  op <_,_,_,_> : Label Store ExpSeq Stack -> ExpConf [ctor] .
 
-  ceq [norm-case] :
-     < P | exp: GVALUE, case #hole of CLSEQ end, EXSEQ', store: STORE, ASET > =
-     < P | exp: EXSEQ, EXSEQ', store: STORE, ASET >
-     if #entityMatchSuccess(EXSEQ | STORE') := #entityMatch(CLSEQ ; #empty-clauselist | GVALUE | STORE ) .
 
-  eq [norm-case] :
-     < P | exp: GVALUE, case #hole of CLSEQ end, EXSEQ, store: STORE, ASET > =
-     < P | exp: #crashed, store: STORE, ASET > [owise] .
+  op #up : ExpConf -> Term [memo] .
+  eq #up(< LABEL, STORE, EXPSEQ, STACK >)
+      = '<_`,_`,_`,_>[#up(LABEL), #up(STORE), #up(EXPSEQ), #up(STACK)] .
 
-  *** Case 1: VAR is an unbound variable, in such case we bind it to the ground-value
-  *** produced by the evaluation of EX, we update the store and we return the ground value
-  ceq [norm-match] :
-     < P | exp: VAR = EX, EXSEQ, store: STORE, ASET > =
-     < P | exp: EX, VAR = #hole, EXSEQ, store: STORE, ASET >
-     if STORE[VAR] == undefined .
+  op #downExpConf : Term -> ExpConf [memo] .
+  eq #downExpConf('<_`,_`,_`,_>[T1,T2,T3,T4])
+     = < #downLabel(T1), #downStore(T2), #downExpSeq(T3), #downStack(T4) > .
 
-  ceq [norm-match] :
-     < P | exp: GVALUE, VAR = #hole, EXSEQ, store: STORE, ASET > =
-     < P | exp: EXSEQ, store: STORE', ASET >
-     if STORE' :=  insert(VAR, GVALUE, STORE) .
 
-  *** Case 1: If we try to evaluate a var which is available in the store
-  *** then its value is returned.
-  ceq [var-evaluation] :
-     < P | exp: VAR, EXSEQ, store: STORE, ASET > =
-     < P | exp: GVALUE, EXSEQ, store: STORE, ASET >
-     if STORE[VAR] =/= undefined /\ GVALUE := STORE[VAR] .
+   ceq [var] :
+    < empty, STORE, VAR, STACK > =
+    < crashed, STORE, VAR, STACK >
+    if STORE[VAR] == undefined .
 
-  *** Case 2: If we try to evaluate a var which is not available in the store then
-  *** we enter an error state.
-  ceq [var-evaluation] :
-     < P | exp: VAR, EXSEQ, store: STORE, ASET > =
-     < P | exp: #crashed, store: STORE, ASET >
-     if STORE[VAR] == undefined .
+   ceq [var] :
+    < empty, STORE, VAR, STACK > =
+    < tau, STORE, STORE[VAR], STACK >
+    if STORE[VAR] =/= undefined .
 
-  eq [norm-self] :
-     < pid(INT) | exp: atom("self")(), EXSEQ, ASET > =
-     < pid(INT) | exp: int(INT), EXSEQ, ASET > .
+   ceq [match] :
+    < empty, STORE, VAR = GVALUE, STACK > =
+    < tau, STORE', GVALUE, STACK >
+    if STORE[VAR] == undefined /\
+       STORE' := insert(VAR, GVALUE, STORE) .
 
-  eq [norm-funcall] :
-     < P | exp: FUNNAME(EXSEQ'), EXSEQ, ASET > =
-     < P | exp: EXSEQ', FUNNAME(#hole), EXSEQ, ASET > .
+   ceq [match] :
+    < empty, STORE, VAR = GVALUE, STACK > =
+    < crashed, STORE, VAR = GVALUE, STACK >
+    if STORE[VAR] =/= undefined .
 
-  ceq [norm-funcall] :
-     < P | exp: GVALUE , FUNNAME(#hole), EXSEQ, store: STORE, stack: STACK, mod-env: ME, ASET > =
-     < P | exp: EXSEQ', store: STORE',
-       stack: storeAndExp(STORE, EXSEQ) : STACK, mod-env: ME, ASET >
-     if STORE' := #init-store(#get-formal-args(FUNNAME, ME),GVALUE) /\
-        EXSEQ' := #get-function(FUNNAME, ME) .
+   ceq [match] :
+    < empty, STORE, VAR = EX, STACK > =
+    < LABEL', STORE, VAR = #hole, STACK > .
 
-  ceq [norm-funcall] :
-     < P | exp: FUNNAME(), EXSEQ, store: STORE, stack: STACK, mod-env: ME, ASET > =
-     < P | exp: EXSEQ', store: STORE',
-       stack: storeAndExp(STORE, EXSEQ) : STACK, mod-env: ME, ASET >
-     if STORE' := empty /\
-        EXSEQ' := #get-function(FUNNAME, ME) .
 
-  eq [norm-funcall] :
-     < P | exp: GVALUE, #bottom, store: STORE, stack: storeAndExp(STORE', EXSEQ) : STACK, ASET > =
-     < P | exp: GVALUE, EXSEQ, store: STORE', stack: STACK, ASET > .
 
-  eq [norm-minus] :
-     < P | exp: EX - EX', EXSEQ, ASET > =
-     < P | exp: EX, #hole - EX', EXSEQ, ASET > .
+   eq [seq] :
+    < empty, STORE, GVALUE, EXPSEQ, STACK > =
+    < tau, STORE, EXPSEQ, STACK > .
 
-  eq [norm-minus] :
-     < P | exp: int(INT), #hole - EX, EXSEQ, ASET > =
-     < P | exp: EX, int(INT) - #hole, EXSEQ, ASET > .
+   ceq [seq] :
+    < empty, STORE, EX, EXSEQ, STACK > =
+    < LABEL', STORE', EXSEQ', EXSEQ, STACK' >
+    if < LABEL', STORE', EXSEQ', STACK' > :=
+       < empty, STORE, EX, STACK > .
 
-  ceq [norm-minus] :
-      < P | exp: int(INT), int(INT') - #hole, EXSEQ, ASET > =
-      < P | exp: int(RES), EXSEQ, ASET >
-      if RES := downTerm(getTerm(metaReduce(upModule('INT, false), '_-_[upTerm(INT'), upTerm(INT)])), INT) .
-
-  eq [norm-mult] :
-     < P | exp: EX * EX', EXSEQ, ASET > =
-     < P | exp: EX, #hole * EX', EXSEQ, ASET > .
-
-  eq [norm-mult] :
-     < P | exp: int(INT), #hole * EX, EXSEQ, ASET > =
-     < P | exp: EX, int(INT) * #hole, EXSEQ, ASET > .
-
-  ceq [norm-mult] :
-      < P | exp: int(INT), int(INT') * #hole, EXSEQ, ASET > =
-      < P | exp: int(RES), EXSEQ, ASET >
-      if RES := downTerm(getTerm(metaReduce(upModule('INT, false), '_*_[upTerm(INT'), upTerm(INT)])), INT) .
-
-  ceq < P | exp: GVALUE, EXSEQ, ASET > =
-      < P | exp: EXSEQ, ASET >
-      if EXSEQ =/= #bottom [owise] .
 
 endm
 

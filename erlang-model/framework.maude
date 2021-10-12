@@ -19,6 +19,7 @@ load result.maude .
 load store.maude .
 load modenv.maude .
 load message.maude .
+load control.maude .
 load process.maude .
 load entities.maude .
 load matching.maude .

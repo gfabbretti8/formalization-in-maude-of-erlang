@@ -35,6 +35,8 @@ mod SEM_LABEL is
 
   subsort StopLabel < Label .
 
+  op empty : -> Label [ctor] .
+
 	*** An expression label "tau" is an "unobservable" action.
 	*** This means that the process normalisation within the equational theory continues.
 	op tau : -> Label [ctor] .
@@ -77,6 +79,7 @@ mod SEM_LABEL is
   var CLSEQ : ClauseSeq .
 
 	*** Implementation of the meta-representation part
+	eq #up(empty) = 'empty.Label .
 	eq #up(tau) = 'tau.Label .
 	eq #up(PID ! EX) = '_!_[#up(PID),#up(EX)] .
 	eq #up(receive(CLSEQ)) = 'receive_[#up(CLSEQ)] .
@@ -85,6 +88,7 @@ mod SEM_LABEL is
   eq #up(spawn ATOM) = 'spawn[#up(ATOM)] .
 
 	*** Lowering the meta-representation level of expression level labels
+	eq #downLabel('empty.Label) = empty .
 	eq #downLabel('tau.Label) = tau .
 	eq #downLabel('_!_[T1, T2]) = #downPid(T1) ! #downExp(T2) .
 	eq #downLabel('receive_[T]) = receive #downClauseSeq(T) .
@@ -93,63 +97,3 @@ mod SEM_LABEL is
 	eq #downLabel('spawn_[T]) = spawn #downAtom(T) .
 endm
 
-mod SEM_SYSLABEL is
-	protecting SYNTAX .
-	protecting SEM_PID .
-	protecting MAUDE-SYNTAX-UPDOWN .
-
-	sort SysLabel .
-
-	*** The sys-start label signals the beginning of the whole rewriting.
-	*** It is the first system state before any side-effect occurs.
-	op sys-start : -> SysLabel .
-
-	*** The sys-noop label is needed to signal a transition between process
-	*** environments which does not change anything (except the system label)
-	*** Specifying schedulers closely depends on these noop operations.
-	op sys-noop : -> SysLabel .
-
-	*** The sys-newproc system label indicated that a process that is specified by
-	*** the process identifier in the first argument created a new process whose
-	*** PID and function form the remaining arguments.
-	op sys-newproc : Pid Pid Atom -> SysLabel .
-
-	*** The process identified by the first argument sends the message to the
-	*** process given by the second argument.
-	op sys-sendmsg : Pid Pid GroundValues -> SysLabel .
-
-	*** The specified process receives the given message.
-	op sys-receive : Pid GroundValues -> SysLabel .
-
-	*******************************
-  *** METAREPRESENTATION PART ***
-	*******************************
-
-	op #up : SysLabel -> Term [memo] .
-	op #downSysLabel : Term -> SysLabel [memo] .
-
-	vars P P' : Pid .
-	var GVALUE : GroundValues .
-	vars T1 T2 T3 : Term .
-  var A : Atom .
-
-	*** This function lifts a term of sort SysLabel to the first meta-level
-	*** It is needed to get formatted output of these labels.
-	eq #up(sys-start) = 'sys-start.SysLabel .
-	eq #up(sys-noop) = 'sys-noop.SysLabel .
-	eq #up(sys-newproc(P,P',A)) = 'sys-newproc[#up(P),#up(P'),#up(A)] .
-	eq #up(sys-sendmsg(P,P',GVALUE)) = 'sys-sendmsg[#up(P),#up(P'),#up(GVALUE)] .
-	eq #up(sys-receive(P, GVALUE)) = 'sys-receive[#up(P),#up(GVALUE)] .
-
-	*** Lowering the representation level for system labels. This is needed, because
-	*** the result of the lts computation (which takes place on the meta-level)
-	*** has to be lowered as soon as it is formatted for output.
-	eq #downSysLabel('sys-start.SysLabel) = sys-start .
-	eq #downSysLabel('sys-noop.SysLabel) = sys-noop .
-	eq #downSysLabel('sys-newproc[T1,T2,T3])
-		= sys-newproc(#downPid(T1), #downPid(T2), #downAtom(T3)) .
-
-	eq #downSysLabel('sys-sendmsg[T1,T2,T3])
-		= sys-sendmsg(#downPid(T1), #downPid(T2), #downExp(T3)) .
-	eq #downSysLabel('sys-receive[T1,T2]) = sys-receive(#downPid(T1), #downExp(T2)) .
-endm
