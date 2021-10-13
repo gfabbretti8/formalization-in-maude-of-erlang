@@ -67,16 +67,16 @@ mod SEM_TRANSITIONS is
 	*******************************
 
   crl [sys-tau] :
-      < P | exp: EXSEQ, store: STORE, stack: STACK, ASET >  =>
-      < P | exp: EXSEQ', store: STORE', stack: STACK', ASET >
-      if < tau, STORE', EXSEQ', STACK' > :=
-         < empty, STORE, EXSEQ, STACK > .
+      < P | exp: EXSEQ, store: STORE, stack: STACK, mod-env: ME, ASET >  =>
+      < P | exp: EXSEQ', store: STORE', stack: STACK', mod-env: ME, ASET >
+      if < tau, STORE', EXSEQ', STACK', ME > :=
+         < empty, STORE, EXSEQ, STACK, ME > .
 
   crl [sys-crash] :
-      < P | exp: EXSEQ, store: STORE, stack: STACK, ASET >  =>
-      < P | exp: #crashed, store: STORE', stack: STACK', ASET >
-      if < crashed, STORE', EXSEQ', STACK' > :=
-         < empty, STORE, EXSEQ, STACK > .
+      < P | exp: EXSEQ, store: STORE, stack: STACK, mod-env: ME, ASET >  =>
+      < P | exp: #crashed, store: STORE', stack: STACK', mod-env: ME, ASET >
+      if < crashed, STORE', EXSEQ', STACK', ME > :=
+         < empty, STORE, EXSEQ, STACK, ME > .
 endm
 
 mod SEM_EQUATIONS is

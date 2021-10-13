@@ -5,67 +5,138 @@ mod SEM_NORMALISATION is
   protecting SEM_MATCH_ENTITY .
   protecting SEM_LABEL .
 
-
+  var FUNNAME : Atom .
   vars LABEL LABEL' : Label .
   vars STORE STORE' : Store .
   var EXPSEQ : ExpSeq .
-  var GVALUE : GroundValues .
+  var GVALUE GVALUE' : GroundValues .
   vars STACK STACK' : Stack .
-  vars T1 T2 T3 T4 : Term .
+  vars T1 T2 T3 T4 T5 T6 : Term .
   var VAR : Var .
   vars EXSEQ EXSEQ' : ExpSeq .
-  var EX EX' : Exp .
+  var EX EX' EX'' EX1 EX2 : Exp .
+  var CLSEQ : ClauseSeq .
+  var ME : ModEnv .
+  var PAT : Pattern .
+  var INT INT' RES : Int .
 
   sort ExpConf .
-  op <_,_,_,_> : Label Store ExpSeq Stack -> ExpConf [ctor] .
+
+
+  op <_,_,_,_,_> : Label Store ExpSeq Stack ModEnv -> ExpConf [ctor] .
 
 
   op #up : ExpConf -> Term [memo] .
-  eq #up(< LABEL, STORE, EXPSEQ, STACK >)
-      = '<_`,_`,_`,_>[#up(LABEL), #up(STORE), #up(EXPSEQ), #up(STACK)] .
+  eq #up(< LABEL, STORE, EXPSEQ, STACK, ME >)
+      = '<_`,_`,_`,_`,_`,_>[#up(LABEL), #up(STORE), #up(EXPSEQ), #up(STACK), #up(ME)] .
 
   op #downExpConf : Term -> ExpConf [memo] .
-  eq #downExpConf('<_`,_`,_`,_>[T1,T2,T3,T4])
-     = < #downLabel(T1), #downStore(T2), #downExpSeq(T3), #downStack(T4) > .
+  eq #downExpConf('<_`,_`,_`,_>[T1,T2,T3,T4,T5])
+     = < #downLabel(T1), #downStore(T2), #downExpSeq(T3), #downStack(T4), #downModEnv(T5) > .
 
 
    ceq [var] :
-    < empty, STORE, VAR, STACK > =
-    < crashed, STORE, VAR, STACK >
+    < empty, STORE, VAR, STACK, ME > =
+    < crashed, STORE, VAR, STACK, ME >
     if STORE[VAR] == undefined .
 
    ceq [var] :
-    < empty, STORE, VAR, STACK > =
-    < tau, STORE, STORE[VAR], STACK >
+    < empty, STORE, VAR, STACK, ME > =
+    < tau, STORE, STORE[VAR], STACK, ME >
     if STORE[VAR] =/= undefined .
 
+    eq [match] :
+     < empty, STORE, GVALUE = GVALUE, STACK, ME > =
+     < tau, STORE, GVALUE, STACK, ME > .
+
    ceq [match] :
-    < empty, STORE, VAR = GVALUE, STACK > =
-    < tau, STORE', GVALUE, STACK >
+     < empty, STORE, GVALUE = GVALUE', STACK, ME > =
+     < crashed, STORE, #crashed, STACK, ME >
+     if GVALUE =/= GVALUE' .
+
+   ceq [match] :
+    < empty, STORE, VAR = GVALUE, STACK, ME > =
+    < tau, STORE', GVALUE, STACK, ME >
     if STORE[VAR] == undefined /\
        STORE' := insert(VAR, GVALUE, STORE) .
 
    ceq [match] :
-    < empty, STORE, VAR = GVALUE, STACK > =
-    < crashed, STORE, VAR = GVALUE, STACK >
+    < empty, STORE, VAR = GVALUE, STACK, ME > =
+    < crashed, STORE, VAR = GVALUE, STACK, ME >
     if STORE[VAR] =/= undefined .
 
-   ceq [match] :
-    < empty, STORE, VAR = EX, STACK > =
-    < LABEL', STORE, VAR = #hole, STACK > .
+   eq [match] :
+    < empty, STORE, PAT = EX, STACK, ME > =
+    < empty, STORE, EX, PAT = #hole, STACK, ME > .
 
+   eq [match] :
+    < empty, STORE, GVALUE, PAT = #hole, EXSEQ, STACK, ME > =
+    < empty, STORE, PAT = GVALUE, EXSEQ, STACK, ME > .
 
+   ceq [case] :
+    < empty, STORE, GVALUE, case #hole of CLSEQ end, EXSEQ, STACK, ME > =
+    < empty, STORE', EXSEQ', EXSEQ, STACK, ME > 
+    if #entityMatchSuccess(EXSEQ' | STORE') :=
+       #entityMatch(CLSEQ ; #empty-clauselist | GVALUE | STORE ) .
 
-   eq [seq] :
-    < empty, STORE, GVALUE, EXPSEQ, STACK > =
-    < tau, STORE, EXPSEQ, STACK > .
+   eq [case-fail] :
+    < empty, STORE, case GVALUE of CLSEQ end, STACK, ME > =
+    < crashed, STORE, #crashed, STACK, ME > [owise] .
+
+   eq [case] :
+    < empty, STORE, case EX of CLSEQ end, STACK, ME > =
+    < empty, STORE, EX, case #hole of CLSEQ end, STACK, ME > .
+
+   ceq [minus] :
+    < empty, STORE, int(INT), int(INT') - #hole, EXSEQ, STACK, ME > =
+    < empty, STORE, int(RES), EXSEQ, STACK, ME >
+   if RES := downTerm(getTerm(metaReduce(upModule('INT, false), '_-_[upTerm(INT'), upTerm(INT)])), INT) .
+
+   eq [minus] :
+    < empty, STORE, EX1 - EX2, STACK, ME > =
+    < empty, STORE, EX1, #hole - EX2, STACK, ME > .
+
+   eq [minus] :
+    < empty, STORE, GVALUE, #hole - EX2, EXSEQ, STACK, ME > =
+    < empty, STORE, EX2, GVALUE - #hole, EXSEQ, STACK, ME > .
+
+   ceq [mult] :
+    < empty, STORE, int(INT), int(INT') * #hole, EXSEQ, STACK, ME > =
+    < empty, STORE, int(RES), EXSEQ, STACK, ME >
+   if RES := downTerm(getTerm(metaReduce(upModule('INT, false), '_*_[upTerm(INT'), upTerm(INT)])), INT) .
+
+   eq [mult] :
+    < empty, STORE, EX1 * EX2, STACK, ME > =
+    < empty, STORE, EX1, #hole * EX2, STACK, ME > .
+
+   eq [mult] :
+    < empty, STORE, GVALUE, #hole * EX2, EXSEQ, STACK, ME > =
+    < empty, STORE, EX2, GVALUE * #hole, EXSEQ, STACK, ME > .
+
+   ceq [funcall] :
+    < empty, STORE, GVALUE, FUNNAME(#hole), EXSEQ, STACK, ME > =
+    < tau, STORE', EXSEQ', control(STORE, #hole, EXSEQ) : STACK, ME >
+    if STORE' := empty /\
+       EXSEQ' := #get-function(FUNNAME, ME) .
+
+   eq [funcall] :
+    < empty, STORE, FUNNAME(EXSEQ), STACK, ME > =
+    < empty, STORE, EXSEQ, FUNNAME(#hole), STACK, ME > .
+
+   eq [fun-return] :
+    < empty, STORE, GVALUE, #bottom, control(STORE', #hole, EXSEQ) : STACK, ME > =
+    < tau, STORE', GVALUE, EXSEQ, STACK, ME > .
 
    ceq [seq] :
-    < empty, STORE, EX, EXSEQ, STACK > =
-    < LABEL', STORE', EXSEQ', EXSEQ, STACK' >
-    if < LABEL', STORE', EXSEQ', STACK' > :=
-       < empty, STORE, EX, STACK > .
+    < empty, STORE, EX, EXSEQ, STACK, ME > =
+    < LABEL', STORE', EXSEQ', EXSEQ, STACK', ME >
+    if < LABEL', STORE', EXSEQ', STACK', ME > :=
+       < empty, STORE, EX, STACK, ME > /\
+       not(EX :: GroundValues ).
 
+   eq [seq] :
+    < empty, STORE, GVALUE, EXPSEQ, STACK, ME > =
+    < tau, STORE, EXPSEQ, STACK, ME > .
 
 endm
 
