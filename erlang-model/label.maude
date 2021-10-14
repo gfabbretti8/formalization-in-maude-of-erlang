@@ -35,6 +35,8 @@ mod SEM_LABEL is
 
   subsort StopLabel < Label .
 
+  var ARGS : Args .
+
   op empty : -> Label [ctor] .
 
 	*** An expression label "tau" is an "unobservable" action.
@@ -61,7 +63,7 @@ mod SEM_LABEL is
 	*** can always continue waiting for arrival of a message or one can issue a timeout.
 	op blocked : -> StopLabel [ctor] .
 
-	op spawn_ : Atom -> StopLabel [ctor] .
+	op spawn(_,_) : Atom Args -> StopLabel [ctor] .
 
   op crashed : -> StopLabel [ctor] .
 	*******************************
@@ -85,7 +87,7 @@ mod SEM_LABEL is
 	eq #up(receive(CLSEQ)) = 'receive_[#up(CLSEQ)] .
 	eq #up(blocked) = 'blocked.StopLabel .
   eq #up(crashed) = 'crashed.StopLabel .
-  eq #up(spawn ATOM) = 'spawn[#up(ATOM)] .
+  eq #up(spawn(ATOM, ARGS)) = 'spawn`(_`,_`)[#up(ATOM),#up(ARGS)] .
 
 	*** Lowering the meta-representation level of expression level labels
 	eq #downLabel('empty.Label) = empty .
@@ -94,6 +96,6 @@ mod SEM_LABEL is
 	eq #downLabel('receive_[T]) = receive #downClauseSeq(T) .
 	eq #downLabel('blocked.StopLabel) = blocked .
   eq #downLabel('crashed.StopLabel) = crashed .
-	eq #downLabel('spawn_[T]) = spawn #downAtom(T) .
+	eq #downLabel('spawn`(_`,_`)[T1,T2]) = spawn(#downAtom(T1), #downExpSeq(T2)) .
 endm
 

@@ -1,5 +1,5 @@
 load framework.maude
-load tests/factorial.erl
+load tests/client-server.erl
 (pprint-sys)
 
 

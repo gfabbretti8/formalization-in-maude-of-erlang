@@ -50,7 +50,7 @@ fmod SEM_STORE is
   *** METAREPRESENTATION PART ***
 	*******************************
 
-  vars STORE STORE' : Store .
+  vars STORE STORE' : StoreStack .
   vars ENTRY ENTRY' : Entry .
   var PATT : Pattern .
   var GVALUE : GroundValues .
@@ -61,7 +61,7 @@ fmod SEM_STORE is
   op #downStore : Term -> Store [memo] .
 
   ceq #up((STORE, STORE')) = '_`,_[#up(STORE), #up(STORE')]
-     if STORE' =/= empty /\ STORE =/= empty .
+     if STORE' =/= empty /\ STORE =/= empty /\ STORE =/= empty-stack /\ STORE' =/= empty-stack .
   eq #up(empty) = 'empty.Store .
 
   eq #downStore('_`,_[TERMS]) = #downEntry(TERMS) .
@@ -86,12 +86,15 @@ fmod SEM_STORE is
   op empty-stack : -> StoreStack .
 
   op #up : StoreStack -> Term [memo] .
-  eq #up(STORE : STORE') = '_:_[#up(STORE), #up(STORE')] .
+  ceq #up(STORE : STORE') = '_:_[#up(STORE), #up(STORE')]
+  if STORE =/= empty-stack /\ STORE' =/= empty-stack .
+  eq #up(empty-stack) = 'empty-stack.StoreStack .
 
   op #downStoreStack : Term -> StoreStack [memo] .
   eq #downStoreStack('_:_[T1, T2]) = #downStoreStack(T1) : #downStoreStack(T2) .
   eq #downStoreStack('_`,_[TERMS]) = #downStore('_`,_[TERMS]) .
   eq #downStoreStack('_|->_[T1,T2]) = #downStore('_|->_[T1,T2]) .
-
+  eq #downStoreStack('empty.Store) = #downStore('empty.Store) .
+  eq #downStoreStack('empty-stack.StoreStack) = empty-stack .
 endfm
 

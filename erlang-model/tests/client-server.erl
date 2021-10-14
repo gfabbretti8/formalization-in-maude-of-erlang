@@ -1,8 +1,8 @@
 (add-module(
 
        fun main() ->
-               E = erlang : spawn ( echo ),
-               T = erlang : spawn ( target ),
+               E = erlang : spawn ( echo , [] ),
+               T = erlang : spawn ( target, [] ),
                T ! [ giovanni | [ciao] ],
                E ! T .
 
@@ -17,4 +17,4 @@
               receive
                 P -> P ! world
               end .
-, main))
+, main, empty))

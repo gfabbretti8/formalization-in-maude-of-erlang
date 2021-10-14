@@ -2,7 +2,20 @@ mod SEM_COREBIB is
 	protecting NAT .
 	protecting STRING .
 	protecting SEM_ENTITIES .
+  protecting SEM_STORE .
+  protecting SEM_MODENV .
+  protecting SEM_LABEL .
+  protecting SEM_NORMALISATION .
 
 
+  var ARGS : GroundValues .
+  var STORESTACK : StoreStack .
+  var ME : ModEnv .
+  var FUNNAME : FunName .
+
+  eq [spawn] :
+  < empty, STORESTACK, atom("erlang") :
+atom("spawn")(FUNNAME, ARGS), ME > =
+  < spawn(FUNNAME,ARGS), STORESTACK, int(12), ME > .
 
 endm

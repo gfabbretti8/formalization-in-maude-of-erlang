@@ -37,7 +37,7 @@ mod SEM_TRANSITIONS is
 
 
 	var EX : Exp .
-  var EXSEQ EXSEQ' : ExpSeq .
+  var EXSEQ EXSEQ' EXSEQ'' : ExpSeq .
   var ARGS ARGS' : Args .
 	var P : Pid .
 	vars INT INT1 : Int .
@@ -53,7 +53,7 @@ mod SEM_TRANSITIONS is
   var ENTRYPOINT : FunName .
   var MOD : FunDefSeq .
   var LABEL LABEL' : Label .
-
+  var FUNNAME : FunName .
 	*******************************
   ******** INIT FUNCTION ********
 	*******************************
@@ -79,6 +79,18 @@ mod SEM_TRANSITIONS is
       < P | exp: #crashed, store-stack: STORE', mod-env: ME, ASET >
       if < crashed, STORE', EXSEQ', ME > :=
          < empty, STORE, EXSEQ, ME > .
+
+  crl [sys-crash] :
+      < P | exp: EXSEQ, store-stack: STORE, mod-env: ME, ASET > || pidGen(INT) =>
+      < P | exp: EXSEQ', store-stack: STORE', mod-env: ME, ASET > ||
+      < pid(INT + 1) | exp: EXSEQ'', mod-env: ME, store-stack: STORE' > ||
+       pidGen(INT + 1)
+   		if < spawn(FUNNAME,ARGS), STORE', EXSEQ', ME > :=
+         < empty, STORE, EXSEQ, ME > /\
+         EXSEQ'' := #get-function(FUNNAME, ME) /\
+         ARGS' := #extract-and-map-args(ARGS, STORE) /\
+         STORE' := #init-store(#get-formal-args(FUNNAME, ME), ARGS') .
+
 endm
 
 mod SEM_EQUATIONS is
