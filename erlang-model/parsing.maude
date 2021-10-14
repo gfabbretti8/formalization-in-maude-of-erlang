@@ -201,6 +201,7 @@ fmod COMMON-SYNTAX-DOWN is
   eq #downExp('#crashed.Exp) = #crashed .
   eq #downExp('#hole.Exp) = #hole .
   eq #downExp('#bottom.Exp) = #bottom .
+  eq #downExp('begin_end[T1]) = begin #downExpSeq(T1) end .
   eq #downExp('`[`].Nil) = #downList('`[`].Nil) .
 	eq #downExp('`[_`][T1]) = #downList('`[_`][T1]) .
 	eq #downExp('`[_|_`][T1,T2]) = #downList('`[_|_`][T1,T2]) .
@@ -287,6 +288,7 @@ fmod PARSING-SYNTAX-DOWN is
 			including 'COMMAND-GRAMMAR .
 			including 'PARSING-SYNTAX .
       including 'SEM_STORE .
+      including 'SEM_PROCESS .
       including 'SEM_ENTITIES .
       including 'SEM_MODENV .
 			sorts none .

@@ -94,8 +94,8 @@ endm
 mod SEM_MATCH_ENTITY is
 	extending SYNTAX .
 	protecting SEM_MATCH .
-  protecting SEM_ENTITIES .
-
+  protecting SEM_STORE .
+  protecting SEM_ENTITY .
 	sort ClauseMatchResult .
 
   op #empty-clauselist : -> ClauseSeq [ctor] .

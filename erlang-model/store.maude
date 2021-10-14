@@ -42,8 +42,6 @@ fmod SEM_STORE is
   eq #map-args([PAT | TAIL], STORE) = [#map-arg(PAT, STORE)| #extract-and-map-args(TAIL, STORE)] .
   eq #map-args(PAT, STORE) = #map-arg(PAT, STORE) .
 
-
-
   op #map-arg : Pattern Store -> GroundValues .
   eq #map-arg(VAR, STORE) = STORE[VAR] .
   eq #map-arg(GVALUE, STORE) = GVALUE .
@@ -70,7 +68,6 @@ fmod SEM_STORE is
   eq #downStore('_|->_[T1,T2]) = #downEntry('_|->_[T1,T2]) .
   eq #downStore('empty.Store) = empty .
 
-
   op #up : Entry -> Term [memo] .
   op #downEntry : Term -> Store [memo] .
 
@@ -80,4 +77,21 @@ fmod SEM_STORE is
   if TERMS =/= empty .
   eq #downEntry('_|->_[T1,T2]) = #downExp(T1) |-> #downExp(T2) .
 
+
+  sort StoreStack .
+  subsort Store < StoreStack .
+  subsort Entry < StoreStack .
+
+  op _:_ : StoreStack StoreStack -> StoreStack [ctor id: empty-stack] .
+  op empty-stack : -> StoreStack .
+
+  op #up : StoreStack -> Term [memo] .
+  eq #up(STORE : STORE') = '_:_[#up(STORE), #up(STORE')] .
+
+  op #downStoreStack : Term -> StoreStack [memo] .
+  eq #downStoreStack('_:_[T1, T2]) = #downStoreStack(T1) : #downStoreStack(T2) .
+  eq #downStoreStack('_`,_[TERMS]) = #downStore('_`,_[TERMS]) .
+  eq #downStoreStack('_|->_[T1,T2]) = #downStore('_|->_[T1,T2]) .
+
 endfm
+

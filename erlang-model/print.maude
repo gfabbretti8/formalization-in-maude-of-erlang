@@ -2,6 +2,7 @@ mod PRETTY_PRINT is
 
   protecting QID .
   protecting SEM_ENTITIES .
+  protecting SEM_PROCESS .
 	protecting META-LEVEL .
 
   op #pretty-print-sys : Entities -> Qid .
@@ -21,7 +22,7 @@ mod PRETTY_PRINT is
   var T1 T2 : Term .
   var PIDGEN : PidGen .
   var ASET : AttributeSet .
-  var STORE : Store .
+  var STORE : StoreStack .
 
   ceq #pretty-print-sys(ENTS) =
      '===================================================== '\n
@@ -36,7 +37,7 @@ mod PRETTY_PRINT is
 
   eq #pretty-print-sys1(#empty-entities) = ' .
 
-  eq #pretty-print-ent(< P | exp: EXSEQ, store: STORE, ASET > ) =
+  eq #pretty-print-ent(< P | exp: EXSEQ, store-stack: STORE, ASET > ) =
       '< metaPrettyPrint(['SEM_PROCESS], #up(P)) '|
          metaPrettyPrint(['SEM_PROCESS], #up(EXSEQ)) '|
          metaPrettyPrint(['SEM_PROCESS], #up(STORE)) '> .

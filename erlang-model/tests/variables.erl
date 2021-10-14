@@ -2,6 +2,6 @@
 
        fun start() ->
                X = 42,
-               Y = X,
+               Y = X - 2,
                Z .
 , start, empty))

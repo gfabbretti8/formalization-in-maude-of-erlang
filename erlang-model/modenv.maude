@@ -59,8 +59,8 @@ fmod SEM_MODENV is
 
 	op #get-function : Atom ModEnv -> ExpSeq .
 
-  eq #get-function(FNAME, FNAME ==> FUNBODY, MAP) = FUNBODY, #bottom .
-  eq #get-function(FNAME, FNAME[ARGS] ==> FUNBODY, MAP) = FUNBODY, #bottom .
+  eq #get-function(FNAME, FNAME ==> FUNBODY, MAP) = FUNBODY .
+  eq #get-function(FNAME, FNAME[ARGS] ==> FUNBODY, MAP) = FUNBODY .
   eq #get-function(FNAME1, FNAME2 ==> FUNBODY, MAP)
      = #get-function(FNAME1, MAP) [owise] .
 

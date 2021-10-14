@@ -13,6 +13,7 @@ fmod SYNTAX-COMMON is
   op #bottom : -> Exp .
   op #crashed : -> Exp .
   op _,_ : ExpSeq ExpSeq -> ExpSeq [ctor assoc prec 51 gather (e E) format (o m! o o)] .
+  op begin_end : ExpSeq -> Exp [ctor prec 70 format (o m! o m!)] .
 
   sorts List ListOfGroundValues ListOfPatterns Nil .
   subsort Nil < List .
@@ -173,6 +174,8 @@ fmod MAUDE-SYNTAX-UP is
   eq #up(#hole) = '#hole.ExpSeq .
   eq #up(#crashed) = '#crashed.ExpSeq .
   eq #up(#bottom) = '#bottom.ExpSeq .
+  eq #up(begin EXSEQ end) = 'begin_end[#up(EXSEQ)] .
+
 
   op #up : FunDef -> Term [memo] .
   eq #up(fun FNAME ()-> EXSEQ .) = 'fun_`(`)->_[#up(FNAME), #up(EXSEQ)] .

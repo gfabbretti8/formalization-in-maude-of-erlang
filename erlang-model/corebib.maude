@@ -3,16 +3,6 @@ mod SEM_COREBIB is
 	protecting STRING .
 	protecting SEM_ENTITIES .
 
-	var INT : Int .
-  var P' : ErlInt .
-	var A : Atom .
-	var P : Pid .
-  var CLSEQ : ClauseSeq .
-  var ASET ASET' : AttributeSet .
-  vars EX EX1 EX2 : Exp .
-  var EXSEQ : ExpSeq .
-  var GVALUE : GroundValues .
-  var STORE : Store .
 
 
 endm

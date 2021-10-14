@@ -7,6 +7,7 @@ mod SEM_PROCESS is
   protecting SEM_MODENV .
   protecting SEM_ENTITY .
   protecting SEM_CONTROL .
+  protecting SEM_NORMALISATION .
   protecting QID .
 
 	sort Process .
@@ -15,14 +16,14 @@ mod SEM_PROCESS is
   op <_|_> : Pid AttributeSet -> Process [ctor frozen] .
 
   sorts ExpAtt ModEnvAtt StoreAtt StackAtt .
-  subsorts ExpAtt ModEnvAtt StoreAtt StackAtt < Attribute .
+  subsorts ExpAtt ModEnvAtt StoreAtt < Attribute .
 
   sort EmptyExp .
 
   op exp:_ : ExpSeq -> ExpAtt [ctor gather (&)] .
-  op store:_ : Store -> StoreAtt [ctor gather (&)] .
+  op store-stack:_ : StoreStack -> StoreAtt [ctor gather (&)] .
   op mod-env:_ : ModEnv -> ModEnvAtt [ctor gather (&)] .
-  op stack:_ : Stack -> StackAtt [ctor gather (&)] .
+
 
   *******************************
   *** METAREPRESENTATION PART ***
@@ -41,7 +42,7 @@ mod SEM_PROCESS is
   var A : Attribute .
   var ASET : AttributeSet .
   var SUB : Substitution .
-  var STORE : Store .
+  var STORESTACK : StoreStack .
 
 
 	eq #up(< P | ASET >) = '<_|_>[#up(P),#up(ASET)] .
@@ -50,9 +51,9 @@ mod SEM_PROCESS is
    if A =/= (none).AttributeSet /\ ASET =/= (none).AttributeSet .
 
   eq #up(exp: EXSEQ) = 'exp:_[#up(EXSEQ)] .
-  eq #up(store: STORE) = 'store:_[#up(STORE)] .
+  eq #up(store-stack: STORESTACK) = 'store-stack:_[#up(STORESTACK)] .
   eq #up(mod-env: ME) = 'mod-env:_[#up(ME)] .
-  eq #up(stack: STACK) = 'stack:_[#up(STACK)] .
+
 
   eq #downEntity('<_|_>[T1,T2]) = < #downPid(T1) | #downAttributeSet(T2) > .
   ceq #downAttributeSet(T1) = #downAttribute(T2), #downAttributeSet(T3)
@@ -62,8 +63,8 @@ mod SEM_PROCESS is
   eq #downAttributeSet(T1) = #downAttribute(T1) [owise] .
 
   eq #downAttribute('exp:_[T1]) = exp: #downExpSeq(T1) .
-  eq #downAttribute('store:_[T1]) = store: #downStore(T1) .
+  eq #downAttribute('store-stack:_[T1]) = store-stack: #downStoreStack(T1) .
   eq #downAttribute('mod-env:_[T1]) = mod-env: #downModEnv(T1) .
-  eq #downAttribute('stack:_[T1]) = stack: #downStack(T1) .
+
 
 endm

@@ -3,10 +3,9 @@ mod SEM_ENTITIES is
   protecting META-LEVEL .
 	protecting MAUDE-SYNTAX-UPDOWN .
 	protecting SEM_ENTITY .
-  protecting SEM_PROCESS .
   protecting SEM_MESSAGE .
   protecting SEM_PID .
-
+  protecting SEM_MODENV .
   sort Entities .
   subsort Entity < Entities .
 
@@ -27,7 +26,9 @@ mod SEM_ENTITIES is
 	vars T T1 T2 : Term .
 
 	eq #up(#empty-entities) = '#empty-entities.Entities .
-	eq #up(E || ENTS) = '_||_[#up(E), #up(ENTS)] .
+	ceq #up(E || ENTS) = '_||_[#up(E), #up(ENTS)]
+     if ENTS =/= #empty-entities .
+  
 
 	eq #downEntities('#empty-entities.Entities) = #empty-entities .
 	ceq #downEntities(T) = #downEntity(T1) || #downEntities(T2)

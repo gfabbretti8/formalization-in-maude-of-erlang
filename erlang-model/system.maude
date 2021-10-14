@@ -33,6 +33,8 @@ mod SEM_TRANSITIONS is
 	protecting SEM_ENTITIES .
   protecting SEM_MATCH_ENTITY .
   protecting SEM_NORMALISATION .
+  protecting SEM_PROCESS .
+
 
 	var EX : Exp .
   var EXSEQ EXSEQ' : ExpSeq .
@@ -47,10 +49,10 @@ mod SEM_TRANSITIONS is
   var MSG : Message .
   vars ASET ASET' : AttributeSet .
   var ENTS : Entities .
-  vars STORE STORE' : Store .
+  vars STORE STORE' : StoreStack .
   var ENTRYPOINT : FunName .
   var MOD : FunDefSeq .
-  vars STACK STACK' : Stack .
+  var LABEL LABEL' : Label .
 
 	*******************************
   ******** INIT FUNCTION ********
@@ -58,7 +60,7 @@ mod SEM_TRANSITIONS is
 
   op #setup-first-proc : Entities FunName FunDefSeq GroundValues -> Entities .
   ceq #setup-first-proc(ENTS, ENTRYPOINT, MOD, ARGS)
-      = < pid(0) | exp: EXSEQ, mod-env: ME, store: STORE, stack: emptyStack > || pidGen(0)
+      = < pid(0) | exp: EXSEQ, mod-env: ME, store-stack: STORE > || pidGen(0)
       if ME := #extract-functions(MOD) /\ EXSEQ := #get-function(ENTRYPOINT, ME) /\
          STORE := #init-store(#get-formal-args(ENTRYPOINT, ME), ARGS) .
 
@@ -67,16 +69,16 @@ mod SEM_TRANSITIONS is
 	*******************************
 
   crl [sys-tau] :
-      < P | exp: EXSEQ, store: STORE, stack: STACK, mod-env: ME, ASET >  =>
-      < P | exp: EXSEQ', store: STORE', stack: STACK', mod-env: ME, ASET >
-      if < tau, STORE', EXSEQ', STACK', ME > :=
-         < empty, STORE, EXSEQ, STACK, ME > .
+      < P | exp: EXSEQ, store-stack: STORE, mod-env: ME, ASET >  =>
+      < P | exp: EXSEQ', store-stack: STORE', mod-env: ME, ASET >
+      if < tau, STORE', EXSEQ', ME > :=
+         < empty, STORE, EXSEQ, ME > .
 
   crl [sys-crash] :
-      < P | exp: EXSEQ, store: STORE, stack: STACK, mod-env: ME, ASET >  =>
-      < P | exp: #crashed, store: STORE', stack: STACK', mod-env: ME, ASET >
-      if < crashed, STORE', EXSEQ', STACK', ME > :=
-         < empty, STORE, EXSEQ, STACK, ME > .
+      < P | exp: EXSEQ, store-stack: STORE, mod-env: ME, ASET >  =>
+      < P | exp: #crashed, store-stack: STORE', mod-env: ME, ASET >
+      if < crashed, STORE', EXSEQ', ME > :=
+         < empty, STORE, EXSEQ, ME > .
 endm
 
 mod SEM_EQUATIONS is
