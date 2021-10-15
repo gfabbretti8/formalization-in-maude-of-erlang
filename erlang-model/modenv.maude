@@ -25,8 +25,8 @@ fmod SEM_MODENV is
 	protecting MAUDE-SYNTAX-UPDOWN .
 
 	sort ModEnvMap .
-	op _==>_ : FunName ExpSeq -> ModEnvMap [ctor prec 70] .
-	op _[_]==>_ : FunName Args ExpSeq -> ModEnvMap [ctor prec 70] .
+	op _==>_ : FunName NeExpSeq -> ModEnvMap [ctor prec 70] .
+	op _[_]==>_ : FunName Args NeExpSeq -> ModEnvMap [ctor prec 70] .
 
   sort ModEnv .
 	subsort ModEnvMap < ModEnv .
@@ -34,7 +34,7 @@ fmod SEM_MODENV is
 	op #empty-modenv : -> ModEnv [ctor] .
 	op _,_ : ModEnv ModEnv -> ModEnv [ctor assoc comm prec 71 id: #empty-modenv] .
 
-	var FUNBODY : ExpSeq .
+	var FUNBODY : NeExpSeq .
 	var MN : Atom .
   var FDEF : FunDef .
 	var FDLIST : FunDefSeq .
@@ -57,16 +57,15 @@ fmod SEM_MODENV is
 	eq #extract-functions(fun FNAME (ARGS) -> FUNBODY .)
 		= FNAME[ARGS] ==> FUNBODY .
 
-	op #get-function : Atom ModEnv -> ExpSeq .
+	op #get-function : Atom ModEnv -> NeExpSeq .
 
   eq #get-function(FNAME, FNAME ==> FUNBODY, MAP) = FUNBODY .
   eq #get-function(FNAME, FNAME[ARGS] ==> FUNBODY, MAP) = FUNBODY .
   eq #get-function(FNAME1, FNAME2 ==> FUNBODY, MAP)
      = #get-function(FNAME1, MAP) [owise] .
 
-  op #empty : -> Pattern .
 
-  op #get-formal-args : Atom ModEnv -> ExpSeq .
+  op #get-formal-args : Atom ModEnv -> NeExpSeq .
   eq #get-formal-args(FNAME, FNAME ==> FUNBODY, MAP) = #empty .
   eq #get-formal-args(FNAME, FNAME[ARGS]==> FUNBODY, MAP) = ARGS .
   eq #get-formal-args(FNAME1, FNAME2 ==> FUNBODY, MAP)
@@ -83,7 +82,7 @@ fmod SEM_MODENV is
 	op #downModEnv : Term -> ModEnv [memo] .
  	op #downModEnvMap : Term -> ModEnv [memo] .
 
-	var EXSEQ : ExpSeq .
+	var EXSEQ : NeExpSeq .
 	vars T T1 T2 T3 : Term .
 	var SUB : Substitution .
   var ME : ModEnv .

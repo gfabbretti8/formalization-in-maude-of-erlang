@@ -20,7 +20,7 @@ mod SEM_PROCESS is
 
   sort EmptyExp .
 
-  op exp:_ : ExpSeq -> ExpAtt [ctor gather (&)] .
+  op exp:_ : NeExpSeq -> ExpAtt [ctor gather (&)] .
   op store-stack:_ : StoreStack -> StoreAtt [ctor gather (&)] .
   op mod-env:_ : ModEnv -> ModEnvAtt [ctor gather (&)] .
 
@@ -34,7 +34,7 @@ mod SEM_PROCESS is
 
   var STACK : Stack .
 	var EX : Exp .
-  var EXSEQ : ExpSeq .
+  var EXSEQ : NeExpSeq .
 	vars T1 T2 T3 : Term .
   var P : Pid .
   var MSG : Atom .

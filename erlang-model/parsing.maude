@@ -192,14 +192,12 @@ fmod COMMON-SYNTAX-DOWN is
   eq #downExpSeq('_`,_[TERMS]) = #downExpSeq(TERMS) .
   ceq #downExpSeq((T1, TERMS')) = #downExp(T1), #downExpSeq(TERMS')
      if TERMS' =/= empty .
-  eq #downExpSeq('#empty.ExpSeq) = #empty .
+  eq #downExpSeq('nil.ExpSeq) = nil .
   eq #downExpSeq(T1) = #downExp(T1) .
 
   *** EXP
   op #downExp : Term -> Exp [memo] .
-  eq #downExp('#empty.Exp) = #empty .
   eq #downExp('#crashed.Exp) = #crashed .
-  eq #downExp('#hole.Exp) = #hole .
   eq #downExp('#bottom.Exp) = #bottom .
   eq #downExp('begin_end[T1]) = begin #downExpSeq(T1) end .
   eq #downExp('`[`].Nil) = #downList('`[`].Nil) .

@@ -32,16 +32,19 @@ mod SEM_LABEL is
 	*** They indicate that a normal form w.r.t. the equational theory is reached.
 	sort Label .
 	sort StopLabel .
+  sort RequestLabel .
 
   subsort StopLabel < Label .
+  subsort RequestLabel < Label .
 
   var ARGS : Args .
 
-  op empty : -> Label [ctor] .
+  op req-gen : -> RequestLabel [ctor] .
 
 	*** An expression label "tau" is an "unobservable" action.
 	*** This means that the process normalisation within the equational theory continues.
-	op tau : -> Label [ctor] .
+	op tau : -> StopLabel [ctor] .
+
 
 	*** The send expression-level label is used to signal that the corresponding process
 	*** sends a message. The first argument is the receiving PID, the second argument the
@@ -52,18 +55,11 @@ mod SEM_LABEL is
 
 	*** To model the reception on the system level, we switch to the "receive"
 	*** expression level label as soon as we find a matching message in the process's mailbox.
-	op receive_ : ClauseSeq -> StopLabel [ctor] .
-
-	*** When evaluating a receive-statement without a matching message in the mailbox,
-	*** we distinguish two cases:
-	*** First, there is no timeout specified. In this case, we indicate the temporary end
-	*** of the normalisation by setting the process label to "blocked".
-	*** If there is a timeout specified, we indicate the waiting condition. On the system level,
-	*** this means a non-deterministic choice: We do not have a notion of time. Therefore one
-	*** can always continue waiting for arrival of a message or one can issue a timeout.
-	op blocked : -> StopLabel [ctor] .
+	op req-receive(_) : GroundValues -> RequestLabel [ctor] .
+  op received : -> StopLabel .
 
 	op spawn(_,_) : Atom Args -> StopLabel [ctor] .
+  op req-spawn(_) : Pid -> RequestLabel [ctor] .
 
   op crashed : -> StopLabel [ctor] .
 	*******************************
@@ -79,23 +75,26 @@ mod SEM_LABEL is
 	vars T T1 T2 T3 : Term .
 	vars A1 A2 : Atom .
   var CLSEQ : ClauseSeq .
+  var PAYLOAD : GroundValues .
+
 
 	*** Implementation of the meta-representation part
-	eq #up(empty) = 'empty.Label .
 	eq #up(tau) = 'tau.Label .
+  eq #up(req-gen) = 'req-gen.Label .
 	eq #up(PID ! EX) = '_!_[#up(PID),#up(EX)] .
-	eq #up(receive(CLSEQ)) = 'receive_[#up(CLSEQ)] .
-	eq #up(blocked) = 'blocked.StopLabel .
+	eq #up(req-receive(PAYLOAD)) = 'req-receive`(_`)[#up(PAYLOAD)] .
   eq #up(crashed) = 'crashed.StopLabel .
   eq #up(spawn(ATOM, ARGS)) = 'spawn`(_`,_`)[#up(ATOM),#up(ARGS)] .
+  eq #up(req-spawn(PID)) = 'req-spawn`(_`)[#up(PID)] .
+
 
 	*** Lowering the meta-representation level of expression level labels
-	eq #downLabel('empty.Label) = empty .
 	eq #downLabel('tau.Label) = tau .
+  eq #downLabel('req-gen.Label) = req-gen .
 	eq #downLabel('_!_[T1, T2]) = #downPid(T1) ! #downExp(T2) .
-	eq #downLabel('receive_[T]) = receive #downClauseSeq(T) .
-	eq #downLabel('blocked.StopLabel) = blocked .
+	eq #downLabel('req-receive`(_`)[T]) = req-receive(#downPattern(T)) .
   eq #downLabel('crashed.StopLabel) = crashed .
 	eq #downLabel('spawn`(_`,_`)[T1,T2]) = spawn(#downAtom(T1), #downExpSeq(T2)) .
+  eq #downLabel('req-spawn`(_`)[T1]) = req-spawn(#downPid(T1)) .
 endm
 

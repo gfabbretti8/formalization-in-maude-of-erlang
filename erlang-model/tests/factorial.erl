@@ -9,4 +9,4 @@ fun fact(X) ->
       X * fact(Y)
   end .
 
-,fact,120))
+,fact,12))

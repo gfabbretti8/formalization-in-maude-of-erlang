@@ -107,7 +107,7 @@ mod SEM_MATCH_ENTITY is
 	var CLAUSE : Clause .
 	var CLSEQ : ClauseSeq .
 	var PAT : Pattern .
-	var EXSEQ : ExpSeq .
+	var EXSEQ : NeExpSeq .
   var E : Entity .
   var MSG : GroundValues .
   var STORE STORE' : Store .

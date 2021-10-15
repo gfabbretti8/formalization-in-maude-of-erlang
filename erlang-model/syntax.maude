@@ -3,23 +3,27 @@ fmod SYNTAX-COMMON is
   sort Program .
   subsort FunDefSeq < Program .
 
-  sort Construct .
+  sorts Exp ExpSeq NeExpSeq .
 
-  sort Exp ExpSeq .
-  subsort Exp < ExpSeq .
-  op #empty : -> ExpSeq .
-  op #empty : -> Exp .
-  op #hole : -> Exp .
+  subsorts Exp < NeExpSeq < ExpSeq .
+
+  op nil : -> ExpSeq [ctor] .
+  op _,_ : ExpSeq ExpSeq -> ExpSeq [ctor assoc id: nil prec 51 format (o m! o o)] .
+  op _,_ : NeExpSeq ExpSeq  -> NeExpSeq [ditto] .
+  op _,_ : ExpSeq NeExpSeq -> NeExpSeq [ditto] .
+
+  op begin_end : NeExpSeq -> Exp [ctor prec 70 format (o m! o m!)] .
+
   op #bottom : -> Exp .
   op #crashed : -> Exp .
-  op _,_ : ExpSeq ExpSeq -> ExpSeq [ctor assoc prec 51 gather (e E) format (o m! o o)] .
-  op begin_end : ExpSeq -> Exp [ctor prec 70 format (o m! o m!)] .
+
+  sort GroundValues .
+  subsorts ListOfGroundValues Atom ErlInt < GroundValues .
+  subsort GroundValues < Exp .
 
   sorts List ListOfGroundValues ListOfPatterns Nil .
   subsort Nil < List .
-  subsort List < Exp .
-  subsort List < GroundValues .
-  subsort List < Pattern .
+  subsort List < Exp GroundValues Pattern .
 
   subsort ListOfGroundValues < List .
 
@@ -37,13 +41,9 @@ fmod SYNTAX-COMMON is
   sort Var .
   subsort Var < Exp .
 
-  sort GroundValues .
-  subsorts ListOfGroundValues Atom ErlInt < GroundValues .
-  subsort GroundValues < Exp .
-
   sort Pattern .
   subsorts GroundValues Var < Pattern .
-  subsort Pattern < Exp .
+  subsorts Pattern < Exp .
 
   sort Mult .
   subsort Mult < Exp .
@@ -77,12 +77,15 @@ fmod SYNTAX-COMMON is
   subsort FunCall < Exp .
 
   sort Args .
-  subsort ExpSeq Pattern GroundValues < Args .
+  subsort Args < Exp .
+  subsort Pattern GroundValues < Args .
 
-  op _,_ : Args Args -> Args [ctor assoc prec 60 gather (E e) format (o m! o o)] .
+  op #empty : -> Args .
 
-  op fun_()->_. : FunName ExpSeq -> FunDef [ctor prec 70 format (m! o m! m! m! o m! o)] .
-  op fun_(_)->_. : FunName Args ExpSeq -> FunDef [ctor prec 70 format (m! o m! o m! m! o m! o)] .
+  op _,_ : Args Args -> Args [ctor assoc id: nil prec 60 format (o m! o o)] .
+
+  op fun_()->_. : FunName NeExpSeq -> FunDef [ctor prec 70 format (m! o m! m! m! o m! o)] .
+  op fun_(_)->_. : FunName Args NeExpSeq -> FunDef [ctor prec 70 format (m! o m! o m! m! o m! o)] .
   op __ : FunDefSeq FunDefSeq -> FunDefSeq [ctor assoc prec 71 format(o o o)] .
   op _() : Exp -> FunCall [ctor prec 10 format (o m! m! o)] .
   op _(_) : Exp Args -> FunCall [ctor prec 10 format (o m! o m! o)] .
@@ -118,16 +121,12 @@ fmod PARSING-SYNTAX is
 	extending SYNTAX .
 	sort Token .
 
-	subsort Token < Atom ErlInt Var .
+	subsort NeTokenList Token < Atom ErlInt Var .
 
 	sort NeTokenList .
 	subsort Token < NeTokenList .
-  subsort NeTokenList < Exp .
-	op _,_ : NeTokenList NeTokenList -> NeTokenList [ctor assoc prec 65 gather (E e) format (o m! o o)] .
+	op _,_ : NeTokenList NeTokenList -> NeTokenList [ctor assoc id: nil prec 65  format (o m! o o)] .
 
-	sort ListToken .
-	subsort ListToken < GroundValues .
-  subsort List < ListToken .
 
 endfm
 
@@ -167,11 +166,12 @@ fmod MAUDE-SYNTAX-UP is
   vars CLS CLS1 CLS2 : ClauseSeq .
 
 	op #up : ExpSeq -> Term [memo] .
-	eq #up(EXSEQ, EXSEQ') = '_`,_[#up(EXSEQ), #up(EXSEQ')] .
+
+	ceq #up(EXSEQ, EXSEQ') = '_`,_[#up(EXSEQ), #up(EXSEQ')]
+     if EXSEQ =/= nil /\ EXSEQ' =/= nil .
 
   op #up : Exp -> Term [memo] .
-  eq #up(#empty) = '#empty.ExpSeq .
-  eq #up(#hole) = '#hole.ExpSeq .
+
   eq #up(#crashed) = '#crashed.ExpSeq .
   eq #up(#bottom) = '#bottom.ExpSeq .
   eq #up(begin EXSEQ end) = 'begin_end[#up(EXSEQ)] .

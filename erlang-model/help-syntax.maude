@@ -3,12 +3,11 @@ mod HELP-SYNTAX is
   protecting SYNTAX .
 
   var EX : Exp .
-  var EXSEQ : ExpSeq .
+  var EXSEQ : NeExpSeq .
 
   op #head : ExpSeq -> ExpSeq .
   eq #head(EX, EXSEQ) = EX, EXSEQ .
-  eq #head(EX) = EX, #empty .
-  eq #head(#empty) = #empty .
+  eq #head(EX) = EX .
 
 
 endm

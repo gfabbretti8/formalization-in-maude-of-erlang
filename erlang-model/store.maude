@@ -20,26 +20,22 @@ fmod SEM_STORE is
   eq ENTRY, ENTRY = ENTRY .
 
   vars EX EX' : Exp .
-  vars EXSEQ EXSEQ' : ExpSeq .
+  vars EXSEQ EXSEQ' : NeExpSeq .
   var PAT TAIL : Pattern .
   var VAR : Var .
+  var ARGS : Args .
 
-
-  op #init-store : ExpSeq ExpSeq -> Store .
-  eq #init-store((EX, EXSEQ), (EX', EXSEQ')) = EX |-> EX', #init-store(EXSEQ, EXSEQ') .
+  op #init-store : NeExpSeq NeExpSeq -> Store .
   eq #init-store(#empty, EXSEQ) = empty .
+  eq #init-store((EX, EXSEQ), (EX', EXSEQ')) = EX |-> EX', #init-store(EXSEQ, EXSEQ') .
   eq #init-store(EX, EX') = EX |-> EX' .
 
-  op #extract-and-map-args : Pattern Store -> Args .
-  eq #extract-and-map-args([], STORE) = #empty .
-  eq #extract-and-map-args([PAT], STORE) = #map-arg(PAT, STORE) .
-  eq #extract-and-map-args([PAT | TAIL], STORE) = #map-arg(PAT, STORE), #extract-and-map-args(TAIL, STORE) .
-  eq #extract-and-map-args(PAT, STORE) = #map-arg(PAT, STORE) .
+  op #map-args : Args Store -> List .
 
-  op #map-args : Pattern Store -> List .
   eq #map-args([], STORE) = [] .
   eq #map-args([PAT], STORE) = [#map-arg(PAT, STORE)] .
-  eq #map-args([PAT | TAIL], STORE) = [#map-arg(PAT, STORE)| #extract-and-map-args(TAIL, STORE)] .
+  eq #map-args([PAT | TAIL], STORE) = [#map-arg(PAT, STORE)| #map-args(TAIL, STORE)] .
+  eq #map-args(PAT, ARGS, STORE) = #map-args(PAT, STORE), #map-args(ARGS, STORE) .
   eq #map-args(PAT, STORE) = #map-arg(PAT, STORE) .
 
   op #map-arg : Pattern Store -> GroundValues .
