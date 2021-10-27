@@ -64,6 +64,7 @@ fmod PRODUCE-FWD-SEM is
 *** The following function analyses the kind of rule (if conditional or not)
 *** and then proceeds to the appropriate transformation. The only difference
 *** is that in a conditional rule we must also consider the if clause.
+
   op #transform-rl-crl : Rule -> Rule .
   eq #transform-rl-crl(rl T1 => T2 [ATT] .)
      = #transform-rl(rl T1 => T2 [ATT] .) .
@@ -107,6 +108,7 @@ fmod PRODUCE-FWD-SEM is
 *** In the other scenario, when declared-in is false, we are dealing with an
 *** Entity of the lower level of the syntax, in that case we must tag it with
 ***  a key.
+
   op #transform-rl-left-term : Term QidList -> TermWithKeys .
   ceq #transform-rl-left-term(OPNAME[TERMS], KEYS) = (OPNAME[TERMS']) * KEYS'
     if #declared-in(upModule('SEM_ENTITIES, false), OPNAME) /\

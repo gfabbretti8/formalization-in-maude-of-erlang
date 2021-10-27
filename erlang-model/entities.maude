@@ -28,7 +28,6 @@ mod SEM_ENTITIES is
 	eq #up(#empty-entities) = '#empty-entities.Entities .
 	ceq #up(E || ENTS) = '_||_[#up(E), #up(ENTS)]
      if ENTS =/= #empty-entities .
-  
 
 	eq #downEntities('#empty-entities.Entities) = #empty-entities .
 	ceq #downEntities(T) = #downEntity(T1) || #downEntities(T2)

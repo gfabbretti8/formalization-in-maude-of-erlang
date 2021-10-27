@@ -24,125 +24,125 @@ mod SEM_NORMALISATION is
 
 
   sort ExpConf .
-  op <_,_,_,_> : Label Store ExpSeq ModEnv -> ExpConf [ctor frozen] .
+  op <_,_,_> : Label Store ExpSeq -> ExpConf [ctor frozen] .
 
    ceq [var] :
-    < REQLABEL, STORE : STORESTACK, VAR, ME > =
-    < crashed, STORE : STORESTACK, VAR, ME >
+    < REQLABEL, STORE : STORESTACK, VAR > =
+    < crashed, STORE : STORESTACK, VAR >
     if STORE[VAR] == undefined .
 
    ceq [var] :
-    < REQLABEL, STORE : STORESTACK, VAR, ME > =
-    < tau, STORE : STORESTACK, STORE[VAR], ME >
+    < REQLABEL, STORE : STORESTACK, VAR > =
+    < tau, STORE : STORESTACK, STORE[VAR] >
     if STORE[VAR] =/= undefined .
 
     eq [match] :
-     < REQLABEL, STORE : STORESTACK, GVALUE = GVALUE, ME > =
-     < tau, STORE : STORESTACK, GVALUE, ME > .
+     < REQLABEL, STORE : STORESTACK, GVALUE = GVALUE > =
+     < tau, STORE : STORESTACK, GVALUE > .
 
    ceq [match] :
-     < REQLABEL, STORE : STORESTACK, GVALUE = GVALUE', ME > =
-     < crashed, STORE : STORESTACK, #crashed, ME >
+     < REQLABEL, STORE : STORESTACK, GVALUE = GVALUE' > =
+     < crashed, STORE : STORESTACK, #crashed >
      if GVALUE =/= GVALUE' .
 
    ceq [match] :
-    < REQLABEL, STORE : STORESTACK, VAR = GVALUE, ME > =
-    < tau, STORE' : STORESTACK, GVALUE, ME >
+    < REQLABEL, STORE : STORESTACK, VAR = GVALUE > =
+    < tau, STORE' : STORESTACK, GVALUE >
     if STORE[VAR] == undefined /\
        STORE' := insert(VAR, GVALUE, STORE) .
 
    ceq [match] :
-    < REQLABEL, STORE : STORESTACK, VAR = GVALUE, ME > =
-    < crashed, STORE : STORESTACK, #crashed, ME >
+    < REQLABEL, STORE : STORESTACK, VAR = GVALUE > =
+    < crashed, STORE : STORESTACK, #crashed >
     if STORE[VAR] =/= undefined .
 
    ceq [match] :
-    < REQLABEL, STORESTACK, VAR = EX, ME > =
-    < LABEL, STORESTACK', VAR = EX', ME >
-    if < LABEL, STORESTACK', EX', ME > :=
-       < REQLABEL, STORESTACK, EX, ME > .
+    < REQLABEL, STORESTACK, VAR = EX > =
+    < LABEL, STORESTACK', VAR = EX' >
+    if < LABEL, STORESTACK', EX' > :=
+       < REQLABEL, STORESTACK, EX > .
 
    ceq [minus] :
-    < REQLABEL, STORESTACK, int(INT) - int(INT'), ME > =
-    < tau, STORESTACK, int(RES), ME >
+    < REQLABEL, STORESTACK, int(INT) - int(INT') > =
+    < tau, STORESTACK, int(RES) >
     if RES := downTerm(getTerm(metaReduce(upModule('INT, false), '_-_[upTerm(INT), upTerm(INT')])), INT) .
 
    ceq [minus] :
-    < REQLABEL, STORESTACK, int(INT) - EX , ME > =
-    < LABEL, STORESTACK', int(INT) - EX', ME >
-    if < LABEL, STORESTACK', EX' , ME > :=
-       < REQLABEL, STORESTACK, EX , ME > .
+    < REQLABEL, STORESTACK, int(INT) - EX > =
+    < LABEL, STORESTACK', int(INT) - EX' >
+    if < LABEL, STORESTACK', EX' > :=
+       < REQLABEL, STORESTACK, EX > .
 
    ceq [minus] :
-    < REQLABEL, STORESTACK, EX1 - EX2 , ME > =
-    < LABEL, STORESTACK', EX1' - EX2 , ME >
-    if < LABEL, STORESTACK', EX1' , ME > :=
-       < REQLABEL, STORESTACK, EX1 , ME > .
+    < REQLABEL, STORESTACK, EX1 - EX2 > =
+    < LABEL, STORESTACK', EX1' - EX2 >
+    if < LABEL, STORESTACK', EX1' > :=
+       < REQLABEL, STORESTACK, EX1 > .
 
    ceq [mult] :
-    < REQLABEL, STORESTACK, int(INT) * int(INT'), ME > =
-    < tau, STORESTACK, int(RES), ME >
+    < REQLABEL, STORESTACK, int(INT) * int(INT') > =
+    < tau, STORESTACK, int(RES) >
     if RES := downTerm(getTerm(metaReduce(upModule('INT, false), '_*_[upTerm(INT), upTerm(INT')])), INT) .
 
    ceq [mult] :
-    < REQLABEL, STORESTACK, int(INT) * EX , ME > =
-    < LABEL, STORESTACK', int(INT) * EX', ME >
-    if < LABEL, STORESTACK', EX' , ME > :=
-       < REQLABEL, STORESTACK, EX , ME > .
+    < REQLABEL, STORESTACK, int(INT) * EX > =
+    < LABEL, STORESTACK', int(INT) * EX' >
+    if < LABEL, STORESTACK', EX' > :=
+       < REQLABEL, STORESTACK, EX > .
 
    ceq [mult] :
-    < REQLABEL, STORESTACK, EX1 * EX2 , ME > =
-    < LABEL, STORESTACK', EX1' * EX2 , ME >
-    if < LABEL, STORESTACK', EX1' , ME > :=
-       < REQLABEL, STORESTACK, EX1 , ME > .
+    < REQLABEL, STORESTACK, EX1 * EX2 > =
+    < LABEL, STORESTACK', EX1' * EX2 >
+    if < LABEL, STORESTACK', EX1' > :=
+       < REQLABEL, STORESTACK, EX1 > .
 
    ceq [case-succ] :
-    < REQLABEL, STORE : STORESTACK, case GVALUE of CLSEQ end, ME > =
-    < tau, STORE' : (STORE : STORESTACK), begin EXSEQ end, ME >
+    < REQLABEL, STORE : STORESTACK, case GVALUE of CLSEQ end > =
+    < tau, STORE' : (STORE : STORESTACK), begin EXSEQ end >
      if #entityMatchSuccess(EXSEQ | STORE') := #entityMatch(CLSEQ ; #empty-clauselist | GVALUE | STORE ) .
 
    eq [case-fail] :
-    < REQLABEL, STORESTACK, case GVALUE of CLSEQ end, ME > =
-    < crashed, STORESTACK, #crashed, ME > [owise] .
+    < REQLABEL, STORESTACK, case GVALUE of CLSEQ end > =
+    < crashed, STORESTACK, #crashed > [owise] .
 
    ceq [case] :
-    < REQLABEL, STORESTACK, case EX of CLSEQ end, ME > =
-    < LABEL, STORESTACK', case EX' of CLSEQ end, ME >
-    if < LABEL, STORESTACK', EX', ME > :=
-       < REQLABEL, STORESTACK, EX, ME > .
+    < REQLABEL, STORESTACK, case EX of CLSEQ end > =
+    < LABEL, STORESTACK', case EX' of CLSEQ end >
+    if < LABEL, STORESTACK', EX' > :=
+       < REQLABEL, STORESTACK, EX > .
 
    ceq [funcall] :
-    < REQLABEL, STORE : STORESTACK, FUNNAME(ARGS), ME > =
-    < tau, STORE' : (STORE : STORESTACK), begin EXSEQ end, ME >
+    < funcall(ME), STORE : STORESTACK, FUNNAME(ARGS) > =
+    < tau, STORE' : (STORE : STORESTACK), begin EXSEQ end >
     if STORE' := #init-store(#get-formal-args(FUNNAME, ME),#map-args(ARGS,STORE)) /\
         EXSEQ := #get-function(FUNNAME, ME) .
 
    ceq [funcall] :
-    < REQLABEL, STORESTACK, FUNNAME(EXSEQ), ME > =
-    < LABEL, STORESTACK', FUNNAME(EXSEQ'), ME >
-    if < LABEL, STORESTACK', EXSEQ', ME > :=
-       < REQLABEL, STORESTACK, EXSEQ, ME > .
+    < REQLABEL, STORESTACK, FUNNAME(EXSEQ) > =
+    < LABEL, STORESTACK', FUNNAME(EXSEQ') >
+    if < LABEL, STORESTACK', EXSEQ' > :=
+       < REQLABEL, STORESTACK, EXSEQ > .
 
    eq [begin] :
-    < REQLABEL, STORE : STORESTACK, begin GVALUE end, ME > =
-    < tau, STORESTACK, GVALUE, ME > .
+    < REQLABEL, STORE : STORESTACK, begin GVALUE end > =
+    < tau, STORESTACK, GVALUE > .
 
    ceq [begin] :
-    < REQLABEL, STORESTACK, begin EXSEQ end, ME > =
-    < LABEL, STORESTACK', begin EXSEQ' end, ME >
-    if < LABEL, STORESTACK', EXSEQ', ME > :=
-       < REQLABEL, STORESTACK, EXSEQ, ME > .
+    < REQLABEL, STORESTACK, begin EXSEQ end > =
+    < LABEL, STORESTACK', begin EXSEQ' end >
+    if < LABEL, STORESTACK', EXSEQ' > :=
+       < REQLABEL, STORESTACK, EXSEQ > .
 
    ceq [seq] :
-    < REQLABEL, STORESTACK, EX, EXSEQ, ME > =
-    < LABEL, STORESTACK', EX', EXSEQ, ME >
-    if < LABEL, STORESTACK', EX', ME > :=
-       < REQLABEL, STORESTACK, EX, ME > /\
+    < REQLABEL, STORESTACK, EX, EXSEQ > =
+    < LABEL, STORESTACK', EX', EXSEQ >
+    if < LABEL, STORESTACK', EX' > :=
+       < REQLABEL, STORESTACK, EX > /\
        not(EX :: GroundValues ).
 
    eq [seq] :
-    < REQLABEL, STORESTACK, GVALUE, EXPSEQ, ME > =
-    < tau, STORESTACK, EXPSEQ, ME > .
+    < REQLABEL, STORESTACK, GVALUE, EXPSEQ > =
+    < tau, STORESTACK, EXPSEQ > .
 
 endm
 

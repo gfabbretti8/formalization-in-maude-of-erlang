@@ -1,5 +1,5 @@
 load framework.maude
-load tests/client-server.erl
+load tests/meViolation.erl
 (pprint-sys)
 
 

@@ -34,7 +34,7 @@ mod SEM_TRANSITIONS is
   protecting SEM_MATCH_ENTITY .
   protecting SEM_NORMALISATION .
   protecting SEM_PROCESS .
-
+  protecting HELP-SYNTAX .
 
 	var EX : Exp .
   var EXSEQ EXSEQ' EXSEQ'' : NeExpSeq .
@@ -74,41 +74,53 @@ mod SEM_TRANSITIONS is
 	*******************************
 
   crl [sys-receive] :
-      < P | exp: EXSEQ, store-stack: STORE, mod-env: ME, ASET > ||
+      < P | exp: EXSEQ, store-stack: STORE, ASET > ||
       < sender: SENDER, receiver: P, payload: GVALUE > =>
-      < P | exp: EXSEQ', store-stack: STORE', mod-env: ME, ASET >
-      if < received, STORE', EXSEQ', ME > :=
-         < req-receive(GVALUE), STORE, EXSEQ, ME > [print EXSEQ'] .
+      < P | exp: EXSEQ', store-stack: STORE', ASET >
+      if < received, STORE', EXSEQ' > :=
+         < req-receive(GVALUE), STORE, EXSEQ > .
 
   crl [sys-spawn] :
       < P | exp: EXSEQ, store-stack: STORE, mod-env: ME, ASET > || pidGen(INT) =>
       < P | exp: EXSEQ', store-stack: STORE', mod-env: ME, ASET > ||
-      < pid(INT + 1) | exp: EXSEQ'', mod-env: ME, store-stack: STORE' > ||
+      < pid(INT + 1) | exp: EXSEQ'', store-stack: STORE', mod-env: ME > ||
        pidGen(INT + 1)
-   		if < spawn(FUNNAME,ARGS), STORE', EXSEQ', ME > :=
-         < req-spawn(pid(INT + 1)), STORE, EXSEQ, ME > /\
+   		if < spawn(FUNNAME,ARGS), STORE', EXSEQ' > :=
+         < req-spawn(pid(INT + 1)), STORE, EXSEQ > /\
          EXSEQ'' := #get-function(FUNNAME, ME) /\
          ARGS' := #map-args(ARGS, STORE') /\
-         STORE'' := #init-store(#get-formal-args(FUNNAME, ME), ARGS') .
+         STORE'' := #init-store(#get-formal-args(FUNNAME, ME), #flatten-list(ARGS')) .
+
+  crl [sys-self] :
+      < P | exp: EXSEQ, store-stack: STORE, ASET > =>
+      < P | exp: EXSEQ', store-stack: STORE', ASET >
+      if < tau, STORE', EXSEQ' > :=
+         < self(P), STORE, EXSEQ > .
 
   crl [sys-send] :
-      < P | exp: EXSEQ, store-stack: STORE, mod-env: ME, ASET > =>
-      < P | exp: EXSEQ', store-stack: STORE', mod-env: ME, ASET > ||
+      < P | exp: EXSEQ, store-stack: STORE, ASET > =>
+      < P | exp: EXSEQ', store-stack: STORE', ASET > ||
       < sender: P, receiver: DEST, payload: GVALUE >
-      if < DEST ! GVALUE, STORE', EXSEQ', ME > :=
-         < req-gen, STORE, EXSEQ, ME > .
+      if < DEST ! GVALUE, STORE', EXSEQ' > :=
+         < req-gen, STORE, EXSEQ > .
 
   crl [sys-tau] :
+      < P | exp: EXSEQ, store-stack: STORE, ASET >  =>
+      < P | exp: EXSEQ', store-stack: STORE', ASET >
+      if < tau, STORE', EXSEQ' > :=
+         < req-gen, STORE, EXSEQ > .
+
+  crl [sys-funcall] :
       < P | exp: EXSEQ, store-stack: STORE, mod-env: ME, ASET >  =>
       < P | exp: EXSEQ', store-stack: STORE', mod-env: ME, ASET >
-      if < tau, STORE', EXSEQ', ME > :=
-         < req-gen, STORE, EXSEQ, ME > .
+      if < tau, STORE', EXSEQ' > :=
+         < funcall(ME), STORE, EXSEQ > .
 
   crl [sys-crash] :
-      < P | exp: EXSEQ, store-stack: STORE, mod-env: ME, ASET >  =>
-      < P | exp: #crashed, store-stack: STORE', mod-env: ME, ASET >
-      if < crashed, STORE', EXSEQ', ME > :=
-         < req-gen, STORE, EXSEQ, ME > .
+      < P | exp: EXSEQ, store-stack: STORE, ASET >  =>
+      < P | exp: #crashed, store-stack: STORE', ASET >
+      if < crashed, STORE', EXSEQ' > :=
+         < req-gen, STORE, EXSEQ > .
 
 
 endm

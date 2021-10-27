@@ -26,6 +26,7 @@ mod SEM_LABEL is
 	protecting SYNTAX .
 	protecting SEM_PID .
 	protecting MAUDE-SYNTAX-UPDOWN .
+  protecting SEM_MODENV .
 
 	*** We distinguish between two types of expression level labels.
 	*** First we have labels that signal a side-effect change of the whole system state.
@@ -45,6 +46,9 @@ mod SEM_LABEL is
 	*** This means that the process normalisation within the equational theory continues.
 	op tau : -> StopLabel [ctor] .
 
+  op funcall(_) : ModEnv -> RequestLabel [ctor] .
+
+  op self(_) : Pid -> RequestLabel [ctor] .
 
 	*** The send expression-level label is used to signal that the corresponding process
 	*** sends a message. The first argument is the receiving PID, the second argument the
@@ -62,39 +66,7 @@ mod SEM_LABEL is
   op req-spawn(_) : Pid -> RequestLabel [ctor] .
 
   op crashed : -> StopLabel [ctor] .
-	*******************************
-  *** METAREPRESENTATION PART ***
-	*******************************
-
-	op #up : Label -> Term [memo] .
-	op #downLabel : Term -> Label [memo] .
-
-	var EX : Exp .
-	var PID : Pid .
-	var ATOM : Atom .
-	vars T T1 T2 T3 : Term .
-	vars A1 A2 : Atom .
-  var CLSEQ : ClauseSeq .
-  var PAYLOAD : GroundValues .
 
 
-	*** Implementation of the meta-representation part
-	eq #up(tau) = 'tau.Label .
-  eq #up(req-gen) = 'req-gen.Label .
-	eq #up(PID ! EX) = '_!_[#up(PID),#up(EX)] .
-	eq #up(req-receive(PAYLOAD)) = 'req-receive`(_`)[#up(PAYLOAD)] .
-  eq #up(crashed) = 'crashed.StopLabel .
-  eq #up(spawn(ATOM, ARGS)) = 'spawn`(_`,_`)[#up(ATOM),#up(ARGS)] .
-  eq #up(req-spawn(PID)) = 'req-spawn`(_`)[#up(PID)] .
-
-
-	*** Lowering the meta-representation level of expression level labels
-	eq #downLabel('tau.Label) = tau .
-  eq #downLabel('req-gen.Label) = req-gen .
-	eq #downLabel('_!_[T1, T2]) = #downPid(T1) ! #downExp(T2) .
-	eq #downLabel('req-receive`(_`)[T]) = req-receive(#downPattern(T)) .
-  eq #downLabel('crashed.StopLabel) = crashed .
-	eq #downLabel('spawn`(_`,_`)[T1,T2]) = spawn(#downAtom(T1), #downExpSeq(T2)) .
-  eq #downLabel('req-spawn`(_`)[T1]) = req-spawn(#downPid(T1)) .
 endm
 

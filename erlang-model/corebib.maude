@@ -24,28 +24,32 @@ mod SEM_COREBIB is
   var EXSEQ : NeExpSeq .
 
   eq [spawn] :
-    < req-spawn(pid(INT)), STORESTACK, atom("erlang") : atom("spawn")(FUNNAME, ARGS), ME > =
-    < spawn(FUNNAME,ARGS), STORESTACK, int(INT), ME > .
+    < req-spawn(pid(INT)), STORESTACK, atom("erlang") : atom("spawn")(FUNNAME, ARGS)> =
+    < spawn(FUNNAME,ARGS), STORESTACK, int(INT) > .
 
   eq [send] :
-    < REQLABEL, STORE : STORESTACK, int(INT) ! PAT, ME > =
-    < pid(INT) ! #map-args(PAT, STORE), STORE : STORESTACK, #map-args(PAT, STORE), ME > .
+    < REQLABEL, STORE : STORESTACK, int(INT) ! PAT > =
+    < pid(INT) ! #map-args(PAT, STORE), STORE : STORESTACK, #map-args(PAT, STORE) > .
+
+  eq [self] :
+    < self(pid(INT)), STORESTACK, atom("self")() > =
+    < tau, STORESTACK, int(INT) > .
 
   ceq [send] :
-    < REQLABEL, STORESTACK, PID ! EX, ME > =
-    < LABEL, STORESTACK', PID ! EX', ME >
-    if < LABEL, STORESTACK', EX', ME > :=
-       < REQLABEL, STORESTACK, EX, ME > .
+    < REQLABEL, STORESTACK, PID ! EX > =
+    < LABEL, STORESTACK', PID ! EX' >
+    if < LABEL, STORESTACK', EX' > :=
+       < REQLABEL, STORESTACK, EX > .
 
   ceq [send] :
-    < REQLABEL, STORESTACK, EX1 ! EX2, ME > =
-    < LABEL, STORESTACK, EX1' ! EX2, ME >
-    if < LABEL, STORESTACK, EX1', ME > :=
-       < REQLABEL, STORESTACK, EX1, ME > .
+    < REQLABEL, STORESTACK, EX1 ! EX2 > =
+    < LABEL, STORESTACK, EX1' ! EX2 >
+    if < LABEL, STORESTACK, EX1' > :=
+       < REQLABEL, STORESTACK, EX1 > .
 
   ceq [receive] :
-    < req-receive(PAYLOAD), STORE : STORESTACK, receive CLSEQ end, ME > =
-    < received, STORE' : (STORE : STORESTACK), begin EXSEQ end, ME >
+    < req-receive(PAYLOAD), STORE : STORESTACK, receive CLSEQ end > =
+    < received, STORE' : (STORE : STORESTACK), begin EXSEQ end >
     if #entityMatchSuccess(EXSEQ | STORE') := #entityMatch(CLSEQ ; #empty-clauselist | PAYLOAD | STORE ) .
 
 endm
