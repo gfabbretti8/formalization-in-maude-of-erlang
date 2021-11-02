@@ -73,6 +73,7 @@ mod SEM_TRANSITIONS is
   ******** SYSTEM RULES  ********
 	*******************************
 
+
   crl [sys-receive] :
       < P | exp: EXSEQ, store-stack: STORE, ASET > ||
       < sender: SENDER, receiver: P, payload: GVALUE > =>
@@ -83,7 +84,7 @@ mod SEM_TRANSITIONS is
   crl [sys-spawn] :
       < P | exp: EXSEQ, store-stack: STORE, mod-env: ME, ASET > || pidGen(INT) =>
       < P | exp: EXSEQ', store-stack: STORE', mod-env: ME, ASET > ||
-      < pid(INT + 1) | exp: EXSEQ'', store-stack: STORE', mod-env: ME > ||
+      < pid(INT + 1) | exp: EXSEQ'', store-stack: STORE'', mod-env: ME > ||
        pidGen(INT + 1)
    		if < spawn(FUNNAME,ARGS), STORE', EXSEQ' > :=
          < req-spawn(pid(INT + 1)), STORE, EXSEQ > /\

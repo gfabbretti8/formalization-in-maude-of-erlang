@@ -20,7 +20,7 @@
              [write | NewVal] -> varmanager(NewVal);
              [read | Pid] -> Pid ! Val
            end,
-           varmanager([Val]) .
+           varmanager(Val) .
 
       fun incrementer(MePid, XPid) ->
            S = self(),

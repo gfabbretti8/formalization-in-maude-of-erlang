@@ -12,7 +12,7 @@ fmod SYNTAX-COMMON is
   op _,_ : NeExpSeq ExpSeq  -> NeExpSeq [ditto] .
   op _,_ : ExpSeq NeExpSeq -> NeExpSeq [ditto] .
 
-  op begin_end : NeExpSeq -> Exp [ctor prec 70 format (o m! o m!)] .
+  op begin_end : NeExpSeq -> Exp [ctor prec 35 format (o m! o m!)] .
 
   op #bottom : -> Exp .
   op #crashed : -> Exp .

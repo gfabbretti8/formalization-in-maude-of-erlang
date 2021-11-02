@@ -112,6 +112,11 @@ mod SEM_NORMALISATION is
        < REQLABEL, STORESTACK, EX > .
 
    ceq [funcall] :
+    < funcall(ME), STORE : STORESTACK, FUNNAME() > =
+    < tau, STORE : (STORE : STORESTACK), begin EXSEQ end >
+    if EXSEQ := #get-function(FUNNAME, ME) .
+
+   ceq [funcall] :
     < funcall(ME), STORE : STORESTACK, FUNNAME(ARGS) > =
     < tau, STORE' : (STORE : STORESTACK), begin EXSEQ end >
     if STORE' := #init-store(#get-formal-args(FUNNAME, ME),#map-args(ARGS,STORE)) /\
