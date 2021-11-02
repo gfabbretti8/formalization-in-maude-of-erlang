@@ -1,0 +1,16 @@
+load cinni .
+load syntax .
+load semantics .
+
+set show advisories off .
+
+*** Scope extrusion
+rewrite 'a{0}('x) . 'x{0} < 'b{0} > . nil | ['b] 'a{0} < 'b{0} > . tau . nil .
+
+*** Depth bound non-ternimation avoidance
+rewrite [128] 'a{0} < 'b{0} > . nil | ! 'a{0}('x) . 'a{0} < 'x{0} > . nil .
+
+*** Divergence
+search 'a{0} < 'b{0} > . nil + tau . nil | 'a{0}('x) . nil =>! X:Term .
+
+quit

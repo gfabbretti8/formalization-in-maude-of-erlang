@@ -1,3 +1,0 @@
-[submodule "case-studies/picalc"]
-	path = case-studies/picalc
-	url = https://github.com/bhaaksema/picalc-redux.git
