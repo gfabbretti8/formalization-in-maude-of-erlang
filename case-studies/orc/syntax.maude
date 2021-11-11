@@ -1,0 +1,80 @@
+fmod NAMES is
+
+  protecting QID .
+
+  sorts SiteName ExprName Var IVar Const PreConst ConstList .
+
+  subsorts SiteName ExprName Var < Qid .
+  subsorts Nat < Const < PreConst .
+  subsorts Const < ConstList .
+
+  op tup : ConstList -> Const [ctor] .
+  op tr : Bool -> Const [ctor] .
+  op sig : -> Const [ctor] .
+  op self : -> SiteName [ctor] .
+  op _{_} : Var Nat -> IVar [ctor prec 1] .
+
+  var Q : Qid .
+  cmb Q : SiteName if substr(string(Q), 0, 1) == "s" .
+  cmb Q : ExprName if substr(string(Q), 0, 1) == "e" .
+  cmb Q : Var if substr(string(Q), 0, 1) == "v" .
+
+endfm
+
+fmod PARAMETER is
+
+  protecting NAMES .
+
+  sorts AParam FParam AParamList FParamList .
+
+  subsorts Var < FParam < FParamList .
+  subsorts IVar SiteName Const < AParam < AParamList .
+  subsorts ConstList < AParamList .
+
+  op nilF : -> FParamList [ctor] .
+  op _;_ : FParamList FParamList -> FParamList [ctor assoc id: nilF prec 8] .
+  op nilA : -> ConstList [ctor] .
+  op _,_ : AParamList AParamList -> AParamList [ctor assoc id: nilA prec 8] .
+  op _,_ : ConstList ConstList -> ConstList [ctor assoc id: nilA prec 8] .
+
+endfm
+
+fmod ORC-SYNTAX is
+
+  protecting PARAMETER .
+
+  sorts Prog Decl DeclList Expr Handle .
+
+  subsort Decl < DeclList .
+
+  op h : Nat -> Handle [ctor] .
+  op _;_ : DeclList Expr -> Prog [ctor prec 50] .
+  op nilD : -> DeclList [ctor] .
+  op _;_ : DeclList DeclList -> DeclList [ctor assoc id: nilD prec 40] .
+  op __:=_ : ExprName FParamList Expr -> Decl [ctor frozen(3) prec 30] .
+  op zero : -> Expr [ctor] .
+  op _(_) : SiteName AParamList -> Expr [ctor prec 10] .
+  op _(_) : ExprName AParamList -> Expr [ctor prec 10] .
+  op !_ : IVar -> Expr [ctor prec 5] .
+  op !_ : Const -> Expr [ctor prec 5] .
+  op _>_>_ : Expr Var Expr -> Expr [ctor frozen (3) prec 15 gather (e & E)] .
+  op _|_ : Expr Expr -> Expr [ctor assoc comm prec 20] .
+  op _where_:in_ : Expr Var Expr -> Expr [ctor prec 25 gather (E & e)] .
+  op ?_ : Handle -> Expr [ctor prec 1] .
+
+  var x : Var . var f : Expr .
+  var E : ExprName . var M : SiteName .
+
+  eq zero > x > f = zero .
+  eq zero | f = f .
+
+  *** Syntactic Sugar
+
+  op _:=_ : ExprName Expr -> Decl [prec 30] .
+  eq E := f = E nilF := f .
+  op _() : SiteName -> Expr [prec 10] .
+  op _() : ExprName -> Expr [prec 10] .
+  eq M() = M(nilA) .
+  eq E() = E(nilA) .
+
+endfm

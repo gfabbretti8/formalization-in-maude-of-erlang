@@ -1,0 +1,60 @@
+fmod CINNI is
+
+  protecting PARAMETER .
+
+  sort Subst .
+
+  op [_:=_] : Var AParam  -> Subst [ctor] .
+  op [shiftup_] : Var -> Subst [ctor] .
+  op [lift__] : Var Subst -> Subst [ctor] .
+  op __ : Subst IVar -> IVar [ctor] .
+
+  vars n : Nat .
+  vars a b : Var .
+  vars x : AParam .
+  vars S : Subst .
+
+  eq [a := x] a{0} = x .
+  eq [a := x] a{s(n)} = a{n} .
+  ceq [a := x] b{n} = b{n} if a =/= b .
+  eq [shiftup a] a{n} = a{s(n)} .
+  ceq[shiftup a]b{n} = b{n} if a =/= b .
+  eq [lift a S] a{0} = a{0} .
+  eq [lift a S] a{s(n)} = [shiftup a] S a{n} .
+  ceq [lift a S] b{n} = [shiftup a] S b{n} if a =/= b .
+
+endfm
+
+fmod SUBSTITUTION is
+
+  protecting CINNI .
+  protecting ORC-SYNTAX .
+
+  op __ : Subst Expr -> Expr [frozen (2)] .
+  op __ : Subst AParamList -> AParamList .
+  op [_<-_]_ : FParamList AParamList Expr -> Expr [frozen (3)] .
+
+  vars id : Qid . vars n : Nat .
+  vars p : AParam . vars P : AParamList .
+  vars Q : FParamList .
+  vars d : Decl . vars D : DeclList .
+  vars ix : IVar . vars x : Var . vars c : Const .
+  vars f f’ : Expr .
+  vars S : Subst .
+  vars E : ExprName . vars M : SiteName .
+  var h : Handle .
+  eq [x ; Q <- p, P] f = [x := p] ([Q <- P] f) .
+  eq [nilF <- nilA] f = f .
+  eq S zero = zero .
+  eq S (id ( P )) = id ( S P ) .
+  eq S ! ix = ! (S ix) .
+  eq S ! c = ! c .
+  eq S (f > x > f’) = (S f) > x > ([lift x S] f’) .
+  eq S (f | f’) = (S f) | (S f’) .
+  eq S (f where x :in f’) = ([lift x S] f) where x :in (S f’) .
+  eq S (? h) = ? h .
+  eq S (nilA) = nilA .
+  ceq S (x{n}, P) = (S x{n}) , (S P) if P =/= nilA .
+  eq S (p , P) = p , (S P) [owise] .
+
+endfm

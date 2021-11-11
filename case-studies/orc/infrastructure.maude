@@ -1,0 +1,204 @@
+fmod CLOCK is
+
+  pr NAT .
+  sort Clock .
+  op halt : -> Clock [ctor] .
+  op clock : Nat -> Clock [ctor] .
+  eq clock(1) = halt . --- finite state clock
+
+endfm
+
+fmod EVENT is
+
+  protecting ORC-SYNTAX .
+  sort Event .
+  op _<_,_|_> : SiteName ConstList Handle Nat -> Event [ctor] .
+  op _?_|_ : Handle Const Nat -> Event [ctor] .
+  op !!_|_ : Const Nat -> Event [ctor] .
+  op tau : -> Event [ctor] .
+
+endfm
+
+fmod EVENT-LIST is
+
+  protecting EVENT .
+  sort EventList .
+  subsort Event < EventList .
+  op nil : -> EventList [ctor] .
+  op _._ : EventList EventList -> EventList [ctor assoc id: nil] .
+
+endfm
+
+fmod CONTEXT is
+
+  protecting ORC-SYNTAX .
+
+  sort Context .
+  subsort Decl < Context .
+
+  op mt : -> Context [ctor] .
+  op _,_ : Context Context -> Context [ctor assoc comm id: mt prec 42] .
+  op _<-_ : Context Decl -> Context [ctor prec 45 gather (E e)] .
+
+  var E : ExprName .
+  var f f’ : Expr .
+  var sigma : Context .
+
+  var d : Decl .
+  var Q Q’ : FParamList .
+  eq E Q := f , sigma <- E Q’ := f’ = E Q’ := f’ , sigma .
+  eq sigma <- d = d , sigma [owise] .
+
+endfm
+
+fmod MESSAGES is
+
+  protecting ORC-SYNTAX .
+
+  sorts Msg MsgPool .
+  subsort Msg < MsgPool .
+
+  op [_,_,_] : SiteName [ConstList] Handle -> [Msg] [ctor] .
+  op empty : -> MsgPool [ctor] .
+  op __ : MsgPool MsgPool -> MsgPool [ctor assoc comm id: empty] .
+  var M : SiteName . var C : ConstList . var h : Handle .
+  var pc : PreConst .
+  mb [self, pc, h] : Msg .
+  mb [M, C, h] : Msg .
+
+endfm
+fmod HANDLE-SET is
+  protecting ORC-SYNTAX .
+
+  sort HandleSet .
+  subsort Handle < HandleSet .
+
+  op mth : -> HandleSet [ctor] .
+  op _#_ : HandleSet HandleSet -> HandleSet [ctor assoc comm id: mth] .
+
+  vars h h’ : Handle .
+  vars H : HandleSet .
+  var n : Nat .
+
+  eq h # h # H = h # H .
+
+  op _usedin_ : Handle HandleSet -> Bool .
+  eq h usedin (h’ # H) = h == h’ or h usedin H .
+  eq h usedin mth = false .
+
+  op gFresh : HandleSet -> Handle .
+  op gFreshAux : HandleSet Handle -> Handle .
+
+  eq gFresh(H) = gFreshAux(H, h(0)) .
+  eq gFreshAux(H, h(n)) = if h(n) usedin H
+                          then gFreshAux(H, h(s n))
+                          else h(n) fi .
+
+endfm
+
+fmod RECORD-HS is
+
+  pr EVENT-LIST .
+  pr CONTEXT .
+  pr CLOCK .
+  pr MESSAGES .
+  pr HANDLE-SET .
+  sorts Index Field Record .
+  subsort Field < Record .
+  ops tr con clk msg hdl : -> Index [ctor] .
+  op null : -> Record [ctor] .
+  op _|_ : Record Record -> Record [ctor assoc comm id: null] .
+  op _:_ : Index EventList -> Field [ctor] .
+  op _:_ : Index Context -> Field [ctor] .
+  op _:_ : Index Clock -> Field [ctor] .
+  op _:_ : Index MsgPool -> Field [ctor] .
+  op _:_ : Index HandleSet -> Field [ctor] .
+
+endfm
+
+fmod RECORD-HC is
+
+  pr EVENT-LIST .
+  pr CONTEXT .
+  pr CLOCK .
+  pr MESSAGES .
+
+  sorts Index Field Record .
+  subsort Field < Record .
+
+  ops tr con clk msg hdl : -> Index [ctor] .
+  op null : -> Record .
+  op _|_ : Record Record -> Record [ctor assoc comm id: null] .
+  op _:_ : Index EventList -> Field [ctor] .
+  op _:_ : Index Context -> Field [ctor] .
+  op _:_ : Index Clock -> Field [ctor] .
+  op _:_ : Index MsgPool -> Field [ctor] .
+  op _:_ : Index Handle -> Field [ctor] .
+
+endfm
+
+mod RCONF-HC is
+
+ inc RECORD-HC .
+ sort Conf .
+ op <_,_> : Expr Record -> Conf [ctor frozen(1)] .
+
+endm
+
+mod SOS-RCONF-HC is
+
+ inc RCONF-HC .
+
+ op {_,_} : [Expr] [Record] -> [Conf] [ctor] .
+ op [_,_] : [Expr] [Record] -> [Conf] [ctor] .
+
+ vars f f’ : Expr .
+ vars r r’ : Record .
+
+ crl [step] : < f , r > => < f’ , r’ > if {f,r} => [f’,r’] .
+
+endm
+
+mod RCONF-HS is
+
+ inc RECORD-HS .
+ sort Conf .
+ op <_,_> : Expr Record -> Conf [ctor frozen(1)] .
+
+endm
+
+mod SOS-RCONF-HS is
+
+ inc RCONF-HS .
+
+ op {_,_} : [Expr] [Record] -> [Conf] [ctor] .
+ op [_,_] : [Expr] [Record] -> [Conf] [ctor] .
+
+ vars f f’ : Expr .
+ vars r r’ : Record .
+
+ crl [step] : < f , r > => < f’ , r’ > if {f,r} => [f’,r’] .
+
+endm
+
+mod SIMCOUNTER is
+
+  pr NAT .
+  op counter : -> [Nat] .
+  rl [count] : counter => s(counter) .
+  rl [eval]  : counter => 0 .
+  eq s_^5(counter) = counter .  --- finite state counter
+
+endm
+
+mod SIMRANDOM is
+
+  pr RANDOM .
+  pr SIMCOUNTER .
+  pr RAT .
+  pr CONVERSION .
+  op rand : -> [Nat] .
+  ----rl [rnd] : rand => floor((random(counter) / 4294967296) * 10) .
+  eq rand = 0 .
+
+endm

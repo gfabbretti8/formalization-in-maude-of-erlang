@@ -1,0 +1,106 @@
+mod ORC-SEMANTICS is
+  inc SOS-RCONF-HC .
+  pr SUBSTITUTION .
+
+  pr SIMRANDOM .
+
+  op initCon : DeclList -> Context .
+  op [_] : Prog -> Conf .
+  op app : SiteName ConstList Nat -> PreConst .
+  op eagerEnabled : Conf -> [Bool] [frozen] .
+
+  var d : Decl .
+  var D : DeclList .
+  var h : Handle .
+  var M : SiteName .
+  var c : Const .
+  var x : Var .
+  var P : AParamList .
+  var C : ConstList .
+  vars f f’ g g’ : Expr .
+  var s : Event .
+  var n m : Nat .
+  var E : ExprName .
+  var Q : FParamList .
+  var t : EventList .
+  var sigma : Context .
+  var rho : MsgPool .
+  vars r r’ : Record .
+
+  eq initCon(nilD) = mt .
+
+  eq initCon(D ; d) = initCon(D) <- d .
+
+  eq eagerEnabled(< f, r >) = eagerEnabled({f, r}) .
+
+  eq [D ; f] = < f , (tr : nil) | (con : initCon(D)) |
+                     (clk : clock(0)) | (msg : empty) | (hdl : h(0)) > .
+
+  rl [SiteCall] : { M(C) , (tr : t) | (msg : rho) | (hdl : h(n)) | (clk : clock(m)) | r}
+       => [ ? h(n) , (tr : (t . M < C , h(n) | m >)) | (msg : (rho [M, C, h(n)])) | (hdl : h(s n)) | (clk : clock(m)) | r] .
+
+  eq eagerEnabled({ M(C) , (tr : t) | (msg : rho) | (hdl : h(n)) |
+                            (clk : clock(m)) | r}) = true .
+
+  ceq [M, C, h] = [self, app(M, C, rand), h] if M =/= self .
+
+  rl [SiteRet] : { ? h , (tr : t) | (msg : (rho [self, c, h])) | (clk : clock(m)) | r}
+              => [ ! c , (tr : (t . h ? c | m)) | (msg : rho) | (clk : clock(m)) | r] .
+
+  eq eagerEnabled({ ? h , (tr : t) | (msg : (rho [self, c, h])) | (clk : clock(m)) | r}) = true .
+
+  rl [Pub] : {! c , (tr : t) | (clk : clock(m)) | r}
+             => [zero, (tr : t . (!! c | m)) | (clk : clock(m)) | r] .
+
+  eq eagerEnabled({! c , (tr : t) | (clk : clock(m)) | r}) = true .
+
+  rl [Def] : { E(P), (tr : t) | (con : (sigma , E Q := f)) | r }
+              => [ ([Q <- P] f), (tr : t . tau) | (con : (sigma , E Q := f)) | r ] .
+
+  eq eagerEnabled({ E(P), (tr : t) | (con : (sigma , E Q := f)) | r }) = true .
+
+  crl [Sym] : { f | g , (tr : t) | r} => [ f’ | g, (tr : (t . s)) | r’]
+     if { f , (tr : nil) | r} => [ f’ , (tr : s) | r’ ] .
+
+  ceq eagerEnabled({ f | g , (tr : t) | r}) = true
+    if eagerEnabled({ f , (tr : nil) | r}) .
+
+  crl [Seq1V] : { f > x > g , (tr : t) | r}
+                 => [ (f’ > x > g) | ([x := c] g) , (tr : t . tau) | r’ ]
+                 if { f , (tr : nil) | r } => [ f’ , (tr : (!! c | m)) | r’ ] .
+
+  ceq eagerEnabled({ f > x > g , (tr : t) | r}) = true
+                               if eagerEnabled({ f , (tr : nil) | r }) .
+
+  crl [Seq1N1] : { f > x > g , (tr : t) | r} => [ f’ > x > g , (tr : t . tau) | r’ ]
+                 if { f , (tr : nil) | r } => [ f’ , (tr : tau) | r’ ] .
+
+  crl [Seq1N2] : { f > x > g , (tr : t) | r} => [ f’ > x > g , (tr : (t . h ? c | m)) | r’ ]
+                 if { f , (tr : nil) | r } => [ f’ , (tr : (h ? c | m)) | r’ ] .
+
+  crl [Seq1N3] : { f > x > g , (tr : t) | r} => [ f’ > x > g , (tr : (t . M < C , h | m >)) | r’ ]
+                 if { f , (tr : nil) | r } => [ f’ , (tr : (M < C , h | m >)) | r’ ] .
+
+  crl [Asym1V] : { g where x :in f , (tr : t) | r} => [ ([x := c] g) , (tr : t . tau) | r’ ]
+                 if { f , (tr : nil) | r } => [ f’ , (tr : (!! c | m)) | r’ ] .
+
+  ceq eagerEnabled({ g where x :in f , (tr : t) | r}) = true
+      if eagerEnabled({ f , (tr : nil) | r })  .
+
+  crl [Asym1N1] : { g where x :in f , (tr : t) | r} => [ g where x :in f’ , (tr : t . tau) | r’ ]
+                 if { f , (tr : nil) | r } => [ f’ , (tr : tau) | r’ ] .
+
+  crl [Asym1N2] : { g where x :in f , (tr : t) | r} => [ g where x :in f’ , (tr : (t . h ? c | m)) | r’ ]
+                 if { f , (tr : nil) | r } => [ f’ , (tr : (h ? c | m)) | r’ ] .
+
+ crl [Asym1N3] : { g where x :in f , (tr : t) | r} => [ g where x :in f’ , (tr : (t . M < C , h | m >)) | r’ ]
+                 if { f , (tr : nil) | r } => [ f’ , (tr : (M < C , h | m >)) | r’ ] .
+
+ crl [Asym2] : { g where x :in f , (tr : t) | r} => [ g’ where x :in f , (tr : (t . s)) | r’ ]
+                 if { g , (tr : nil) | r } => [ g’ , (tr : s) | r’ ] .
+
+ ceq eagerEnabled({ g where x :in f , (tr : t) | r}) = true
+                 if eagerEnabled({ g , (tr : nil) | r }) .
+
+endm
+
