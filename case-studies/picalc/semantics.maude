@@ -10,4 +10,5 @@ mod SEMANTICS is
   rl [R-COM] : a < b > . P1 + M1 | a(x) . P2 + M2 => P1 | [x := b] P2 .
   rl [R-REP] : a < b > . P1 + M1 | ! a(x) . P2 + M2 => P1 | [x := b] P2 | ! a(x) . P2 .
   rl [R-TAU] : tau . P1 + M1 => P1 .
+
 endm
