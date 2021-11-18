@@ -1,9 +1,9 @@
 
-load ../erlang-model/framework.maude
+load ./fwd-model/framework.maude
 
-load ./erlang-rev-model/entity-with-key.maude
+load ./rev-model/entity-with-key.maude
 
-load ./erlang-rev-model/framework.maude
+load ./rev-model/framework.maude
 
 
 

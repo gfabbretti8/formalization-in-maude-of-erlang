@@ -1,0 +1,28 @@
+
+	          
+
+
+mod SEM_TRANSITIONS is
+  protecting SEM_ENTITY_WITH_KEY .
+  including BOOL .
+  protecting SEM_ENTITIES .
+  rl M1:SumProc + tau . P1:Proc * key N:NatList
+    => (P1:Proc * key(0 N:NatList))||( [M1:SumProc + tau . P1:Proc * key
+    N:NatList ; @: key(0 N:NatList)]) [label R-TAU] .
+  rl (M1:SumProc + a:Chan < b:Chan > . P1:Proc * key N:NatList)||(M2:SumProc +
+    ! a:Chan(x:Qid). P2:Proc * key N':NatList)
+    => ((P1:Proc * key(0 N':NatList N:NatList))||(! a:Chan(x:Qid). P2:Proc *
+    key(1 N':NatList N:NatList))||([x:Qid := b:Chan]P2:Proc * key(2 N':NatList
+    N:NatList)))||( [(M1:SumProc + a:Chan < b:Chan > . P1:Proc * key
+    N:NatList)||(M2:SumProc + ! a:Chan(x:Qid). P2:Proc * key N':NatList);(@:
+    key(0 N':NatList N:NatList))||(@: key(1 N':NatList N:NatList))||(@: key(2
+    N':NatList N:NatList))]) [label R-REP] .
+  rl (M1:SumProc + a:Chan < b:Chan > . P1:Proc * key N:NatList)||(M2:SumProc +
+    a:Chan(x:Qid). P2:Proc * key N':NatList)
+    => ((P1:Proc * key(0 N':NatList N:NatList))||([x:Qid := b:Chan]P2:Proc *
+    key(1 N':NatList N:NatList)))||( [(M1:SumProc + a:Chan < b:Chan > . P1:Proc
+    * key N:NatList)||(M2:SumProc + a:Chan(x:Qid). P2:Proc * key N':NatList);(
+    @: key(0 N':NatList N:NatList))||(@: key(1 N':NatList N:NatList))]) [label
+    R-COM] .
+endm
+

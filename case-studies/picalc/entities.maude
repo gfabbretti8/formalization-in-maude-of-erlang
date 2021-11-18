@@ -1,0 +1,32 @@
+mod SEM_ENTITIES is
+  protecting SEM_ENTITY .
+
+  sort Entities .
+  subsort Entity < Entities .
+
+  op _||_ : Entities Entities -> Entities [ctor assoc comm prec 9 id: #empty-entities] .
+  op [_]_ : Qid Entities -> Entities [ctor prec 7] .
+  op #empty-entities : -> Entities [ctor] .
+  *** Scope extension
+  vars P P1 P2 : Proc .
+  vars x y : Qid .
+
+  eq [x] nil = nil .
+  ceq [x] P1 || P2 = [x] (P1 || [shift x] P2)
+    if P1 =/= nil and P2 =/= nil .
+  ceq [x] [y] P = [y] [x] P if string(y) < string(x) .
+  ceq nil + P = P if P =/= nil .
+
+  var S : Subst .
+  vars a b : Chan .
+
+  eq S (tau . P) = tau . (S P) .
+  eq S (a < b > . P) = (S a) < (S b) > . (S P) .
+  eq S (a(x) . P) = (S a)(x) . ([lift x S] P) .
+  ceq S (P1 || P2) = (S P1) || (S P2) if P1 =/= nil and P2 =/= nil .
+  eq S ([x] P) = [x] ([lift x S] P) .
+  eq S (! a(x) . P) = ! (S a)(x) . ([lift x S] P) .
+  eq S nil = nil .
+  eq S (P1 + P2) = (S P1) + (S P2) .
+
+endm

@@ -57,7 +57,7 @@
 
   op #declared-in : Module Qid -> Bool .
 
-  eq #declared-in(M, OP) = occurs(OP, #get-ops-name(getOps(M))) [print ].
+  eq #declared-in(M, OP) = occurs(OP, #get-ops-name(getOps(M))) .
 
   op #get-ops-name : OpDeclSet -> QidList .
 
@@ -65,6 +65,5 @@
      = NAME #get-ops-name(OTHERS)
      if OTHERS =/= none .
   eq #get-ops-name(op NAME : TYPES -> TYPE [ATTR] . OTHERS ) = NAME .
-
 
   endfm

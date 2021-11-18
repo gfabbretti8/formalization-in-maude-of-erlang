@@ -142,7 +142,7 @@ fmod PRODUCE-FWD-SEM is
   ceq #transform-rl-right-term(OPNAME[TERMS], ID, KEYS)
     = OPNAME[TERMS'] x ID x OPNAME[PL1]
     if #declared-in(upModule('SEM_ENTITIES, false), OPNAME) /\
-       TERMS' x ID' x PL1 := #transform-rl-right-terms(TERMS, ID, KEYS)  .
+       TERMS' x ID' x PL1 := #transform-rl-right-terms(TERMS, ID, KEYS) .
   eq #transform-rl-right-term(T, ID, KEYS)
       = '_*_[T, 'key_['__[upTerm(ID), #add-commas(KEYS)]]] x
         ID x

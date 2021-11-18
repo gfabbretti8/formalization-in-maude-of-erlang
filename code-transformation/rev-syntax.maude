@@ -1,7 +1,6 @@
-load ../erlang-model/framework.maude
+load ./fwd-model/framework.maude
 
-load ./erlang-rev-model/entity-with-key.maude
-
+load ./rev-model/entity-with-key.maude
 
 load framework.maude
 
@@ -15,10 +14,6 @@ set show loop stats off .
 
 (show module CODE-MANIPULATION[SEM_ENTITIES, 'X] .)
 quit
-
-
-
-
 
 *** load ../erlang-model/framework.maude
 *** load framework.maude

@@ -1,30 +1,33 @@
 #!/bin/bash
 
 echo "Deleting old semantics."
-rm -rf erlang-rev-model
+rm -rf rev-model fwd-model
 
 echo "Preparing new directory."
-cp -r ../erlang-model erlang-rev-model
-cp ./key-modules/* ./erlang-rev-model/
+cp -r ../case-studies/$1 rev-model
+cp -r ../case-studies/$1 fwd-model
+cp ./key-modules/* ./rev-model/
 
-rm erlang-rev-model/entities.maude erlang-rev-model/system.maude
+gsed -i '/^load entity ./a load entity-with-key .' ./rev-model/framework.maude
+
+rm rev-model/entities.maude rev-model/system.maude
 
 
 #Producing the reversible syntax
 echo "Producing the reversible syntax."
-echo $(maude -no-banner -no-advise -no-ansi-color -no-mixfix -no-tecla rev-syntax.maude) >> erlang-rev-model/entities.maude
+echo $(maude -no-banner -no-advise -no-ansi-color -no-mixfix -no-tecla rev-syntax.maude) >> rev-model/entities.maude
 
 maude -no-banner -no-advise rev-syntax.maude
 
-truncate -s-5 ./erlang-rev-model/entities.maude
+truncate -s-5 ./rev-model/entities.maude
 
 echo "Producing the forward reversible rules."
 #Producing the forward reversible rules
-echo "$(maude -no-banner -no-advise -no-ansi-color -no-mixfix -no-tecla -no-wrap transform-std-op-sem.maude )" >> erlang-rev-model/system.maude
+echo "$(maude -no-banner -no-advise -no-ansi-color -no-mixfix -no-tecla transform-std-op-sem.maude )" >> rev-model/system.maude
 
-maude -no-banner -no-advise transform-std-op-sem.maude 
+maude -no-banner -no-advise transform-std-op-sem.maude
 
-truncate -s-5 ./erlang-rev-model/system.maude
+truncate -s-5 ./rev-model/system.maude
 
 
 echo "Producing the backward reversible rules."
