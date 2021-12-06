@@ -8,6 +8,18 @@ Vincent Danos and Jean Krivine.
   September 3, 2004, Proceedings}, volume 3170 of {\em Lecture Notes in
   Computer Science}, pages 292--307. Springer, 2004.
 
+\bibitem{PhillipsU07}
+Iain C.~C. Phillips and Irek Ulidowski.
+\newblock Reversing algebraic process calculi.
+\newblock {\em J. Log. Algebraic Methods Program.}, 73(1-2):70--96, 2007.
+
+\bibitem{CristescuKV13}
+Ioana Cristescu, Jean Krivine, and Daniele Varacca.
+\newblock A compositional semantics for the reversible $\pi$-calculus.
+\newblock In {\em 28th Annual {ACM/IEEE} Symposium on Logic in Computer
+  Science, {LICS} 2013, New Orleans, LA, USA, June 25-28, 2013}, pages
+  388--397. {IEEE} Computer Society, 2013.
+
 \bibitem{LaneseMS16}
 Ivan Lanese, Claudio~Antares Mezzina, and Jean{-}Bernard Stefani.
 \newblock Reversibility in the higher-order {\(\pi\)}-calculus.
@@ -24,6 +36,11 @@ Anna Philippou and Kyriaki Psara.
 \newblock In Jarkko Kari and Irek Ulidowski, editors, {\em Reversible
   Computation}, pages 84--101, Cham, 2018. Springer International Publishing.
 
+\bibitem{MelgrattiMU20}
+Hern{\'{a}}n~C. Melgratti, Claudio~Antares Mezzina, and Irek Ulidowski.
+\newblock Reversing place transition nets.
+\newblock {\em Log. Methods Comput. Sci.}, 16(4), 2020.
+
 \bibitem{GiachinoLM14}
 Elena Giachino, Ivan Lanese, and Claudio~Antares Mezzina.
 \newblock Causal-consistent reversible debugging.
@@ -38,6 +55,20 @@ Elena Giachino, Ivan Lanese, and Claudio~Antares Mezzina.
 Ivan Lanese, Naoki Nishida, Adri{\'{a}}n Palacios, and Germ{\'{a}}n Vidal.
 \newblock A theory of reversibility for erlang.
 \newblock {\em J. Log. Algebraic Methods Program.}, 100:71--97, 2018.
+
+\bibitem{Lanese0PV18}
+Ivan Lanese, Naoki Nishida, Adri{\'{a}}n Palacios, and Germ{\'{a}}n Vidal.
+\newblock Cauder: {A} causal-consistent reversible debugger for erlang.
+\newblock In John~P. Gallagher and Martin Sulzmann, editors, {\em Functional
+  and Logic Programming - 14th International Symposium, {FLOPS} 2018, Nagoya,
+  Japan, May 9-11, 2018, Proceedings}, volume 10818 of {\em Lecture Notes in
+  Computer Science}, pages 247--263. Springer, 2018.
+
+\bibitem{Gonzalez-AbrilV21}
+Juan~José González-Abril and Germán Vidal.
+\newblock {\em {C}ausal-Consistent Reversible Debugging: Improving CauDEr},
+  volume 12548 of {\em Lecture Notes in Computer Science}, page 145–160.
+\newblock Springer International Publishing, 2021.
 
 \bibitem{FabbrettiLS21}
 Giovanni Fabbretti, Ivan Lanese, and Jean{-}Bernard Stefani.
@@ -71,12 +102,6 @@ Jos{\'e} Meseguer.
 \newblock In Ugo Montanari and Vladimiro Sassone, editors, {\em CONCUR '96:
   Concurrency Theory}, pages 331--372, Berlin, Heidelberg, 1996. Springer
   Berlin Heidelberg.
-
-\bibitem{Gonzalez-AbrilV21}
-Juan~José González-Abril and Germán Vidal.
-\newblock {\em {C}ausal-Consistent Reversible Debugging: Improving CauDEr},
-  volume 12548 of {\em Lecture Notes in Computer Science}, page 145–160.
-\newblock Springer International Publishing, 2021.
 
 \bibitem{NeuhauberN07}
 Martin Neuhäußer and Thomas Noll.

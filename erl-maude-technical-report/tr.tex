@@ -65,88 +65,104 @@
   investigated are: petri-nets, process algebras and real programming languages.
   Nonetheless, all the
   attempts made so far suffer from the same limitation:
-  they have been studied ad-hoc. To address this limit Lanese et al.~recently
+  they have been studied ad-hoc. To address this limit Lanese et al.~have recently
   proposed a new general method to derive a reversible semantics starting from a
-non-reversible one. The general method proposed though lacked an implementation
+non-reversible one. The general method though lacks an implementation
 that proves its feasibility not only in theory but in practice as well. The
-aim of the work presented here is to provide such missing implementation and
-apply it to the Erlang case study. }
+aim of this work is to provide such an implementation and
+apply it to a case study on the Erlang programming language. }
 
 \section{Introduction}
 
 
-Reversibility is the capability to execute a
-program both in a forward and backward manner. While reversibility is
-well-understood for sequential systems the same cannot be said for concurrent
-ones. The major difficulty while reversing the execution of a concurrent system is given from the lack of
-total order over the actions. To tackle this problem Danos and Krivine in~\cite{DanosK04} propose a notion of
-\emph{Causal Consistency}, which aims at establishing a way to undo actions in a
-minimal and sound way. Causal Consistency states that an action can be undone
-iff all of its consequences, if any, have been undone beforehand.
+Reversibility is the capability to execute a program both in a forward
+and backward manner. While reversibility is well-understood for
+sequential systems the same cannot be said for concurrent
+ones. Indeed, in sequential systems, actions can be undone in reverse
+order of completion.  The major difficulty while reversing the
+execution of a concurrent system is that the order of actions is no
+more a total order, since execution of concurrent actions may overlap.
+To tackle this problem Danos and Krivine in~\cite{DanosK04} propose a
+notion of \emph{causal-consistent reversibility}, which aims at
+establishing a way to undo actions in concurrent systems. Causal
+consistency states that an action can be undone iff all of its
+consequences, if any, have been undone beforehand. Notably, this
+definition does not need a (temporal) total order of actions, but
+builds on a notion of causality.
 
 Following their seminal work, reversibility has been studied in other formalisms
-as well, among which we find: the $\pi$-calculus~\cite{LaneseMS16},
-$\mu$Klaim~\cite{GiachinoLMT17}, petri-nets~\cite{PhilippouP18}, etc.
+as well, among which we find: CCS~\cite{DanosK04,PhillipsU07}, $\pi$-calculus~\cite{CristescuKV13}, higher-order $\pi$-calculus~\cite{LaneseMS16},
+$\mu$Klaim~\cite{GiachinoLMT17}, Petri-nets~\cite{PhilippouP18,MelgrattiMU20}, etc.
 
-Another stem of research, investigating reversibility as a debugging technique,
-has risen after \cite{GiachinoLM14}, where Giachino et al. proposed to
-equip a debugger with reversible primitives.
-Following the seminal work by Giachino et al. a great deal of effort has been placed in reversing the Erlang programming
-language~\cite{LaneseNPV18, FabbrettiLS21}.
+Another stream of research, investigating reversibility as a debugging technique for concurrent systems,
+has risen after \cite{GiachinoLM14}, where Giachino et al.~proposed to
+equip a concurrent debugger with reversible primitives.
+The approach by Giachino et al.~has subsequently be applied in the context of a real programming language, namely Erlang~\cite{LaneseNPV18,Lanese0PV18,Gonzalez-AbrilV21,FabbrettiLS21}.
 
 However, as anticipated, all the works cited so far suffer from the same limitation: reversibility has always been
-devised manually. Given a forward non-reversible formalism, the authors manually
-derived a forward reversible version and its symmetric backward counterpart.
-Clearly, deriving a reversible semantics manually presents some limitations: the
-process is error-prone, does not scale well to other formalisms and lacks
-uniformity - i.e., the same properties must be proved every time.
+devised manually. Given a forward non-reversible semantics, the authors manually
+derived an extension of its forward semantics, enabling reversibility, and the corresponding backward semantics, defining reverse execution.
+Deriving a reversible semantics manually presents some limitations: the
+process is error-prone, it does not scale well to other formalisms and lacks
+uniformity - i.e., the same properties must be proved for each formalism.
 
-To address this problem recently Lanese et al. in~\cite{LaneseM20} proposed a
-new automatic general method to
-derive a reversible semantics starting from a non-reversible one. The
-advantages of having an automatic method are symmetrical to the disadvantages
+To address this problem, Lanese et al.~proposed in~\cite{LaneseM20} a
+new general method to
+automatically derive a causal-consistent reversible semantics starting from a non-reversible one. The
+advantages of having an automatic method are symmetric to the disadvantages
 listed above, i.e., the method: is not error-prone; scales well; is uniform. The key idea behind the general method is to capture
-causal dependencies in terms of resources consumed and produced. The non-reversible
-semantics taken in input must a reduction semantics and the entities on the
+causal dependencies, needed for the definition of causal-consistent reversibility, in terms of resources consumed and produced. The non-reversible
+semantics taken in input must be a reduction semantics and the entities on the
 left-hand side of a rule are seen as the resources to be \emph{consumed} to
 \emph{produce} the resources on the right-hand side - i.e., the new entities.
-Then, keys and memories added to the semantics. Keys are used to uniquely
-identify processes while memories are used to recall past states so that
-eventually they can be restored.
+In order to define the reversible semantics, we need two ingredients: keys and memories.
+Keys are attached to entities, so to distinguish entities with the same form but different history.
+Memories are used to track past states, that would normally be lost during the computation, so that
+they can be restored during backward execution.
 
-However, in~\cite{LaneseM20} the approach is only described theoretically and no
-implementation is provided. Our work aims at providing a concrete implementation of the general method, taking the
-Erlang programming language as case study and showing that the method
-proposed works not only in theory but in practice as well.
+However, in~\cite{LaneseM20} the approach is only described
+theoretically and no implementation is provided. Our work aims at
+providing a concrete implementation of this method, to show that the
+method can be applied in practice as well.  To further supply this
+claim, we apply it to a case study on the Erlang programming language.
 
-Notably, the main contributions of this work are: a novel formalization of Erlang using
-Maude; the implementation of a program that automatically derives a reversible
-semantics starting from a non reversible one.
+The main contributions of this work are:
+\begin{itemize}
+  \item a novel formalization of Erlang semantics using
+    Maude~\cite{maude};
+  \item the implementation of a tool that automatically derives a reversible
+    semantics starting from a non reversible one.
+\end{itemize}
 
-The rest of the report will provide the reader with the required background in
-Section~\ref{sec:background}, then in Section~\ref{sec:contribution} the main
-contributions will be analyzed in detail, while in
-Section~\ref{sec:ongoing-work} we discuss some ongoing work. Finally, in
-Section~\ref{sec:conclusion} we give some conclusions and we hints possible
-future directions. 
+The rest of the report provides the reader with the required
+background in Section~\ref{sec:background}, then in
+Section~\ref{sec:contribution} we will present the formalization of
+the Erlang semantics in Maude and discuss how the reversible semantics
+is derived, while in Section~\ref{sec:ongoing-work} we discuss some
+ongoing work. Finally, in Section~\ref{sec:conclusion} we give some
+conclusions and we hint possible future directions.
 
 All the code discussed in this report is publicly available at: \url{https://github.com/gfabbretti8/formalization-in-maude-of-erlang}.
+
 \section{Background}\label{sec:background}
 
-\subsection{Erlang: Syntax And Semantics}
+\subsection{Erlang: Syntax and Semantics}
 
-Erlang is a functional, concurrent, programming language. First
-introduced in 1986 by Ericsson, has gained quite a lot of popularity since then.
-Today it is widely used and mostly appreciated because it is easy to learn,
-provides libraries to do concurrent and distributed programming, and because of its
-policies about handling failures. Erlang implements the actor model, a
-concurrency model based on message passing. In the actor model each process is
-identified as an actor that can interact with other actors only through the
-exchange of messages, no memory is shared. Indeed, centrals in Erlang are the
-$\ms{send}$, $\ms{receive}$ and $\ms{spawn}$ operations.
+Erlang is a functional and concurrent programming language. First
+introduced in 1986 by Ericsson, it has gained quite a lot of
+popularity since then.  Today it is widely used and mostly appreciated
+because it is easy to learn, provides useful abstractions for
+concurrent and distributed programming, and because of its support for
+highly-available systems. Erlang implements the actor model~\cite{}, a
+concurrency model based on message passing. In the actor model, each
+process is identified as an actor that can interact with other actors
+only through the exchange of messages, no memory is shared. Indeed,
+central in Erlang are the $\ms{send}$, $\ms{receive}$ and $\ms{spawn}$
+operations, to, respectively, send a message, receive a message, and
+create a new actor.
 
-The remaining of this section will provide the reader with a basic understanding
-of the language. We begin by illustrating its syntax, depicted in
+The rest of this section provides the reader with a basic understanding
+of the Erlang programming language. We begin by illustrating its syntax, depicted in
 Fig.~\ref{ErlangSyntax}\footnote{The syntax that we support is a subset of the
   real Erlang language.}. 
 
@@ -156,12 +172,12 @@ by a sequence of expressions. In the following we denote an expression with $e$
 and sequences of expressions as $e_1,\ldots,e_n$  - sequences of other
 syntactical elements are represented in the same manner. 
 
-Ground values in Erlang are: atoms (which are identifiers that either begin
-with a lowercase or are enclosed by quotes), integers and strings and any
-construction of these elements using tuples and lists. We denote atoms, strings and
-integers by $v$. Tuples are denoted as
-$\ms{\{}v_1,\ldots,v_n\ms{\}}$ and lists are denoted as  $[v_1|v_2]$, where
-$v_1$ is the head and $v_2$ the tail.
+Ground values in Erlang are: atoms (which are identifiers that either
+begin with a lowercase or are enclosed by quotes), integers and
+strings, as well as compositions of values using tuple and list
+constructs. We range over ground values using $v$. Tuples are denoted
+as $\ms{\{}v_1,\ldots,v_n\ms{\}}$ and lists are denoted as
+$[v_1|v_2]$, where $v_1$ is the head and $v_2$ the tail.
 
 
 \begin{figure}[t]
@@ -189,15 +205,14 @@ $v_1$ is the head and $v_2$ the tail.
   \caption{Language syntax} \label{ErlangSyntax}
 \end{figure}
 
-Spanning over ground values we have variables, which can be distinguished
-from other syntactical elements as they always have the first letter capital and
-are not enclosed in quotes, e.g., $X,Y$.
-Then, we have patterns, denoted by $pat$, which are like the ground-values
+Variables can store ground values. Variables, e.g., $X,Age$, start with a capital letter and
+are not enclosed in quotes.
+Patterns, denoted by $pat$, are like the ground-values,
 but also admit the presence of variables. Patterns are used in branching
 statements, like $\ms{receive}~pat_1 \rightarrow exprs_1; \ldots; pat_n
 \rightarrow exprs_n~\ms{end}$, to match the branch
-to evaluate, in the matching operation, i.e., $e_1 = e_2$, or in functions
-definition, to define the formal parameters. 
+to evaluate, in the matching operation, i.e., $e_1 = e_2$, or in function
+definitions, to define the formal parameters. 
 
 Let us now talk about the semantics of some of most important Erlang constructs.
 One of the most distinguishing operation of Erlang is the \emph{pattern
