@@ -19,7 +19,7 @@ echo $(maude -no-banner -no-advise -no-ansi-color -no-mixfix -no-tecla rev-synta
 
 maude -no-banner -no-advise rev-syntax.maude
 
-truncate -s-5 ./rev-model/entities.maude
+truncate -s -5 ./rev-model/entities.maude
 
 echo "Producing the forward reversible rules."
 #Producing the forward reversible rules
@@ -27,7 +27,7 @@ echo "$(maude -no-banner -no-advise -no-ansi-color -no-mixfix -no-tecla transfor
 
 maude -no-banner -no-advise transform-std-op-sem.maude
 
-truncate -s-5 ./rev-model/system.maude
+truncate -s -5 ./rev-model/system.maude
 
 
 echo "Producing the backward reversible rules."

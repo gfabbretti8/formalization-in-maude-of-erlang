@@ -1,0 +1,96 @@
+view Var from TRIV to SYNTAX is
+  sort Elt to Var .
+endv
+
+view GroundValues from TRIV to SYNTAX-COMMON is
+  sort Elt to GroundValues .
+endv
+
+fmod SEM_STORE is
+
+  protecting META-LEVEL .
+  protecting SYNTAX .
+  protecting MAUDE-SYNTAX-UP .
+  protecting COMMON-SYNTAX-DOWN .
+
+  protecting MAP{Var, GroundValues} * (sort Entry{Var, GroundValues} to Entry,
+                                       sort Map{Var, GroundValues} to Store ) .
+  var MAP : Store .
+
+  eq ENTRY, ENTRY = ENTRY .
+
+  vars EX EX' : Exp .
+  vars EXSEQ EXSEQ' : NeExpSeq .
+  var PAT TAIL : Pattern .
+  var VAR : Var .
+  var ARGS : Args .
+
+  op #init-store : NeExpSeq NeExpSeq -> Store .
+  eq #init-store(#empty, EXSEQ) = empty .
+  eq #init-store((EX, EXSEQ), (EX', EXSEQ')) = EX |-> EX', #init-store(EXSEQ, EXSEQ') .
+  eq #init-store(EX, EX') = EX |-> EX' .
+
+  op #map-args : Args Store -> List .
+
+  eq #map-args([], STORE) = [] .
+  eq #map-args([PAT], STORE) = [#map-arg(PAT, STORE)] .
+  eq #map-args([PAT | TAIL], STORE) = [#map-arg(PAT, STORE)| #map-args(TAIL, STORE)] .
+  eq #map-args(PAT, ARGS, STORE) = #map-args(PAT, STORE), #map-args(ARGS, STORE) .
+  eq #map-args(PAT, STORE) = #map-arg(PAT, STORE) .
+
+  op #map-arg : Pattern Store -> GroundValues .
+  eq #map-arg(VAR, STORE) = STORE[VAR] .
+  eq #map-arg(GVALUE, STORE) = GVALUE .
+
+	*******************************
+  *** METAREPRESENTATION PART ***
+	*******************************
+
+  vars STORE STORE' : StoreStack .
+  vars ENTRY ENTRY' : Entry .
+  var PATT : Pattern .
+  var GVALUE : GroundValues .
+  vars T1 T2 : Term .
+  var TERMS : TermList .
+
+  op #up : Store -> Term [memo] .
+  op #downStore : Term -> Store [memo] .
+
+  ceq #up((STORE, STORE')) = '_`,_[#up(STORE), #up(STORE')]
+     if STORE' =/= empty /\ STORE =/= empty /\ STORE =/= empty-stack /\ STORE' =/= empty-stack .
+  eq #up(empty) = 'empty.Store .
+
+  eq #downStore('_`,_[TERMS]) = #downEntry(TERMS) .
+  eq #downStore('_|->_[T1,T2]) = #downEntry('_|->_[T1,T2]) .
+  eq #downStore('empty.Store) = empty .
+
+  op #up : Entry -> Term [memo] .
+  op #downEntry : Term -> Store [memo] .
+
+  eq #up(PATT |-> GVALUE) = '_|->_[#up(PATT), #up(GVALUE)] .
+
+  ceq #downEntry((T1, TERMS)) = #downEntry(T1), #downEntry(TERMS)
+  if TERMS =/= empty .
+  eq #downEntry('_|->_[T1,T2]) = #downExp(T1) |-> #downExp(T2) .
+
+
+  sort StoreStack .
+  subsort Store < StoreStack .
+  subsort Entry < StoreStack .
+
+  op _:_ : StoreStack StoreStack -> StoreStack [ctor id: empty-stack] .
+  op empty-stack : -> StoreStack .
+
+  op #up : StoreStack -> Term [memo] .
+  ceq #up(STORE : STORE') = '_:_[#up(STORE), #up(STORE')]
+  if STORE =/= empty-stack /\ STORE' =/= empty-stack .
+  eq #up(empty-stack) = 'empty-stack.StoreStack .
+
+  op #downStoreStack : Term -> StoreStack [memo] .
+  eq #downStoreStack('_:_[T1, T2]) = #downStoreStack(T1) : #downStoreStack(T2) .
+  eq #downStoreStack('_`,_[TERMS]) = #downStore('_`,_[TERMS]) .
+  eq #downStoreStack('_|->_[T1,T2]) = #downStore('_|->_[T1,T2]) .
+  eq #downStoreStack('empty.Store) = #downStore('empty.Store) .
+  eq #downStoreStack('empty-stack.StoreStack) = empty-stack .
+endfm
+

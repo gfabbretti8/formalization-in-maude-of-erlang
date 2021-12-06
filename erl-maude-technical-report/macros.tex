@@ -1,0 +1,73 @@
+%!TEX root = main.tex
+
+\def\finex{{\unskip\nobreak\hfil
+\penalty50\hskip1em\null\nobreak\hfil{\Large $\diamond$}
+\parfillskip=0pt\finalhyphendemerits=0\endgraf}}
+
+\newenvironment{lmref}[1]{%
+	\vspace*{0.3cm}
+	\noindent {\bf  Lemma #1.}}
+
+\newenvironment{thref}[1]{%
+	\vspace*{0.3cm}
+	\noindent {\bf  Theorem #1.}}
+
+\newenvironment{corref}[1]{%
+	\vspace*{0.3cm}
+	\noindent {\bf  Corollary #1.}}
+
+
+\newcommand{\picalc}{$\pi$-calculus~}
+\newcommand{\ms}[1]{\mathsf{#1}}
+\newcommand{\ctx}{\mathtt{C}}
+\newcommand{\co}[1]{\overline{#1}}
+\newcommand{\proj}[1]{\mathtt{proj}(#1)}
+\newcommand{\projs}[1]{\mathtt{proj_n}(#1)}
+\newcommand{\lts}[1]{\xrightarrow{#1}}
+\newcommand{\comm}[1]{\textcolor{blue}{#1}}
+\newcommand{\red}[1]{\textcolor{red}{#1}}
+\newcommand{\key}{\mathtt{keys}}
+\newcommand{\flts}[1]{\overset{#1}\twoheadrightarrow}
+\newcommand{\rev}{^{\bullet}}
+%\newcommand{\forw}{_{\twoheadrightarrow}}
+\newcommand{\eq}{\sim} 
+\newcommand{\env}{\theta} 
+\newcommand{\ex}{e} 
+\newcommand{\proc}[3]{\langle #1,#2,#3\rangle } 
+\newcommand{\erl}[1]{\hookrightarrow_{#1}} 
+\newcommand{\mem}[2]{[#1\;;#2]}
+\newcommand{\bl}[1]{\textcolor{blue}{#1}}
+\newcommand{\rd}[1]{\textcolor{red}{#1}}
+\newcommand{\mtt}[1]{\mathtt{#1}}
+\newcommand{\pid}{\mathtt{pid}}
+\newcommand{\procl}[4]{\langle #1,#2,#3,#4\rangle } 
+\newcommand{\con}{\equiv}
+\newcommand{\conk}{\equiv_k}
+\newcommand{\extcon}{\equiv_c}
+\newcommand{\de}{\delta}
+\newcommand{\G}{\Gamma}
+\newcommand{\logg}[1]{\rightharpoonup_{#1}}
+\newcommand{\rlogg}[1]{\leftharpoondown_{#1}}
+\newcommand{\la}{\lambda}
+\newcommand{\col}[1]{\mathtt{col}(#1)}
+\newcommand{\rel}{\mathcal{R}}
+\newcommand{\conc}{\smile_c}
+\newcommand{\nil}{{\bf{0}}}
+%\newcommand{\res}{\nu}
+\newcommand{\res}[1]{\nu #1\,}
+\newcommand{\out}[1]{\langle #1\rangle}
+\newcommand{\cont}{\triangleright}
+\newcommand{\sub}[2]{\{#1/#2\}}
+\newcommand{\op}{op_n}
+\newcommand{\pidd}{Pid}
+\newcommand{\fmod}{\rightarrowtail}
+\newcommand{\enc}[1]{\llparenthesis #1 \rrparenthesis}
+\newcommand{\blt}{\bullet}
+\newcommand{\str}{C}
+\newcommand{\term}[1]{T[#1]}
+\newcommand{\en}[1]{\Lbag #1 \Rbag}
+\newcommand{\signal}[1]{\{ #1\}}
+\newcommand{\systset}{\mathbb{S}}
+\newcommand{\confset}{\mathbb{C}}
+\newcommand{\set}[1]{\{ #1\}}
+\newcommand{\node}[3]{#1,#2\mkern-3mu:\mkern-3mu[\mkern-6mu[#3]\mkern-6.2mu]}

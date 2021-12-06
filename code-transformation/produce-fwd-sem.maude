@@ -119,7 +119,7 @@ fmod PRODUCE-FWD-SEM is
 
 *** The transform-terms set of equations below parse a list of terms and
 *** transform each term. The set of keys produced is then passed to the
-*** recursive call that will tag the "brothers" of the term.
+*** recursive call that will tag the "brother(s)" of the term.
 
   op #transform-rl-left-terms : Term QidList -> TermWithKeys .
   ceq #transform-rl-left-terms(TERMS, KEYS)
