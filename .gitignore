@@ -1,2 +1,13 @@
-code-transformation/erlang-rev-model
 .DS_Store
+*.bbl
+*.blg
+*.log
+*.out
+*.gz
+*.el
+erl-maude-technical-report/*.pdf
+code-transformation/erlang-rev-model
+erl-maude-technical-report/auto*
+*synctex.gz
+
+
