@@ -207,85 +207,83 @@ $[v_1|v_2]$, where $v_1$ is the head and $v_2$ the tail.
 
 Variables can store ground values. Variables, e.g., $X,Age$, start with a capital letter and
 are not enclosed in quotes.
-Patterns, denoted by $pat$, are like the ground-values,
-but also admit the presence of variables. Patterns are used in branching
-statements, like $\ms{receive}~pat_1 \rightarrow exprs_1; \ldots; pat_n
-\rightarrow exprs_n~\ms{end}$, to match the branch
-to evaluate, in the matching operation, i.e., $e_1 = e_2$, or in function
+Patterns, denoted by $pat$, are like the ground values,
+but also admit the presence of variables. Patterns are used for pattern matching in the following contexts: (i) in the matching operation $e_1 = e_2$, (ii) in case statements $\ms{case}~e~\ms{of}~clseq~\ms{end}$ to choose the branch
+to evaluate according to the shape of the incoming data,
+(iii) in receive
+statements $\ms{receive}~pat_1 \rightarrow exprs_1; \ldots; pat_n
+\rightarrow exprs_n~\ms{end}$, to analyze the shape of the received message, and
+(iv) in function
 definitions, to define the formal parameters. 
 
-Let us now talk about the semantics of some of most important Erlang constructs.
-One of the most distinguishing operation of Erlang is the \emph{pattern
-  matching}. Pattern matching occurs in the following scenarios: i) $e_1 = e_2$; ii)
-$\ms{case}~e~\ms{of}~clseq~\ms{end}$; iii) $\ms{receive}~clseq~\ms{end}$.
-
-We begin by explaining the first case and then we move on to the others.
-The expression on the left-hand side, $e_1$, is evaluated until it becomes a
-pattern, or a ground value in case no free variables occur in it. Then, the
-expression on the right-hand side is evaluated until it becomes a ground value,
-eventual occurrences of free variables would raise an exception, and then the
-two elements are matched against each others. The free variables of the
+We first explain the match operation. First, the expression $e_2$ on
+the right-hand side is evaluated until it becomes a ground value,
+occurrences of free variables, if any, would raise an exception.
+Then, the expression on the left-hand side, $e_1$, is evaluated until
+it becomes a pattern, or a ground value in case no free variables
+occur in it. Then the
+two elements are matched against each other. The free variables of the
 left-hand side are bound to the corresponding ground value of the right-hand
-side and ground values are compared together, if a mismatch occur an exception
+side, ground values in corresponding position should coincide: if a mismatch occurs then an exception
 is raised. If no mismatch occurs then the operation evaluates to the ground
-values of the right-hand side and the environment is updated.
+value of the right-hand side and the environment is updated.
 
 In the $\ms{case}$ scenario, the expression $e$ must evaluate to a ground value, then it is matched against the patterns, from
-top to down, until one that matches is found, when a match is found the environment
+top to down, until one that matches is found. When a match is found the environment
 is enriched with the new bindings and the sequence of expressions returned, if
 no match is found an exception is raised.
 
-In the $\ms{receive}$ scenario things are similar to the $\ms{case}$ one, only the
-ground values are the messages in the queue of the process, which are checked
-one by one against the clauses and when a match is found the corresponding branch is selected.
-Conversely to the $\ms{case}$, if a match is not found then the language
-does not raise an exception but suspends the process execution.
+The behaviour of the $\ms{receive}$ is similar to the one of the
+$\ms{case}$, with the only difference that messages in the queue of
+the process are tried as ground values till the match succeeds.
+When a match is found the corresponding branch
+is selected.  Contrary to the $\ms{case}$, if no match is found
+then the process suspends.
 
 Despite being - mostly - functional Erlang
 admits some imperative operations that produce side-effects, like the receive
-above, or like spawning a new process, or sending a message. 
+above, spawning a new process, or sending a message. 
 
-Messages are sent with the syntax, $e_1!e_2$, where $e_1$ must
-evaluate to the pid of the receiver and $e_2$ must evaluate to the ground values
-that represents the payload of the message. The expression itself evaluates to
+The syntax of message send is $e_1!e_2$, where $e_1$ must
+evaluate to the pid of the receiver process and $e_2$ must evaluate to the ground value that represents the payload of the message. The expression itself evaluates to
 the payload and as a side-effect the message is sent.
 
-The $\ms{spawn}$ is the primitive to create a new process; it takes in input the
-function that the new process will execute together with the arguments to supply
-- if any. Once evaluated, the spawn will return the pid of the newly created
-process and as a side effect the process will be created.
+The $\ms{spawn}$ primitive creates a new process; it takes as argument
+the function $f$ that the new process will execute, together with the
+parameters for $f$ - if any. The spawn returns the
+pid of the newly created process and, as a side effect, a new process is created.
 
-Finally, the function $\ms{self}$ is used to get the process id of the process
+Finally, the function $\ms{self}$ returns the process id of the process
 who invoked it.
 
 Self, send, spawn and receive are the concurrent features, offered by Erlang, that we support in this work.
 
 \subsection{Maude}
 
-Maude~\cite{maude} is a programming language that efficiently implements the rewriting logic~\cite{MeseguerMS96}.
-Intuitively, a rewriting logic can be seen as a framework that unifies equational
+Maude~\cite{maude} is a programming language that efficiently implements rewriting logic~\cite{MeseguerMS96}.
+Rewriting logic can be seen as a framework that unifies equational
 logic together with semantics rules.
 
 Formally, a rewriting logic is a tuple $(\Sigma, E, R)$, where $\Sigma$
-represents a collection of typed operators, $E$ a set of equations among the operators and $R$ is the set of
+represents a collection of typed operators, $E$ a set of equations among the operators, and $R$ is the set of
 semantics rules. Using a rewriting logic is quite convenient to formalize the
-semantics of a language as it brings together the benefits of using both an equational theory together with rewriting rules.
+semantics of a language as it combines the benefits of using an equational theory as well as rewriting rules.
 
 % Equations
-On one hand, the equational side of the rewriting logic is well-suited to define the deterministic part of the model, where
-we define class of equivalences over terms. More precisely we say that two terms
-$v$ and $u$ are equivalent if under a set of equation $E$ we can prove $E \vdash
-v = u$. Equations can be conditional as well and can use as condition either the
+On one hand, the equational side of rewriting logic is well-suited to define the deterministic part of the model, where
+we define classes of equivalences over terms. More precisely we say that two terms
+$v$ and $u$ are equivalent if under a set of equations $E$ we can prove $E \vdash
+v = u$. Equations can be conditional and conditions can be either the
 membership of the term to some kind or other equations.
 
 % Rules
 On the other hand, the rewriting rules are well-suited to define the concurrent
 (non-deterministic) part of the programming language. The set of rules $R$
-specify how to rewrite a (parametrized) term $t$ to another term $t'$.
+specifies how to rewrite a (parametrized) term $t$ to another term $t'$.
 Rewriting rules, like the equations, can be conditional and as condition they can
-use membership, equations as well as other rules.
+use membership, equations, as well as other rules.
 
-In other words the equational theory defines which terms defines the same states
+In other words the equational theory defines which terms define the same states
 of a system, only using different syntactical elements, while the rewriting rules
 define how the system can evolve and transit from one state to another.
 
@@ -308,8 +306,8 @@ define how the system can evolve and transit from one state to another.
 
 A module in Maude has the shape depicted in Fig.~\ref{fig:maude-module}, where:
 \verb+H+ is the module name; \verb+IL+ is the import list; \verb+SS+ is the set
-of sort declaration; \verb+SSDS+ is the set of sub-sort declaration; \verb+OPDS+
-is the set of operators declaration; \verb+MAS+ is the set of membership
+of sort declarations; \verb+SSDS+ is the set of sub-sort declarations; \verb+OPDS+
+is the set of operator declarations; \verb+MAS+ is the set of membership
 declarations; \verb+EQS+ is the set of equations; \verb+RLS+ is the set of
 rewriting rules. 
 
@@ -318,7 +316,7 @@ program that takes in input the modules of the non-reversible semantics and
 produces new modules, which define the reversible semantics.
 
 
-\subsection{A General Approach To Derive A Reversible Semantics}\label{sec:gener-appr-derive-rev-sem}
+\subsection{A General Approach to Derive a Reversible Semantics}\label{sec:gener-appr-derive-rev-sem}
 
 %% One of the main limitations of the approach described in
 %% Section~\ref{sec:fst-rev-sem} is that the causal dependencies introduced by each
@@ -327,27 +325,26 @@ produces new modules, which define the reversible semantics.
 %% nor to other languages.
 
 The following of this section summarizes the main ideas of~\cite{LaneseM20}
-where Lanese et al. propose a methodology to automatically
-derive a reversible semantics starting from a non-reversible one, given that
-this last one is equipped with a reduction semantics that fits some criteria.
+where Lanese et al.\ propose a methodology to automatically
+derive a reversible semantics starting from a non-reversible one, provided that
+the latter is modelled as a reduction semantics which satisfies some syntactic conditions.
 %% One of the main advantages of using such method is that the format is general
 %% enough that can be applied to any formalism that fits the criteria imposed.
 %% Also, we are guaranteed that all the reversible semantics derived with this
 %% method will all enjoy the same properties, which means that they must be proved only once. 
 
-\subsubsection{Format Of The Reduction Semantics}
+\subsubsection{Format of the Reduction Semantics}
 
-We proceed now to describe the shape that the reduction semantics taken as input
+We now describe the shape that the reduction semantics taken as input
 must have.
 
-First, the syntax must be divided in two levels: on the lower level there are no restrictions,
-while the productions of the upper level must be of the following
+First, the syntax must be divided in two levels: a lower level of entities on which there are no restrictions, and an upper level of systems of the following
 form:
 \[
   S::=P\;\paral \;\op(S_1,\ldots,S_n)\; \paral \nil
 \]
 
-where $\nil$ is the empty entity, $P$ an entity of the lower level and $op(S_1,\ldots,S_n)$ an operator
+where $\nil$ is the empty system, $P$ an entity of the lower level and $op(S_1,\ldots,S_n)$ an operator
 composing entities. An entity of the lower-level could, for example, be a process of the system or
 a message traveling the network.
 
@@ -355,10 +352,9 @@ a message traveling the network.
 % used to automatically derive the rev sem.
 
 Second, the rules defining the operational semantics must fit the schema in Fig.~\ref{fig:forwardrules}.
-The schema allows rules to: i) allow entities to interact with each other; ii)
-exploit structural congruence; iii) allow single entities to execute at each
-step;
-iv) run the system in parallel.
+The schema contains rules to: i) allow entities to interact with each other (\textsc{Scm-Act}); ii)
+exploit structural congruence (\textsc{Eqv}); iii) allow single entities to execute inside a context (\textsc{Scm-Opn});
+iv) execute two systems in parallel (\textsc{Par}).
 
 \begin{figure}[t]
   {\footnotesize
@@ -367,7 +363,7 @@ iv) run the system in parallel.
       {\;}
       {P_1\paral \dots \paral P_n\fmod T[Q_1,\ldots, Q_m]}
       \and
-      \inferrule*[left=\footnotesize{(\textsc{Eqv}_)}]
+      \inferrule*[left=\footnotesize{(\textsc{Eqv})}]
       {S\con_c S' \quad S\fmod  S_1 \quad S_1\con_c S'_1}
       {S'\fmod  S'_1}
       \and
@@ -386,7 +382,7 @@ iv) run the system in parallel.
 \subsubsection{Methodology}\label{sec:methodology}
 
 
-To obtain a forward reversible semantics, first, the syntax of the
+To obtain a forward reversible semantics, tracking enough history and causality information to allow one to define a backward semantics exploiting it, first, the syntax of the
 reduction semantics is updated as follow:\\
 \[
 \begin{array}{l}
@@ -399,10 +395,10 @@ Two modifications have been done. First, each entity of the system is tagged wit
 a key. Keys are used to distinguish identical processes with a different
 history. Second, the syntax is updated with another production: memories. Memories have
 the shape $\mu=[R;C]$, where $R$ is the configuration of the
-system that gave rise to the forward step and $C$ is a placeholder of the resulting one.
+system that gave rise to the forward step and $C$ is a context describing the structure of the resulting one.
 $C$ acts as the binder between $R$ and the actual final configuration. In
 other words, memories bind different states of the entities. Moreover, they keep
-track of past states of the system so that eventually they can be restored.
+track of past states of the system so that they can be restored.
 
 Then, the rules of the non-reversible operational semantics are updated as depicted in
 Fig.~\ref{fig:revforward}. Now each time a forward step is performed each resulting entity is tagged with a fresh
