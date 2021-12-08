@@ -5,9 +5,14 @@
 *.out
 *.gz
 *.el
+*synctex.gz
+*.nav
+*.snm
+*.toc
+*.aux
 erl-maude-technical-report/*.pdf
 code-transformation/erlang-rev-model
 erl-maude-technical-report/auto*
-*synctex.gz
+
 
 
