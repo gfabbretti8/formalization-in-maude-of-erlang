@@ -36,6 +36,9 @@
 \theoremstyle{definition}
 \newtheorem{example}{Example}[section]
 \newtheorem{theorem}{Theorem}
+
+\newtheorem{case}{Case}
+
 \newtheorem{definition}{Definition}
 \newtheorem{lemma}{Lemma}
 \newcommand{\paral}{\;|\;}
@@ -60,67 +63,176 @@
 
 \section{Consistency}
 
-\begin{tikzpicture}
-  \matrix (m) [matrix of math nodes,row sep=3em,column sep=4em,minimum width=2em]
-  {
-    \text{S} & \text{R-S} \\
-    \text{I} & \text{R-I} \\};
-  \path[-stealth]
-  (m-1-1) edge node [left] {$gen(S)$} (m-2-1)
-  edge node [below] {$\mathcal{B}_t$} (m-1-2)
-  (m-2-1.east|-m-2-2) edge node [below] {$\text{CONCUR}$}
-  node [] {} (m-2-2)
-  (m-1-2) edge node [right] {$gen(R-S)$} (m-2-2);
-\end{tikzpicture}
+\begin{figure}
+  \centering
+  \begin{tikzpicture}
+    \centering \matrix (m) [matrix of math nodes,row sep=3em,column
+    sep=4em,minimum width=2em] {
+      \text{S} & \text{R-S} \\
+      \text{I} & \text{R-I} \\}; \path[-stealth] (m-1-1) edge node [left]
+    {$inst(S)$} (m-2-1) edge node [below] {$\mathcal{B}_t$} (m-1-2)
+    (m-2-1.east|-m-2-2) edge node [below] {$\text{CONCUR}$} node [] {} (m-2-2)
+    (m-1-2) edge node [right] {$inst(R-S)$} (m-2-2);
+  \end{tikzpicture}
+  \caption{ Relation occurring between schemas and instances. }
+  \label{fig:square}
+\end{figure}
+
+In Fig.~\ref{fig:square} we can observe the relation occurring between schemas
+and instances. On the top-left corner we have non-reversible schemas, on the
+top-right we have reversible schemas, while below on the
+bottom-right corner we have concrete non-reversible instances - i.e., ground
+rules - and on the bottom-left corner we have concrete reversible instances.
+
+Schemas differ from instances as they admit the presence of meta-variables that
+can range over ground terms. Intuitively, to get from one of the top corners to
+the respective concrete one we need to instantiate each meta-variable with
+the appropriate ground instance. The correctness of the rule is then ensured by
+the set of equations each rule is equipped with, if the concrete instances of
+the meta-variables satisfy the equational condition then the instance of the
+rule is to be considered correct.\\
+
+Now, let us discuss the top-arrow, that is transforming a non-reversible schema in reversible
+schema. A non-reversible schema has the following shape:
+\[t \rightarrow t'~\ms{if}~\overline{eq}_n\]
+where $t$ and $t'$ are inductively defined as
+\[
+  \begin{array}{l}
+    t,t',t_1,\ldots,t_n: \ms{System} ::=\\
+    \hspace{1ex}|~E: \ms{Entity}\\
+    \hspace{1ex}|~op(t_1,\ldots,t_n): \ms{System}\\
+  \end{array}
+\]
+
+Now, for a schema to be reversible each entity must be tagged with a key and a
+memory has to be produced each time that a transition is performed. In symbols
+\[t_r \rightarrow t'_r \paral \mu ~\ms{if}~\overline{eq}_n\]
+
+Where $t_r$ and $t'_r$ are inductively defined as
+\[
+  \begin{array}{l}
+    t_r,t'_r,t_{1r},\ldots,t_{nr}: \ms{RevSystem} ::=\\
+    \hspace{1ex}|~E*K: \ms{Entity} \times \ms{Key}\\
+    \hspace{1ex}|~op(t_{1r},\ldots,t_{nr}): \ms{RevSystem}\\
+  \end{array}
+\]
+and $\mu$ is defined as $[R;C]$ where $R$ is the configuration that gave rise to
+the step, i.e., $t_r$ and $C$ is a context describing the structure of the
+resulting one, where entities have been removed while keys are kept.
+
+Let us now define an auxiliary function.
+\[
+  \begin{array}{l}
+  cmp(t,t_r):\ms{Bool} ::=\\
+    \hspace{2ex}\ms{match}~t~\ms{with}\\
+    \hspace{4ex}| E: \ms{Entity} \rightarrow \ms{match}~t_r~\ms{with}\\
+    \hspace{6ex}| E*K: \ms{Entity}\times\ms{Key}~\rightarrow~true\\
+    \hspace{6ex}| \_ \rightarrow false\\
+    \hspace{4ex}| op(t_1,\ldots,t_n): \ms{System} \rightarrow \ms{match}~t_r~\ms{with}\\
+    \hspace{6ex}| op(t_{1r},\ldots,t_{nr}):
+    \ms{RevSystem}~\rightarrow~cmp(t_1,t_{1r}) \wedge\ldots\wedge cmp(t_n,t_{nr})\\
+    \hspace{6ex}| \_ \rightarrow false
+
+  \end{array}
+\]
+
+Let us define the $tag$ operation
+\[
+  \begin{array}{l}
+    tag(t\rightarrow t') ::=\\
+    \hspace{2ex}\ms{let} (t_r, keys) = tag\_left(t, K)~\ms{in}\\
+    \hspace{2ex}\ms{let} (t_r') = tag\_right(t', keys, 0)~\ms{in}\\
+    \hspace{4ex}t_r \rightarrow t'_r
+  \end{array}
+\]
+
+where $tag\_left$ is defined as
+\[
+  \begin{array}{l}
+    tag\_left(t, keys) ::=\\
+    \hspace{2ex}\ms{match}~t~\ms{with}\\
+    \hspace{4ex}| E: \ms{Entity} \rightarrow \ms{let}~k'=fresh(keys)~\ms{in}~
+    (E*k',k'::keys)\\
+    \hspace{4ex}| op(t_1,\ldots,t_n): \ms{System} \rightarrow \\
+    \hspace{6ex} \ms{let}~T=[]~\ms{in}\\
+    \hspace{6ex} \ms{let}~K=keys~\ms{in}\\
+    \hspace{6ex} \ms{for~each}~t'\in t_1,\ldots,t_n\\
+    \hspace{8ex} \ms{let}(t'_r, keys') = tag\_left(t', K)~\ms{in}\\
+    \hspace{8ex} T = T :: t'_r,\\
+    \hspace{8ex} K = keys' :: K\\
+    \hspace{4ex} (op(T), K)
+
+  \end{array}
+\]
+
+and where $tag\_right$ is defined as
+\[
+  \begin{array}{l}
+    tag\_right(t, keys, c) ::=\\
+    \hspace{2ex}\ms{match}~t~\ms{with}\\
+    \hspace{4ex}| E: \ms{Entity} \rightarrow \ms{let}~c'=c+1~\ms{in}~
+    (E*c::keys,c)\\
+    \hspace{4ex}| op(t_1,\ldots,t_n): \ms{System} \rightarrow \\
+    \hspace{6ex} \ms{let}~T=[]~\ms{in}\\
+    \hspace{6ex} \ms{let}~C=c~\ms{in}\\
+    \hspace{6ex} \ms{for~each}~t'\in t_1,\ldots,t_n\\
+    \hspace{8ex} \ms{let}(t'_r, c') = tag\_right(t', keys, C)~\ms{in}\\
+    \hspace{8ex} T = T :: t'_r,\\
+    \hspace{8ex} C = c'\\
+    \hspace{4ex} (op(T), C)
+
+  \end{array}
+\]
+
+Comparison operator up to keys.
+\[
+  \begin{array}{l}
+    eqk(t_r,t'_r):\ms{Bool} ::=\\
+    \hspace{2ex}\ms{match}~t~\ms{with}\\
+    \hspace{4ex}| E*K: \ms{Entity}\times\ms{Key} \rightarrow \ms{match}~t_r~\ms{with}\\
+    \hspace{6ex}| E*K': \ms{Entity}\times\ms{Key}~\rightarrow~true\\
+    \hspace{6ex}| \_ \rightarrow false\\
+    \hspace{4ex}| op(t_{1r},\ldots,t_{nr}): \ms{System} \rightarrow \ms{match}~t_r~\ms{with}\\
+    \hspace{6ex}| op(t'_{1r},\ldots,t'_{nr}):
+    \ms{RevSystem}~\rightarrow~cmp(t_1,t_{1r}) \wedge\ldots\wedge cmp(t_n,t_{nr})\\
+    \hspace{6ex}| \_ \rightarrow false\\
+    \hspace{4ex}| t_1 \rightarrow t_2 : \ms{Rule}\rightarrow \ms{match}~t'_r~\ms{with}\\
+    \hspace{6ex}| t'_1 \rightarrow t'_2 \rightarrow
+    eqk(t_1,t_1')\wedge eqk(t_2,t_2')\\
+    \hspace{6ex}| \_ \rightarrow false
+
+  \end{array}
+\]
+
+\begin{lemma}
+  \[
+    \forall t,t':\ms{System}, t_r,t'_r:\ms{RevSystem}.~\ms{if}~cmp(t,t_r)~\wedge~
+    cmp(t',t'_r) \Rightarrow eqk(tag(t\rightarrow t'),t_r\rightarrow t'_r)
+  \]
+\end{lemma}
+\begin{proof}
+  We proceed by induction on $t,t'$.\\
+  \begin{case}[$t=E,t'=E'$]
+    easy.
+  \end{case}
+  \begin{case}[$t=E,t'=op(t'_1,\ldots,t'_n)$]
+    By hypothesis we know that $cmp(t',t'_r)$, by inductive hypothesis we
+    know that for each $t_i$ in $t'_1,\ldots,t'_n$ we have 
+    $eqk(tag(t_i), t_{ir})$, where $t_{ir}$ is the subterm corresponding to
+    $t_i$ in $t'_r$, so we can conclude
+    $eqk(tag(t\rightarrow t'), t_r\rightarrow t'_r)$.
+  \end{case}
+  \begin{case}[$t=op(t'_1,\ldots,t'_n),t'=E$]
+    Similar to above.
+  \end{case}
+  \begin{case}[$t=op(t'_1,\ldots,t'_n),t'=op'(t''_1,\ldots,t''_n)$]
+    Like above, both on $t$ and $t'$.
+  \end{case}
+
+\end{proof}
 
 
-Rules have the following shape:
-\[r: t\rightarrow t'~\text{if}~\overline{eq}_n\]
-where $\overline{eq}_n$ is a sequence of equational conditions that we use to
-define which transitions are possible and which are not.
 
-Rules are defined by using variables so that with a finite amount of rules we
-can capture infinite possible scenarios.
 
-Now we proceed to show how concrete instances can be generated starting from the
-schemas. First some notation.
-
-\begin{definition}[Ground Terms]
-  For a given signature $\Sigma=\langle Sorts, Operations \rangle$ the set of ground
-  terms $T_\Sigma$ is inductively defined as follows:
-  \begin{enumerate}
-  \item All constants of sorts S in Operations are ground terms of sort S.
-  \item For every function symbol $f:S_1,\ldots,S_n\rightarrow S$ in Operations,
-    if $t_1,\ldots,t_n$ are ground terms of sorts $S_1,\ldots,S_n$,
-    respectively, then $f(t_1,\ldots,t_n)$ is a ground term of sort $S$ where
-    $S_1,\ldots,S_n\in Sorts$
-  \end{enumerate}
-
-  With $T_\Sigma^n$ we indicate all the ground terms up to the $n$-nth iteration
-  of the inductive definition. For example, $T_\Sigma^0$ is the set of constant
-  symbols, $T_\Sigma^1$ is the set of ground terms given by all the possible
-  applications of the operators to $T_\Sigma^0$, and so on.\\
-  With $T_{\Sigma, S}^n$ we indicate the ground terms of sort $S$ up to the
-  $n$-nth iteration.
-\end{definition}
-
-\begin{algorithm}
-  \caption{getInstances($\Sigma,r,E,n$)}\label{alg:cap}
-  \begin{algorithmic}
-    \State $\langle Sorts, Operators \rangle \gets \Sigma$
-    \State $V \gets vars(r)$    \Comment{Get vars used by the rule}
-    \State $S = \{\{v\} \times T_{\Sigma,type(v)}^n | v \in V\}$ 
-    \State $ConcInst = S_{v_1} \times \ldots \times S_{v_m}$
-    \State $ConcRules \gets \emptyset$ 
-    \ForEach{$i \in ConcInst$}
-    \State $CR \gets instantiate(i,r)$
-    \State $t' \rightarrow t'~\text{if}~\overline{eq}_l \gets CR$
-    \If{$E\vdash \overline{eq}_l$}
-    \State $ConcRules \gets ConcRules \cup \{t \rightarrow t'\}$
-    \EndIf
-    \EndFor\\
-    \Return $ConcRules \cup getInstances(\Sigma,r,E,n+1)$
-  \end{algorithmic}
-\end{algorithm}
 
 \end{document}
