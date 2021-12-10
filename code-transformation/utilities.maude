@@ -1,0 +1,63 @@
+
+fmod AP{X :: TRIV} is
+
+sort Func{X} .
+op _[_] : Func{X} X$Elt -> X$Elt [prec 17] .
+
+endfm
+
+fmod FUNC{X :: TRIV, Y :: TRIV} is
+
+sort Func{X,Y} .
+op _[_,_] : Func{X,Y} X$Elt Y$Elt -> Y$Elt [prec 17] .
+
+endfm
+
+fmod MAP{X :: TRIV} is
+
+inc AP{X} .
+inc LIST{X} .
+
+var E : X$Elt .
+var L : List{X} .
+var F : Func{X} .
+
+op map : List{X} Func{X} -> List{X} .
+
+eq map(nil, F) = nil .
+eq map(E L, F) = F[E] map(L, F) .
+
+endfm
+
+fmod FOLD{X :: TRIV, Y :: TRIV} is
+
+inc FUNC{X,Y} .
+inc LIST{X} .
+
+op foldl : List{X} Y$Elt Func{X,Y} -> Y$Elt .
+
+var E : X$Elt .
+var C : Y$Elt .
+var F : Func{X,Y} .
+var L : List{X} .
+
+eq foldl(nil, C, F) = C .
+eq foldl(E L, C, F) = foldl(L, F[E,C], F) .
+
+endfm
+
+fmod TEST is
+
+inc MAP{Nat} .
+
+vars N N' : Nat .
+op inc : -> Func{Nat} .
+eq inc[N] = N + 1 .
+
+inc FOLD{Nat, Nat} .
+
+op + : -> Func{Nat, Nat} .
+eq +[N,N'] = N + N' .
+
+endfm
+
