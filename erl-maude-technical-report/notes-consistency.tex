@@ -98,39 +98,59 @@ schema. A non-reversible schema has the following shape:
 where $t$ and $t'$ are inductively defined as
 \[
   \begin{array}{l}
-    t,t',t_1,\ldots,t_n: \ms{System} ::=\\
-    \hspace{1ex}|~E: \ms{Entity}\\
-    \hspace{1ex}|~op(t_1,\ldots,t_n): \ms{System}\\
+    t,t',t_1,\ldots,t_n: ::=\\
+    \hspace{1ex}|~e:\\
+    \hspace{1ex}|~op(t_1,\ldots,t_n)\\
   \end{array}
 \]
 
-Now, for a schema to be reversible each entity must be tagged with a key and a
+Now, for a schema to be reversible each entity must be tagged with a unique meta-key and a
 memory has to be produced each time that a transition is performed. In symbols
-\[t_r \rightarrow t'_r \paral \mu ~\ms{if}~\overline{eq}_n\]
+\[t_r \rightarrow t'_r \paral \mu ~\ms{if}~\overline{eq}_n~\text{where
+  }ukeys(t_r\rightarrow t'_r)\]
 
 Where $t_r$ and $t'_r$ are inductively defined as
 \[
   \begin{array}{l}
-    t_r,t'_r,t_{1r},\ldots,t_{nr}: \ms{RevSystem} ::=\\
-    \hspace{1ex}|~E*K: \ms{Entity} \times \ms{Key}\\
-    \hspace{1ex}|~op(t_{1r},\ldots,t_{nr}): \ms{RevSystem}\\
+    t_r,t'_r,t_{1r},\ldots,t_{nr} ::=\\
+    \hspace{1ex}|~E*K\\
+    \hspace{1ex}|~op(t_{1r},\ldots,t_{nr})\\
   \end{array}
 \]
 and $\mu$ is defined as $[R;C]$ where $R$ is the configuration that gave rise to
 the step, i.e., $t_r$ and $C$ is a context describing the structure of the
 resulting one, where entities have been removed while keys are kept.
 
-Let us now define an auxiliary function.
+Let us now define some auxiliary functions.
+
 \[
   \begin{array}{l}
-  cmp(t,t_r):\ms{Bool} ::=\\
+    ukeys(t\rightarrow t') ::=\\
+    \hspace{2ex} \ms{let}(b,keys)=ukeys(t, \{\})~\ms{in}\\
+    \hspace{2ex} \ms{let}(b',\_)=ukeys(t', keys)~\ms{in}\\
+    \hspace{2ex} b \wedge b'
+  \end{array}
+\]
+\[
+  \begin{array}{l}
+    ukeys(t, keys) ::=\\
     \hspace{2ex}\ms{match}~t~\ms{with}\\
-    \hspace{4ex}| E: \ms{Entity} \rightarrow \ms{match}~t_r~\ms{with}\\
-    \hspace{6ex}| E*K: \ms{Entity}\times\ms{Key}~\rightarrow~true\\
+    \hspace{4ex}| e*k: \rightarrow (k\in keys, k::keys)\\
+    \hspace{4ex}| op(t_1,\ldots,t_n) \rightarrow \\
+    \hspace{6ex} \ms{let}~F=\ms{fun}(x,\langle b, keys'\rangle)\rightarrow~ukeys(t,keys')\\
+    \hspace{6ex} \ms{foldl}~(t_1,\ldots,t_n)~(true, keys)(F)
+  \end{array}
+\]
+
+\[
+  \begin{array}{l}
+  cmp(t,t_r) ::=\\
+    \hspace{2ex}\ms{match}~t~\ms{with}\\
+    \hspace{4ex}| e \rightarrow \ms{match}~t_r~\ms{with}\\
+    \hspace{6ex}| e*k: ~\rightarrow~true\\
     \hspace{6ex}| \_ \rightarrow false\\
-    \hspace{4ex}| op(t_1,\ldots,t_n): \ms{System} \rightarrow \ms{match}~t_r~\ms{with}\\
-    \hspace{6ex}| op(t_{1r},\ldots,t_{nr}):
-    \ms{RevSystem}~\rightarrow~cmp(t_1,t_{1r}) \wedge\ldots\wedge cmp(t_n,t_{nr})\\
+    \hspace{4ex}| op(t_1,\ldots,t_n) \rightarrow \ms{match}~t_r~\ms{with}\\
+    \hspace{6ex}| op(t_{1r},\ldots,t_{nr})\rightarrow~cmp(t_1,t_{1r}) \wedge\ldots\wedge cmp(t_n,t_{nr})\\
     \hspace{6ex}| \_ \rightarrow false
 
   \end{array}
@@ -151,17 +171,11 @@ where $tag\_left$ is defined as
   \begin{array}{l}
     tag\_left(t, keys) ::=\\
     \hspace{2ex}\ms{match}~t~\ms{with}\\
-    \hspace{4ex}| E: \ms{Entity} \rightarrow \ms{let}~k'=fresh(keys)~\ms{in}~
-    (E*k',k'::keys)\\
-    \hspace{4ex}| op(t_1,\ldots,t_n): \ms{System} \rightarrow \\
-    \hspace{6ex} \ms{let}~T=[]~\ms{in}\\
-    \hspace{6ex} \ms{let}~K=keys~\ms{in}\\
-    \hspace{6ex} \ms{for~each}~t'\in t_1,\ldots,t_n\\
-    \hspace{8ex} \ms{let}(t'_r, keys') = tag\_left(t', K)~\ms{in}\\
-    \hspace{8ex} T = T :: t'_r,\\
-    \hspace{8ex} K = keys' :: K\\
-    \hspace{4ex} (op(T), K)
-
+    \hspace{4ex}| e: \rightarrow \ms{let}~k'=fresh(keys)~\ms{in}~
+    (e*k',k'::keys)\\
+    \hspace{4ex}| op(t_1,\ldots,t_n) \rightarrow \\
+    \hspace{6ex} \ms{let}~F=\ms{fun}(x,\langle T_r, keys'\rangle) \rightarrow \ms{let}(x_r,keys'')=tag\_left(x, keys')~\ms{in}~(T_r::x_r, keys'')\\
+    \hspace{6ex} \ms{foldl}~(t_1,\ldots,t_n)~([],keys)(F)
   \end{array}
 \]
 
@@ -170,35 +184,27 @@ and where $tag\_right$ is defined as
   \begin{array}{l}
     tag\_right(t, keys, c) ::=\\
     \hspace{2ex}\ms{match}~t~\ms{with}\\
-    \hspace{4ex}| E: \ms{Entity} \rightarrow \ms{let}~c'=c+1~\ms{in}~
-    (E*c::keys,c)\\
-    \hspace{4ex}| op(t_1,\ldots,t_n): \ms{System} \rightarrow \\
-    \hspace{6ex} \ms{let}~T=[]~\ms{in}\\
-    \hspace{6ex} \ms{let}~C=c~\ms{in}\\
-    \hspace{6ex} \ms{for~each}~t'\in t_1,\ldots,t_n\\
-    \hspace{8ex} \ms{let}(t'_r, c') = tag\_right(t', keys, C)~\ms{in}\\
-    \hspace{8ex} T = T :: t'_r,\\
-    \hspace{8ex} C = c'\\
-    \hspace{4ex} (op(T), C)
-
+    \hspace{4ex}| e \rightarrow \ms{let}~c'=c+1~\ms{in}~
+    (e*c'::keys,c')\\
+    \hspace{4ex}| op(t_1,\ldots,t_n) \rightarrow \\
+    \hspace{6ex} \ms{let}~F = (x,\langle T_r,C,keys\rangle)\rightarrow \ms{let}(x_r,C')=tag\_right(x, keys, C)~\ms{in}~(T_r::x_r,C', keys)\\
+    \hspace{6ex} \ms{foldl}~(t_1,\ldots,t_n)~([],c,keys)~(F)
   \end{array}
 \]
 
 Comparison operator up to keys.
 \[
   \begin{array}{l}
-    eqk(t_r,t'_r):\ms{Bool} ::=\\
+    eqk(t_r,t'_r) ::=\\
     \hspace{2ex}\ms{match}~t~\ms{with}\\
-    \hspace{4ex}| E*K: \ms{Entity}\times\ms{Key} \rightarrow \ms{match}~t_r~\ms{with}\\
-    \hspace{6ex}| E*K': \ms{Entity}\times\ms{Key}~\rightarrow~true\\
+    \hspace{4ex}| e*k \rightarrow \ms{match}~t_r~\ms{with}\\
+    \hspace{6ex}| e*k'\rightarrow~true\\
     \hspace{6ex}| \_ \rightarrow false\\
     \hspace{4ex}| op(t_{1r},\ldots,t_{nr}): \ms{System} \rightarrow \ms{match}~t_r~\ms{with}\\
-    \hspace{6ex}| op(t'_{1r},\ldots,t'_{nr}):
-    \ms{RevSystem}~\rightarrow~cmp(t_1,t_{1r}) \wedge\ldots\wedge cmp(t_n,t_{nr})\\
+    \hspace{6ex}| op(t'_{1r},\ldots,t'_{nr}): \rightarrow~cmp(t_1,t_{1r}) \wedge\ldots\wedge cmp(t_n,t_{nr})\\
     \hspace{6ex}| \_ \rightarrow false\\
-    \hspace{4ex}| t_1 \rightarrow t_2 : \ms{Rule}\rightarrow \ms{match}~t'_r~\ms{with}\\
-    \hspace{6ex}| t'_1 \rightarrow t'_2 \rightarrow
-    eqk(t_1,t_1')\wedge eqk(t_2,t_2')\\
+    \hspace{4ex}| t_1 \rightarrow t_2 \rightarrow \ms{match}~t'_r~\ms{with}\\
+    \hspace{6ex}| t'_1 \rightarrow t'_2 \rightarrow eqk(t_1,t_1')\wedge eqk(t_2,t_2')\\
     \hspace{6ex}| \_ \rightarrow false
 
   \end{array}
@@ -206,7 +212,7 @@ Comparison operator up to keys.
 
 \begin{lemma}
   \[
-    \forall t,t':\ms{System}, t_r,t'_r:\ms{RevSystem}.~\ms{if}~cmp(t,t_r)~\wedge~
+    \forall t,t',t_r,t'_r.~\ms{if}~cmp(t,t_r)~\wedge~
     cmp(t',t'_r) \Rightarrow eqk(tag(t\rightarrow t'),t_r\rightarrow t'_r)
   \]
 \end{lemma}
@@ -228,10 +234,26 @@ Comparison operator up to keys.
   \begin{case}[$t=op(t'_1,\ldots,t'_n),t'=op'(t''_1,\ldots,t''_n)$]
     Like above, both on $t$ and $t'$.
   \end{case}
-
 \end{proof}
 
-
+\begin{lemma}
+  \[
+    \forall t.~ ukeys(tag\_left(t),\{\})
+  \]
+\end{lemma}
+\begin{proof}
+  We proceed by induction on $t$.\\
+  \begin{case}[$t=E$]
+    easy.
+  \end{case}
+  \begin{case}[$t=op(\overline{t_n})$]
+    We proceed by induction on $t_n$, the case empty list is easy (cannot
+    occur) and the case single element follows by the inductive hypothesis on $t$.
+    The case $t_x::t$ follows by using the inductive hypothesis on $t_n$ and by
+    the one on $t$.
+    
+  \end{case}
+\end{proof}
 
 
 

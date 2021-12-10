@@ -115,6 +115,14 @@ causal dependencies, needed for the definition of causal-consistent reversibilit
 semantics taken in input must be a reduction semantics and the entities on the
 left-hand side of a rule are seen as the resources to be \emph{consumed} to
 \emph{produce} the resources on the right-hand side - i.e., the new entities.
+As an example, even without knowing the details that will be explained later, let
+us consider the following rule. 
+\[\langle p_1, \theta, p_2~\ms{!}~hello, me\rangle \rightarrow \langle p_1, \theta,
+  hello, me\rangle \paral\langle p_1, p_2,hello \rangle\]
+On the left we have a process ready to send a
+message, when the rule is fired the process is consumed to produce the message
+and the process itself after the send.
+
 In order to define the reversible semantics, we need two ingredients: keys and memories.
 Keys are attached to entities, so to distinguish entities with the same form but different history.
 Memories are used to track past states, that would normally be lost during the computation, so that
@@ -142,7 +150,8 @@ is derived, while in Section~\ref{sec:ongoing-work} we discuss some
 ongoing work. Finally, in Section~\ref{sec:conclusion} we give some
 conclusions and we hint possible future directions.
 
-All the code discussed in this report is publicly available at: \url{https://github.com/gfabbretti8/formalization-in-maude-of-erlang}.
+All the code discussed in this report is publicly available
+at~\cite{erl-maude-repo}. 
 
 \section{Background}\label{sec:background}
 
@@ -153,7 +162,7 @@ introduced in 1986 by Ericsson, it has gained quite a lot of
 popularity since then.  Today it is widely used and mostly appreciated
 because it is easy to learn, provides useful abstractions for
 concurrent and distributed programming, and because of its support for
-highly-available systems. Erlang implements the actor model~\cite{}, a
+highly-available systems. Erlang implements the actor model~\cite{Hewitt73}, a
 concurrency model based on message passing. In the actor model, each
 process is identified as an actor that can interact with other actors
 only through the exchange of messages, no memory is shared. Indeed,
@@ -176,7 +185,7 @@ Ground values in Erlang are: atoms (which are identifiers that either
 begin with a lowercase or are enclosed by quotes), integers and
 strings, as well as compositions of values using tuple and list
 constructs. We range over ground values using $v$. Tuples are denoted
-as $\ms{\{}v_1,\ldots,v_n\ms{\}}$ and lists are denoted as
+as $\{v_1,\ldots,v_n\}$ and lists are denoted as
 $[v_1|v_2]$, where $v_1$ is the head and $v_2$ the tail.
 
 
@@ -287,6 +296,47 @@ In other words the equational theory defines which terms define the same states
 of a system, only using different syntactical elements, while the rewriting rules
 define how the system can evolve and transit from one state to another.
 
+Let us now consider the module in Fig.~\ref{fig:bool}, that is an example of a maude module that implements booleans and
+define on them the classic operations.
+
+\begin{figure}[t]
+\begin{verbatim}
+fmod BOOL is
+  sort Bool .
+  op true : -> Bool [ctor] .
+  op false : -> Bool [ctor] .
+
+  op _and_ : Bool Bool -> Bool [assoc comm prec 55] .
+  op _or_ : Bool Bool -> Bool [assoc comm prec 59] .
+  op _xor_ : Bool Bool -> Bool [assoc comm prec 57] .
+  op not_ : Bool -> Bool [prec 53] .
+
+  vars A B C : Bool .
+
+  eq true and A = A .
+  eq false and A = false .
+  eq A and A = A .
+  eq false xor A = A .
+  eq A xor A = false .
+  eq A and (B xor C) = A and B xor A and C .
+  eq not A = A xor true .
+  eq A or B = A and B xor A xor B .
+endfm
+\end{verbatim}
+  \label{fig:bool}
+\end{figure}
+
+First, the sort $Bool$ is declared. Then, the values true and false are declared
+as two constant operators of sort Bool. Successively, the classic operations are
+defined as functions that take in input some bools and produce a bool as a
+result. For example, \verb+_and_ : Bool Bool -> Bool+ defines the \emph{and}
+operator that takes in input two bools and produces a bool. Finally, the semantics of these operators is given
+by the equational theory defined at the bottom of the module. Equations are used
+to from left to right to normalize terms. For instance, the first equation,
+\verb+eq true and A = A.+ is used to evaluate the and operator when the first
+argument had been normalized to false.
+
+
 \begin{figure}[t]
 \begin{verbatim}
  mod H is
@@ -304,7 +354,7 @@ define how the system can evolve and transit from one state to another.
   \label{fig:maude-module}
 \end{figure}
 
-A module in Maude has the shape depicted in Fig.~\ref{fig:maude-module}, where:
+In general, a module in Maude has the shape depicted in Fig.~\ref{fig:maude-module}, where:
 \verb+H+ is the module name; \verb+IL+ is the import list; \verb+SS+ is the set
 of sort declarations; \verb+SSDS+ is the set of sub-sort declarations; \verb+OPDS+
 is the set of operator declarations; \verb+MAS+ is the set of membership
@@ -889,9 +939,9 @@ behavior.
 Let us consider the following processes:
 \[
   \begin{array}{l}
-  \langle p, \theta, 2~\ms{!}~'hello', me\rangle\\
-  \langle p', \theta', \ms{case}~2~\ms{!}~'hello'~\ms{of} \ldots, me'\rangle\\
-  \langle p'', \theta'', X = 2~\ms{!}~'hello', me''\rangle 
+    \langle p, \theta, 2~\ms{!}~'hello', me\rangle\\
+    \langle p', \theta', \ms{case}~2~\ms{!}~'hello'~\ms{of} \ldots, me'\rangle\\
+    \langle p'', \theta'', X = 2~\ms{!}~'hello', me''\rangle 
   \end{array}
 \]
 
