@@ -18,7 +18,6 @@ set show command off .
 set show advisories off .
 set show loop stats off .
 
-
 (show module CODE-MANIPULATION[SEM_TRANSITIONS, 'BWD] .)
 
 quit

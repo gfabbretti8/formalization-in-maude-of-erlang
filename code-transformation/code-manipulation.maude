@@ -31,7 +31,6 @@ fmod CODE-MANIPULATION is
  eq #transform-mod(mod 'SEM_TRANSITIONS is IL sorts SS . SSDS OPDS MAS EQS RLS endm, ''FWD.Qid)
     = #produce-fwd-sem(mod 'SEM_TRANSITIONS is IL sorts SS . SSDS OPDS MAS EQS RLS endm) .
 
-
  eq #transform-mod(mod 'SEM_TRANSITIONS is IL sorts SS . SSDS OPDS MAS EQS RLS endm, ''BWD.Qid)
     = #produce-bwd-sem(mod 'SEM_TRANSITIONS is IL sorts SS . SSDS OPDS MAS EQS RLS endm) .
 

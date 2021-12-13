@@ -1,10 +1,7 @@
 
-fmod AP{X :: TRIV} is
 
-sort Func{X} .
-op _[_] : Func{X} X$Elt -> X$Elt [prec 17] .
 
-endfm
+
 
 fmod FUNC{X :: TRIV, Y :: TRIV} is
 
@@ -13,51 +10,25 @@ op _[_,_] : Func{X,Y} X$Elt Y$Elt -> Y$Elt [prec 17] .
 
 endfm
 
-fmod MAP{X :: TRIV} is
+view Term from TRIV to META-TERM is
+  sort Elt to Term .
+endv
 
-inc AP{X} .
-inc LIST{X} .
+fmod FOLD{Y :: TRIV} is
 
-var E : X$Elt .
-var L : List{X} .
-var F : Func{X} .
+inc FUNC{Term, Y} .
+pr META-TERM .
 
-op map : List{X} Func{X} -> List{X} .
+op foldl-term : TermList Y$Elt Func{Term,Y} -> Y$Elt .
 
-eq map(nil, F) = nil .
-eq map(E L, F) = F[E] map(L, F) .
-
-endfm
-
-fmod FOLD{X :: TRIV, Y :: TRIV} is
-
-inc FUNC{X,Y} .
-inc LIST{X} .
-
-op foldl : List{X} Y$Elt Func{X,Y} -> Y$Elt .
-
-var E : X$Elt .
+var H : Term .
+var TL : TermList .
 var C : Y$Elt .
-var F : Func{X,Y} .
-var L : List{X} .
+var F : Func{Term, Y} .
 
-eq foldl(nil, C, F) = C .
-eq foldl(E L, C, F) = foldl(L, F[E,C], F) .
-
-endfm
-
-fmod TEST is
-
-inc MAP{Nat} .
-
-vars N N' : Nat .
-op inc : -> Func{Nat} .
-eq inc[N] = N + 1 .
-
-inc FOLD{Nat, Nat} .
-
-op + : -> Func{Nat, Nat} .
-eq +[N,N'] = N + N' .
+eq foldl-term(empty, C, F) = C .
+eq foldl-term((H, TL), C, F) = foldl-term(TL, F[H,C], F) .
 
 endfm
+
 
