@@ -33,7 +33,3 @@ truncate -s -5 ./rev-model/system.maude
 echo "Producing the backward reversible rules."
 #Producing the forward reversible rules
 maude -no-banner -no-advise  -no-mixfix -no-tecla -no-wrap transform-fwd-op-sem.maude
-
-
-
-

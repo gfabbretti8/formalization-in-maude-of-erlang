@@ -47,10 +47,10 @@ mod SEM_TRANSITIONS is
   crl < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,store-stack:
     STORE:StoreStack > * key N:NatList
     => (< sender: P:Pid,receiver: DEST:Pid,payload: GVALUE:GroundValues > *
-    key(0 N:NatList) || < P:Pid | exp: EXSEQ':NeExpSeq,ASET:AttributeSet,
-    store-stack: STORE':StoreStack > * key(1 N:NatList)) || [< P:Pid |
+    key(1 N:NatList) || < P:Pid | exp: EXSEQ':NeExpSeq,ASET:AttributeSet,
+    store-stack: STORE':StoreStack > * key(2 N:NatList)) || [< P:Pid |
     ASET:AttributeSet,exp: EXSEQ:NeExpSeq,store-stack: STORE:StoreStack > * key
-    N:NatList ; @: key(0 N:NatList) || @: key(1 N:NatList)]
+    N:NatList ; @: key(1 N:NatList) || @: key(2 N:NatList)]
     if < DEST:Pid ! GVALUE:GroundValues,STORE':StoreStack,EXSEQ':NeExpSeq > :=
     < req-gen,STORE:StoreStack,EXSEQ:NeExpSeq > [label sys-send] .
   crl < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,store-stack:
@@ -75,14 +75,14 @@ mod SEM_TRANSITIONS is
   crl pidGen(INT:Int)* key N:NatList || < P:Pid | ASET:AttributeSet,exp:
     EXSEQ:NeExpSeq,store-stack: STORE:StoreStack,mod-env: ME:ModEnv > * key
     N':NatList
-    => ((pidGen(INT:Int + 1)* key(0 N':NatList N:NatList) || < pid(INT:Int +
+    => ((pidGen(INT:Int + 1)* key(2 N':NatList N:NatList) || < pid(INT:Int +
     1)| exp: EXSEQ'':NeExpSeq,store-stack: STORE'':StoreStack,mod-env:
-    ME:ModEnv > * key(1 N':NatList N:NatList)) || < P:Pid | exp:
+    ME:ModEnv > * key(3 N':NatList N:NatList)) || < P:Pid | exp:
     EXSEQ':NeExpSeq,store-stack: STORE':StoreStack,ASET:AttributeSet,mod-env:
-    ME:ModEnv > * key(1 N':NatList N:NatList)) || [pidGen(INT:Int)* key
+    ME:ModEnv > * key(2 N':NatList N:NatList)) || [pidGen(INT:Int)* key
     N:NatList || < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,store-stack:
-    STORE:StoreStack,mod-env: ME:ModEnv > * key N':NatList ;(@: key(0
-    N':NatList N:NatList) || @: key(1 N':NatList N:NatList)) || @: key(1
+    STORE:StoreStack,mod-env: ME:ModEnv > * key N':NatList ;(@: key(2
+    N':NatList N:NatList) || @: key(3 N':NatList N:NatList)) || @: key(2
     N':NatList N:NatList)]
     if < spawn(FUNNAME:FunName,ARGS:Args),STORE':StoreStack,EXSEQ':NeExpSeq >
     := < req-spawn(pid(INT:Int + 1)),STORE:StoreStack,EXSEQ:NeExpSeq > /\
