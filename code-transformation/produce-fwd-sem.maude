@@ -10,14 +10,6 @@ fmod RICHTERMS is
 
 endfm
 
-view Term from TRIV to META-TERM is
-  sort Elt to Term .
-endv
-
-view TermList from TRIV to META-TERM is
-  sort Elt to TermList .
-endv
-
 view TermWithKeys from TRIV to RICHTERMS is
   sort Elt to TermWithKeys .
 endv
@@ -34,8 +26,8 @@ fmod PRODUCE-FWD-SEM is
   protecting QID .
   protecting META-TERM .
   protecting NAT .
-  inc FOLD{Term, TermWithKeys, TermList} .
-  inc FOLD{Term, TermIdPlKeys, TermList} .
+  inc FOLD{TermWithKeys} .
+  inc FOLD{TermIdPlKeys} .
 
   vars K T T' T'' T1 T2 T2' T3 : Term .
   vars TERMS PL PL1 TERMS' TERMS'' : TermList .
