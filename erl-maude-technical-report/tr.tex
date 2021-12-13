@@ -59,7 +59,8 @@
 
 \maketitle % typeset the header of the contribution 
 
-\abstract{In recent years, reversibility in concurrent settings has attracted quite
+\abstract{
+  In recent years, reversibility in concurrent settings has attracted quite
   some interest thanks to its many applications in different areas, like error-recovery,
   debugging, biological systems. Some of the formalisms where it has been
   investigated are: petri-nets, process algebras and real programming languages.
@@ -68,9 +69,9 @@
   they have been studied ad-hoc. To address this limit Lanese et al.~have recently
   proposed a new general method to derive a reversible semantics starting from a
 non-reversible one. The general method though lacks an implementation
-that proves its feasibility not only in theory but in practice as well. The
+that proves its feasibility in practice. The
 aim of this work is to provide such an implementation and
-apply it to a case study on the Erlang programming language. }
+to apply it to a case study on the Erlang programming language. }
 
 \section{Introduction}
 
@@ -97,7 +98,7 @@ $\mu$Klaim~\cite{GiachinoLMT17}, Petri-nets~\cite{PhilippouP18,MelgrattiMU20}, e
 Another stream of research, investigating reversibility as a debugging technique for concurrent systems,
 has risen after \cite{GiachinoLM14}, where Giachino et al.~proposed to
 equip a concurrent debugger with reversible primitives.
-The approach by Giachino et al.~has subsequently be applied in the context of a real programming language, namely Erlang~\cite{LaneseNPV18,Lanese0PV18,Gonzalez-AbrilV21,FabbrettiLS21}.
+The approach by Giachino et al.~has subsequently been applied in the context of a real programming language, namely Erlang~\cite{LaneseNPV18,Lanese0PV18,Gonzalez-AbrilV21,FabbrettiLS21}.
 
 However, as anticipated, all the works cited so far suffer from the same limitation: reversibility has always been
 devised manually. Given a forward non-reversible semantics, the authors manually
@@ -106,8 +107,8 @@ Deriving a reversible semantics manually presents some limitations: the
 process is error-prone, it does not scale well to other formalisms and lacks
 uniformity - i.e., the same properties must be proved for each formalism.
 
-To address this problem, Lanese et al.~proposed in~\cite{LaneseM20} a
-new general method to
+To address this problem, Lanese and Medic~proposed in~\cite{LaneseM20} a
+general method to
 automatically derive a causal-consistent reversible semantics starting from a non-reversible one. The
 advantages of having an automatic method are symmetric to the disadvantages
 listed above, i.e., the method: is not error-prone; scales well; is uniform. The key idea behind the general method is to capture
@@ -128,25 +129,32 @@ Keys are attached to entities, so to distinguish entities with the same form but
 Memories are used to track past states, that would normally be lost during the computation, so that
 they can be restored during backward execution.
 
-However, in~\cite{LaneseM20} the approach is only described
-theoretically and no implementation is provided. Our work aims at
-providing a concrete implementation of this method, to show that the
-method can be applied in practice as well.  To further supply this
-claim, we apply it to a case study on the Erlang programming language.
+In~\cite{LaneseM20} the approach is only described theoretically and
+no implementation is provided. Actually, the method relies on
+reversing instances of rules, which are infinitely many in almost any
+non trivial formalism, what makes not immediately clear that an
+implementation could exist. Our work aims at showing that indeed the
+method can be implemented and used in practice.  The key idea here is
+that the instances of rules can be captured by a finite (and
+frequently small) number of rule schemas, and the approach can be
+applied to schemas. In order to do this, we use Maude~\cite{maude} to represent the reduction semantics (both the non-reversible one in input and the reversible one we compute) as well as for the tool generating the reversible semantics.
+To further prove the practicality of the
+approach, we apply it to a case study on the Erlang programming
+language.
 
 The main contributions of this work are:
 \begin{itemize}
   \item a novel formalization of Erlang semantics using
-    Maude~\cite{maude};
+    Maude;
   \item the implementation of a tool that automatically derives a reversible
     semantics starting from a non reversible one.
 \end{itemize}
 
 The rest of the report provides the reader with the required
 background in Section~\ref{sec:background}, then in
-Section~\ref{sec:contribution} we will present the formalization of
-the Erlang semantics in Maude and discuss how the reversible semantics
-is derived, while in Section~\ref{sec:ongoing-work} we discuss some
+Section~\ref{sec:formalizing-erlang} we will present the formalization of
+the Erlang semantics in Maude and in Section~\ref{sec:generating} we discuss how the reversible semantics
+is generated. In Section~\ref{sec:ongoing-work} we discuss some
 ongoing work. Finally, in Section~\ref{sec:conclusion} we give some
 conclusions and we hint possible future directions.
 
@@ -164,15 +172,16 @@ because it is easy to learn, provides useful abstractions for
 concurrent and distributed programming, and because of its support for
 highly-available systems. Erlang implements the actor model~\cite{Hewitt73}, a
 concurrency model based on message passing. In the actor model, each
-process is identified as an actor that can interact with other actors
+process is an actor that can interact with other actors
 only through the exchange of messages, no memory is shared. Indeed,
 central in Erlang are the $\ms{send}$, $\ms{receive}$ and $\ms{spawn}$
 operations, to, respectively, send a message, receive a message, and
-create a new actor.
+create a new actor. Actors are identified by a pid (process identifier) and have a queue of messages which have arrived but have not yet been processed.
+An actor evaluates an expression, and has an environment to store variable bindings.
 
 The rest of this section provides the reader with a basic understanding
 of the Erlang programming language. We begin by illustrating its syntax, depicted in
-Fig.~\ref{ErlangSyntax}\footnote{The syntax that we support is a subset of the
+Fig.~\ref{ErlangSyntax}\footnote{We support the functional and concurrent fragment of the
   real Erlang language.}. 
 
 An Erlang program can be seen as a collection of modules, where a module is a sequence of function definitions. Each function is uniquely identified by its name and by the
@@ -238,8 +247,8 @@ is raised. If no mismatch occurs then the operation evaluates to the ground
 value of the right-hand side and the environment is updated.
 
 In the $\ms{case}$ scenario, the expression $e$ must evaluate to a ground value, then it is matched against the patterns, from
-top to down, until one that matches is found. When a match is found the environment
-is enriched with the new bindings and the sequence of expressions returned, if
+top to bottom, until one that matches is found. When a match is found the environment
+is enriched with the new bindings and the corresponding sequence of expressions evaluated, if
 no match is found an exception is raised.
 
 The behaviour of the $\ms{receive}$ is similar to the one of the
@@ -251,7 +260,7 @@ then the process suspends.
 
 Despite being - mostly - functional Erlang
 admits some imperative operations that produce side-effects, like the receive
-above, spawning a new process, or sending a message. 
+above, spawning a new process, and sending a message. 
 
 The syntax of message send is $e_1!e_2$, where $e_1$ must
 evaluate to the pid of the receiver process and $e_2$ must evaluate to the ground value that represents the payload of the message. The expression itself evaluates to
@@ -275,11 +284,12 @@ logic together with semantics rules.
 
 Formally, a rewriting logic is a tuple $(\Sigma, E, R)$, where $\Sigma$
 represents a collection of typed operators, $E$ a set of equations among the operators, and $R$ is the set of
-semantics rules. Using a rewriting logic is quite convenient to formalize the
-semantics of a language as it combines the benefits of using an equational theory as well as rewriting rules.
+semantics rules.
 
-% Equations
-On one hand, the equational side of rewriting logic is well-suited to define the deterministic part of the model, where
+Using a rewriting logic is quite convenient to formalize the
+semantics of a language as it provides the benefits of using both an equational theory and rewriting rules.
+
+On the one hand, the equational side of rewriting logic is well-suited to define the deterministic part of the model, where
 we define classes of equivalences over terms. More precisely we say that two terms
 $v$ and $u$ are equivalent if under a set of equations $E$ we can prove $E \vdash
 v = u$. Equations can be conditional and conditions can be either the
@@ -289,7 +299,7 @@ membership of the term to some kind or other equations.
 On the other hand, the rewriting rules are well-suited to define the concurrent
 (non-deterministic) part of the programming language. The set of rules $R$
 specifies how to rewrite a (parametrized) term $t$ to another term $t'$.
-Rewriting rules, like the equations, can be conditional and as condition they can
+Rewriting rules, like equations, can be conditional and as condition they can
 use membership, equations, as well as other rules.
 
 In other words the equational theory defines which terms define the same states
@@ -395,7 +405,7 @@ form:
 \]
 
 where $\nil$ is the empty system, $P$ an entity of the lower level and $op(S_1,\ldots,S_n)$ an operator
-composing entities. An entity of the lower-level could, for example, be a process of the system or
+composing entities. An entity of the lower-level could be, for example, a process of the system or
 a message traveling the network.
 
 % Talk about the schema of the forward rules, why it is necessary and how it is
@@ -404,7 +414,7 @@ a message traveling the network.
 Second, the rules defining the operational semantics must fit the schema in Fig.~\ref{fig:forwardrules}.
 The schema contains rules to: i) allow entities to interact with each other (\textsc{Scm-Act}); ii)
 exploit structural congruence (\textsc{Eqv}); iii) allow single entities to execute inside a context (\textsc{Scm-Opn});
-iv) execute two systems in parallel (\textsc{Par}).
+iv) execute two systems in parallel (\textsc{Par}). Notably, while (\textsc{Eqv}) and (\textsc{Par}) are rule that must belong to the semantics, (\textsc{Scm-Act}) and (\textsc{Scm-Opn}) are schemas, and the semantics may contain any number of instances of the schemas. Actually, rule (\textsc{Par}) is an instance of schema (\textsc{Scm-Opn}), highlighting that such an instance is required. Also, notice that a notion of structural congruence on systems is assumed. 
 
 \begin{figure}[t]
   {\footnotesize
@@ -445,9 +455,9 @@ Two modifications have been done. First, each entity of the system is tagged wit
 a key. Keys are used to distinguish identical processes with a different
 history. Second, the syntax is updated with another production: memories. Memories have
 the shape $\mu=[R;C]$, where $R$ is the configuration of the
-system that gave rise to the forward step and $C$ is a context describing the structure of the resulting one.
-$C$ acts as the binder between $R$ and the actual final configuration. In
-other words, memories bind different states of the entities. Moreover, they keep
+system that gave rise to a forward step and $C$ is a context describing the structure of the system resulting from the forward step.
+$C$ acts as a link between $R$ and the actual final configuration. In
+other words, memories link different states of the entities. Moreover, they keep
 track of past states of the system so that they can be restored.
 
 Then, the rules of the non-reversible operational semantics are updated as depicted in
@@ -505,27 +515,24 @@ the entities tagged with the keys in $C$ are both available then a backward step
 performed and the old configuration $R$ can be restored.
 
 The reversible semantics produced by this approach captures causal dependencies
-in terms of resources produces and consumed, since, thanks to the memory, a
+in terms of resources produced and consumed, since, thanks to the memory, a
 causal link is created each time that some entities are rewritten. We refer
-to~\cite{LaneseM20} for the formal demonstration of the causal-consistency of
+to~\cite{LaneseM20} for the formal demonstration of the causal-consistency and of other relevant properties of
 the reversible semantics. We also remark
-that the semantics here produced is uncontrolled, i.e., if
-several rules can be fired at the same time there is no policy on which one to choose.
+that the semantics produced is uncontrolled~\cite{LaneseMS12}, i.e., if multiple (forward and/or backward) steps are enabled at the same time there is no policy on which one to choose.
 
-\section{Formalizing Erlang and Generating The Reversible Semantics}\label{sec:contribution}
-
-\subsection{Formalizing Erlang}\label{sec:formalizing-erlang}
+\section{Formalizing Erlang in Maude}\label{sec:formalizing-erlang}
 
 The work presented here has been strongly inspired
 by~\cite{NeuhauberN07}, where the authors formalized the semantics of
-Core-Erlang to do model-checking on it. While our final semantics is quite
+Core Erlang~\cite{Car01} to do model-checking on it. While our final semantics is quite
 different from the one they presented (the most notable differences are that we formalize
 full Erlang and the use of labels) we were still able to re-use some of their
-modules and some of their ideas, like the internal representation of the
-ground-values, which greatly simplified the formalization task.
+modules and some of their ideas, like the internal representation of
+ground values, which greatly simplified the formalization task.
 
 Our formalization of the semantics follows the style of the one
-in~\cite{Gonzalez-AbrilV21} with some differences, which we will soon discuss. As
+in~\cite{Gonzalez-AbrilV21}, with some differences which we will soon discuss. As
 in~\cite{Gonzalez-AbrilV21}, the semantics is a two
 layer semantics, one layer for the expressions level and another layer for the system
 level. This division is quite convenient for the formalization in Maude, as we
@@ -533,7 +540,7 @@ can formalize the expression level as an equational theory and then using rewrit
 rules to describe the concurrent features, i.e., the system level.
 
 The system level comprises a rewriting rule for each concurrent feature and a
-rewriting $\tau$ rule for sequential operations. While it would have been
+rewriting rule $\tau$ for sequential operations. While it would have been
 possible to
 define all the sequential operations as an equational theory we still decided to
 have a rewriting rule to perform single sequential steps to better simulate the
@@ -541,23 +548,23 @@ behavior of a step-by-step debugger.
 
 Before diving in discussing the rewriting logic let us first
 discuss the entities that compose our Erlang system.
-Processes are defined as the following tuple:
+Processes are defined as tuples of the form:
 \[\langle p, \theta, e, me \rangle\]
-where $p$ is the process unique id, $\theta$ is the store binding variables to
-values\footnote{Actually $\theta$ is a stack of stores, later we will clarify
+where $p$ is the process pid, $\theta$ is the store binding variables to
+values\footnote{Actually $\theta$ is a stack of stores, later on we will clarify
   why. }, $e$ is the expression currently under evaluation and $me$ is the
 module environment, which contains the functions that $p$ can either invoke or
 spawn.
-Then we have messages, which are defined by the following tuple:
+Messages instead are defined as tuples of the form:
 \[\langle p, p', v \rangle\]
 where $p$ is the pid of the sender, $p'$ is the pid of the receiver and $v$ is
-the payload. In the scope of this work processes and messages corresponds to the
-lower level of the syntactical productions, what we named $P$ in~\ref{sec:gener-appr-derive-rev-sem}.
+the payload. In the scope of this work processes and messages are entities in the
+lower level of the semantics. We denoted them as $P$ in Section~\ref{sec:gener-appr-derive-rev-sem}.
 
-A running system is denoted by messages and processes composed using the
+A running system is composed of messages and processes, using the
 parallel operator.
 
-Now, let us analyze in detail the shape of the rewriting logic by first analyzing the equational theory for the expressions. The theory
+Now, let us analyze in detail the shape of the corresponding rewriting logic by first analyzing the equational theory for the expressions. The theory
 is defined as a set of equations which have one of the following generic forms:
 
 \[
@@ -575,12 +582,12 @@ is defined as a set of equations which have one of the following generic forms:
 
 First, as we can see from above to evaluate an expression we do not only need
 the expression itself but we also need two additional items:
-a store $\theta$ and a label $l$. The store plays a single role, i.e., binds variables to their
-values, given that they have one. The label plays two roles:
+a store $\theta$ and a label $l$. The store binds each variable to its
+value, if any. The label plays two roles:
 i) names the action performed by the process; ii) communicates data back and
 forth between the expression level and the system level. Examples of this mechanism will be soon introduced.
 
-Second, we can observe that two kinds of rules exist, one kind which admit a $\ms{if}$
+Second, we can observe that two kinds of rules exist, one kind which admits an $\ms{if}$
 branch and another kind that does not. The equations defined without the
 $\ms{if}$ clause always define a reduction of the expression - i.e., a step
 taken by some process - and change the label to
@@ -775,7 +782,7 @@ elements to reduce are already available locally.
   \label{fig:rule-rec}
 \end{figure}
 
-\subsection{Producing The Reversible Semantics}
+\section{Generating the Reversible Semantics}\label{sec:generating}
 
 To produce the reversible semantics we decided to remain within Maude, mostly
 for two main reasons. First, Maude is well-suited to define program transformations
