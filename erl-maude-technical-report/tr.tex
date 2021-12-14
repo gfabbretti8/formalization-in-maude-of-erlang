@@ -185,10 +185,10 @@ Fig.~\ref{ErlangSyntax}\footnote{We support the functional and concurrent fragme
   real Erlang language.}. 
 
 An Erlang program can be seen as a collection of modules, where a module is a sequence of function definitions. Each function is uniquely identified by its name and by the
-number of formal parameters, its body is represented
+number of formal parameters. Each function may be specified by cases via multiple definitions. The correct definition for each invocation is selected by pattern matching on parameters. The body of each definition is represented
 by a sequence of expressions. In the following we denote an expression with $e$
 and sequences of expressions as $e_1,\ldots,e_n$  - sequences of other
-syntactical elements are represented in the same manner. 
+syntactical elements are represented in the same manner.  
 
 Ground values in Erlang are: atoms (which are identifiers that either
 begin with a lowercase or are enclosed by quotes), integers and
@@ -280,7 +280,7 @@ Self, send, spawn and receive are the concurrent features, offered by Erlang, th
 
 Maude~\cite{maude} is a programming language that efficiently implements rewriting logic~\cite{MeseguerMS96}.
 Rewriting logic can be seen as a framework that unifies equational
-logic together with semantics rules.
+logic with semantics rules.
 
 Formally, a rewriting logic is a tuple $(\Sigma, E, R)$, where $\Sigma$
 represents a collection of typed operators, $E$ a set of equations among the operators, and $R$ is the set of
@@ -290,7 +290,7 @@ Using a rewriting logic is quite convenient to formalize the
 semantics of a language as it provides the benefits of using both an equational theory and rewriting rules.
 
 On the one hand, the equational side of rewriting logic is well-suited to define the deterministic part of the model, where
-we define classes of equivalences over terms. More precisely we say that two terms
+we define equivalence classes over terms. More precisely we say that two terms
 $v$ and $u$ are equivalent if under a set of equations $E$ we can prove $E \vdash
 v = u$. Equations can be conditional and conditions can be either the
 membership of the term to some kind or other equations.
@@ -300,14 +300,13 @@ On the other hand, the rewriting rules are well-suited to define the concurrent
 (non-deterministic) part of the programming language. The set of rules $R$
 specifies how to rewrite a (parametrized) term $t$ to another term $t'$.
 Rewriting rules, like equations, can be conditional and as condition they can
-use membership, equations, as well as other rules.
+use membership, equations, as well as other rewriting rules.
 
 In other words the equational theory defines which terms define the same states
 of a system, only using different syntactical elements, while the rewriting rules
 define how the system can evolve and transit from one state to another.
 
-Let us now consider the module in Fig.~\ref{fig:bool}, that is an example of a maude module that implements booleans and
-define on them the classic operations.
+Let us now consider the module in Fig.~\ref{fig:bool}, that is an example of a Maude module that implements Booleans together with their classic operations.
 
 \begin{figure}[t]
 \begin{verbatim}
@@ -318,7 +317,6 @@ fmod BOOL is
 
   op _and_ : Bool Bool -> Bool [assoc comm prec 55] .
   op _or_ : Bool Bool -> Bool [assoc comm prec 59] .
-  op _xor_ : Bool Bool -> Bool [assoc comm prec 57] .
   op not_ : Bool -> Bool [prec 53] .
 
   vars A B C : Bool .
@@ -326,25 +324,24 @@ fmod BOOL is
   eq true and A = A .
   eq false and A = false .
   eq A and A = A .
-  eq false xor A = A .
-  eq A xor A = false .
-  eq A and (B xor C) = A and B xor A and C .
-  eq not A = A xor true .
-  eq A or B = A and B xor A xor B .
+  eq not false = true .
+  eq not true = false .
+  eq A or B = not A and not B .
+  eq not not A = A .
 endfm
 \end{verbatim}
   \label{fig:bool}
 \end{figure}
 
-First, the sort $Bool$ is declared. Then, the values true and false are declared
-as two constant operators of sort Bool. Successively, the classic operations are
-defined as functions that take in input some bools and produce a bool as a
-result. For example, \verb+_and_ : Bool Bool -> Bool+ defines the \emph{and}
-operator that takes in input two bools and produces a bool. Finally, the semantics of these operators is given
+First, the sort \verb+Bool+ is declared. Then, the values \verb+true+ and \verb+false+ are declared
+as two constant operators of sort \verb+Bool+. Successively, the classic operations are
+defined as functions that take in input some \verb+Bool+s and produce a \verb+Bool+ as a
+result. For example, \verb+_and_ : Bool Bool -> Bool+ defines the \verb+and+
+operator that takes in input two \verb+Bool+s and produces a \verb+Bool+. Finally, the semantics of these operators is given
 by the equational theory defined at the bottom of the module. Equations are used
-to from left to right to normalize terms. For instance, the first equation,
-\verb+eq true and A = A.+ is used to evaluate the and operator when the first
-argument had been normalized to false.
+from left to right to normalize terms. For instance, the first equation,
+\verb+eq true and A = A.+ is used to evaluate the \verb+and+ operator when the first
+argument has been normalized to \verb+true+. For simplicity, this example does not include rewriting rules nor conditional equations.
 
 
 \begin{figure}[t]
