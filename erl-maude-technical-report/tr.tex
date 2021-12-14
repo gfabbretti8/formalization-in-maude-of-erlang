@@ -104,7 +104,7 @@ However, as anticipated, all the works cited so far suffer from the same limitat
 devised manually. Given a forward non-reversible semantics, the authors manually
 derived an extension of its forward semantics, enabling reversibility, and the corresponding backward semantics, defining reverse execution.
 Deriving a reversible semantics manually presents some limitations: the
-process is error-prone, it does not scale well to other formalisms and lacks
+process is error-prone, it does not scale well to other formalisms, and lacks
 uniformity - i.e., the same properties must be proved for each formalism.
 
 To address this problem, Lanese and Medic~proposed in~\cite{LaneseM20} a
@@ -116,13 +116,13 @@ causal dependencies, needed for the definition of causal-consistent reversibilit
 semantics taken in input must be a reduction semantics and the entities on the
 left-hand side of a rule are seen as the resources to be \emph{consumed} to
 \emph{produce} the resources on the right-hand side - i.e., the new entities.
-As an example, even without knowing the details that will be explained later, let
+As an example, even without knowing the details that will be explained later on, let
 us consider the following rule. 
 \[\langle p_1, \theta, p_2~\ms{!}~hello, me\rangle \rightarrow \langle p_1, \theta,
   hello, me\rangle \paral\langle p_1, p_2,hello \rangle\]
 On the left we have a process ready to send a
 message, when the rule is fired the process is consumed to produce the message
-and the process itself after the send.
+$\langle p_1, p_2,hello \rangle$ and the evolution of the process itself after the send.
 
 In order to define the reversible semantics, we need two ingredients: keys and memories.
 Keys are attached to entities, so to distinguish entities with the same form but different history.
@@ -131,13 +131,13 @@ they can be restored during backward execution.
 
 In~\cite{LaneseM20} the approach is only described theoretically and
 no implementation is provided. Actually, the method relies on
-reversing instances of rules, which are infinitely many in almost any
+reversing instances of rules such as the one above, which are infinitely many in almost any
 non trivial formalism, what makes not immediately clear that an
 implementation could exist. Our work aims at showing that indeed the
 method can be implemented and used in practice.  The key idea here is
 that the instances of rules can be captured by a finite (and
 frequently small) number of rule schemas, and the approach can be
-applied to schemas. In order to do this, we use Maude~\cite{maude} to represent the reduction semantics (both the non-reversible one in input and the reversible one we compute) as well as for the tool generating the reversible semantics.
+applied to schemas. In order to do this, we use Maude~\cite{maude} to represent the reduction semantics (both the non-reversible one in input and the reversible one we generate) as well as for the tool generating the reversible semantics.
 To further prove the practicality of the
 approach, we apply it to a case study on the Erlang programming
 language.
@@ -151,12 +151,12 @@ The main contributions of this work are:
 \end{itemize}
 
 The rest of the report provides the reader with the required
-background in Section~\ref{sec:background}, then in
+background in Section~\ref{sec:background}. In
 Section~\ref{sec:formalizing-erlang} we will present the formalization of
 the Erlang semantics in Maude and in Section~\ref{sec:generating} we discuss how the reversible semantics
 is generated. In Section~\ref{sec:ongoing-work} we discuss some
 ongoing work. Finally, in Section~\ref{sec:conclusion} we give some
-conclusions and we hint possible future directions.
+conclusions and we hint at possible future directions.
 
 All the code discussed in this report is publicly available
 at~\cite{erl-maude-repo}. 
@@ -234,19 +234,19 @@ statements $\ms{receive}~pat_1 \rightarrow exprs_1; \ldots; pat_n
 (iv) in function
 definitions, to define the formal parameters. 
 
-We first explain the match operation. First, the expression $e_2$ on
+We start by explaining the match operation. First, the expression $e_2$ on
 the right-hand side is evaluated until it becomes a ground value,
-occurrences of free variables, if any, would raise an exception.
+occurrences of free variables, if any, raise an exception.
 Then, the expression on the left-hand side, $e_1$, is evaluated until
 it becomes a pattern, or a ground value in case no free variables
 occur in it. Then the
-two elements are matched against each other. The free variables of the
-left-hand side are bound to the corresponding ground value of the right-hand
+two elements are matched against each other. Each free variable of the
+left-hand side is bound to the corresponding ground value of the right-hand
 side, ground values in corresponding position should coincide: if a mismatch occurs then an exception
 is raised. If no mismatch occurs then the operation evaluates to the ground
-value of the right-hand side and the environment is updated.
+value of the right-hand side and the environment is updated with the new bindings.
 
-In the $\ms{case}$ scenario, the expression $e$ must evaluate to a ground value, then it is matched against the patterns, from
+In the $\ms{case}$ construct, the expression $e$ must evaluate to a ground value, then it is matched against the patterns, from
 top to bottom, until one that matches is found. When a match is found the environment
 is enriched with the new bindings and the corresponding sequence of expressions evaluated, if
 no match is found an exception is raised.
@@ -264,7 +264,7 @@ above, spawning a new process, and sending a message.
 
 The syntax of message send is $e_1!e_2$, where $e_1$ must
 evaluate to the pid of the receiver process and $e_2$ must evaluate to the ground value that represents the payload of the message. The expression itself evaluates to
-the payload and as a side-effect the message is sent.
+the payload and, as a side-effect, the message is sent.
 
 The $\ms{spawn}$ primitive creates a new process; it takes as argument
 the function $f$ that the new process will execute, together with the
