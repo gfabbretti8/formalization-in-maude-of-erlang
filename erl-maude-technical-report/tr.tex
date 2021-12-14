@@ -554,16 +554,14 @@ rewriting rule $\tau$ for sequential operations. While it would have been
 possible to
 define the sequential operations as an equational theory also at the system level, we take a different approach. Indeed, using rule $\tau$ is the only way to evaluate expressions (relying on the equational theory), but it forces evaluation to stop when some base cases are reached. This is more suitable to define the behaviour of a reversible debugger, which is our intended application. Notably, also a different semantics where expressions are fully evaluated could be made reversible using the approach we will describe in the next section.
 
-
-
-Before discussing the rewriting logic let us first
-discuss the entities that compose our Erlang system.
+Before presenting the rewriting logic, let us
+discuss the entities that compose an Erlang system.
 Processes are defined as tuples of the form:
 \[\langle p, \theta, e, me \rangle\]
-where $p$ is the process pid, $\theta$ is the store binding variables to
-values\footnote{Actually $\theta$ is a stack of stores, later on we will clarify
+where $p$ is the process pid, $\theta$ is the environment binding variables to
+values\footnote{Actually $\theta$ is a stack of environments, later on we will clarify
   why. }, $e$ is the expression currently under evaluation and $me$ is the
-module environment, which contains the functions that $p$ can either invoke or
+module environment, which contains the definitions of the functions declared in the module, that $p$ can invoke or
 spawn.
 Messages instead are defined as tuples of the form:
 \[\langle p, p', v \rangle\]
@@ -574,7 +572,7 @@ lower level of the semantics. We denoted them as $P$ in Section~\ref{sec:gener-a
 A running system is composed of messages and processes, using the
 parallel operator.
 
-Now, let us analyze in detail the shape of the corresponding rewriting logic by first analyzing the equational theory for the expressions. The theory
+Now, let us analyze in detail the shape of the corresponding rewriting logic by first analyzing the equational theory for expressions. The theory
 is defined as a set of equations which have one of the following generic forms:
 
 \[
@@ -583,31 +581,64 @@ is defined as a set of equations which have one of the following generic forms:
     ~~~~\langle l,\theta,~e \rangle = \langle l',\theta',~e' \rangle\\[2ex]
 
     \ms{ceq}:~[equation-name]\\
-    ~~~~\langle l,\theta,~e \rangle = \langle l',\theta',~e'' \rangle\\
-    ~~~~\ms{if}~\langle l', \theta', e'\rangle =op(l,\theta,e)~\wedge~\langle
+    ~~~~\langle l,\theta,~e \rangle = \langle l'',\theta'',~e'' \rangle\\
+    ~~~~\ms{if}~\langle l', \theta', e'\rangle :=op(l,\theta,e)~\wedge~\langle
     l'',\theta'',~e'' \rangle := \langle l',\theta',e'\rangle
 
   \end{array}
 \]
 
-First, as we can see from above to evaluate an expression we do not only need
-the expression itself but we also need two additional items:
-a store $\theta$ and a label $l$. The store binds each variable to its
+As we can see from above, to evaluate an expression we also need two additional items:
+an environment $\theta$ and a label $l$. The environment binds each variable to its
 value, if any. The label plays two roles:
-i) names the action performed by the process; ii) communicates data back and
+i) communicates the kind of side effect performed by the expression, if any; ii) communicates information of the details of the side effect back and
 forth between the expression level and the system level. Examples of this mechanism will be soon introduced.
 
-Second, we can observe that two kinds of rules exist, one kind which admits an $\ms{if}$
-branch and another kind that does not. The equations defined without the
-$\ms{if}$ clause always define a reduction of the expression - i.e., a step
-taken by some process - and change the label to
-the appropriate one. On the other hand, the conditional equations can: either define a single
-step, that requires some side conditions (e.g., binding a
-variable to its value), or perform some
-intermediate operation (e.g., selecting the inner expression to evaluate) and
-then with the clause $t:=t'$ use recursively other equations to reach a canonic form.
+Two kinds of equations are used: conditional ones, featuring an
+$\ms{if}$ clause, and unconditional ones. Unconditional equations
+define a simple reduction of the expression and change the label to
+the appropriate one.
 
-Let us now focus on the rewriting rules, which have the following general shape:
+\begin{example}[Equation for self]
+The unconditional equation below describes the behavior of \verb+self+ at the expression level.
+\begin{verbatim}
+eq [self] :
+    < self(pid(INT)), STORESTACK, atom("self")() > =
+    < tau, STORESTACK, int(INT) > .
+\end{verbatim}
+It reads roughly as follows: if the system level asks to check whether a \verb+self+ can be performed, communicating that the pid of the current process is \verb+INT+ (via \verb+self(pid(INT))+) and the expression is actually a self (\verb+atom("self")()+) then the expression reduces to the pid (\verb+int(INT)+) and the label becomes \verb+tau+, denoting successful evaluation.
+\end{example}
+
+Conditional equations can: either define a single step, that requires
+some side condition (e.g., binding a variable to its value), or
+perform some intermediate operation (e.g., selecting an inner
+expression to evaluate) and then use recursively other equations (with the clause \verb+t:=t'+) to
+reach a canonic form.
+
+\begin{figure}[t]
+  \centering
+\begin{verbatim}
+  ceq [receive] :
+    < req-receive(PAYLOAD), STORE : STORESTACK, receive CLSEQ end> =
+    < received, STORE' : (STORE : STORESTACK), begin EXSEQ end>
+    if #entityMatchSuccess(EXSEQ | STORE') := 
+       #entityMatch(CLSEQ ; #empty-clauselist | PAYLOAD | STORE ) .
+\end{verbatim}
+  \caption{Conditional equation for receive}
+  \label{fig:eq-rec}
+\end{figure}
+
+\begin{example}[Conditional equation for receive]\label{ex:eqrec}
+Figure~\ref{fig:eq-rec} describes the conditional equation for
+receive. It reads roughly as follows. If the system level asks whether
+a message with a given payload can be received
+(\verb+req-receive(PAYLOAD)+) and the current expression is a receive
+(\verb+receive CLSEQ end+) then one tries to match the body
+\verb+CLSEQ+ of the receive against the payload using the environment \verb|STORE|. If the match succeeds then it returns the selected clause of the receive \verb+EXSEQ+ as well as the environment enriched with the bindings from the match
+ \verb+STORE'+. In this case the expression can reduce to \verb+EXSEQ+ and will be evaluated in the new environment. Label \verb+received+ denotes successful reception.
+\end{example}
+
+Let us now focus on rewriting rules, which have the following general shape:
 
 \[
   \begin{array}{l}
@@ -620,45 +651,79 @@ Let us now focus on the rewriting rules, which have the following general shape:
   \end{array}
 \]
 
-In the schema above $E$ defines other entities of the system -
-potentially even the empty one. As one can see, rules are always
-conditional, as we always rely on the expression semantics to understand which
-action the selected process is ready to perform. Finally, we express the side-effects through $op$ according to the
-system shape and on the action that $p$ wants to perform. In examples
-\ref{ex:send} and~\ref{ex:rec} we show possible concrete instances of $E$.  
+In the schema above $E$ captures other entities of the system, if any,
+that may have an impact on the reduction, in particular a message that
+may be received.  Rewriting rules are always conditional, as we always
+rely on the expression semantics to understand which action the
+selected process is ready to perform. Finally, we use $op$ to apply
+side effects to $E$, determined by the label $l'$ produced by the
+expression level. Examples \ref{ex:send} and~\ref{ex:rec} below show
+some sample rewriting rules.
+
+\begin{figure}[t]
+  \centering
+\begin{verbatim}
+
+  crl [sys-send] :
+      < P | exp: EXSEQ, store-stack: STORE, ASET > =>
+      < P | exp: EXSEQ', store-stack: STORE', ASET > ||
+      < sender: P, receiver: DEST, payload: GVALUE >
+      if < DEST ! GVALUE, STORE', EXSEQ' > :=
+         < req-gen, STORE, EXSEQ > .
+\end{verbatim}
+  \caption{System rule send}
+  \label{fig:rule-send}
+\end{figure}
 
 \begin{example}\label{ex:send}
-  Let us consider the example in Fig.~\ref{fig:rule-send}, which is the
-  rewriting conditional rule to send a message. In the conditional part of the
-  rule we can see the equational theory in action, more precisely we are
-  checking if, by using the equations defined on the expressions, it is possible
-  to obtain a tuple as the one defined on the left-hand side of the operator
-  \verb+:=+. If it is possible to equate the two terms, it means that the
-  process is ready to evaluate a send somewhere in the expression that is under
-  evaluation. We know that the next operation to perform is a send thanks to the
-  first element of the tuple. Moreover, from the resulting label, i.e.,
-  \verb_DEST ! GVALUE_, we retrieve the pid of the receiver and the payload of
-  the message. Here, $E$, on the left-hand side, will be the empty entity, then
-  on the right-hand side $E$ will be replaced by the message that has been sent.
-  This is an example of how the label serves to communicate information from the
-  expression level to the system one. Finally, once that all the information
-  have been gathered, the system level defines the side-effects that must be
-  performed, in this case the sending of a message.
+  Let us consider the conditional rewriting rule in Fig.~\ref{fig:rule-send}, which is used to send a message. In the conditional part of the
+  rule we use the equational theory to check which kind of reduction the current expression \verb+EXSEQ+ can perform. If it can perform a send of a \verb+GVALUE+ to \verb+DEST+, then the process evolves so to evaluate the new expression \verb+EXSEQ'+ in the new environment \verb+STORE'+, and the new message is added to the system. Note that \verb+P+ is the pid of the process (Maude needs a unique identifier for this notation), and \verb+ASET+ includes other elements of the process which are not relevant here (currently, only the module environment).
+  With respect to the general schema described above, here $E$ on the left-hand side is empty, and
+  on the right-hand $op$ will add the message to $E$.
+    This exemplifies how the label serves to communicate information from the
+    expression level to the system one. Using this information, side effects (in this case the send of a message) are performed at the system level.
 \end{example}
 
+\begin{example}\label{ex:rec}
+  Let us consider rule $\ms{sys-receive}$ in Fig.~\ref{fig:rule-rec}, which 
+  is applied when a process receives a message. In the rule, if there is a message targeting the process, we use the equational theory (see Example~\ref{ex:eqrec}) to check whether the message can be received in the current state. If this is the case then the state is updated and the message is removed from the system.
+  %% The preconditions
+  %% for the successful firing of the rule are that the message targeting the
+  %% selected process is floating in the soup and that the process is performing a
+  %% receive with a clause aimed at receiving the message. What we do is bubbling
+  %% up the payload of one of the (potential many) messages ready to be delivered
+  %% to \verb_P_ with the label \verb_req-receive(GVALUE)_, then, if there is a
+  %% receive statement to be evaluated and one of its clauses matches the message,
+  %% we already have all the information necessary to select the appropriate branch
+  %% locally, as can be seen in the equation $\ms{receive}$. Here, to fit the
+  %% concrete instance of the rule in to the generic schema presented above we need
+  %% to instantiate the $E$ on the left-hand side as the message to be received.
+  %% Then, the operator expressing the side effect corresponds to the removal of
+  %% the message from the system.
+\end{example}
+
+
+\begin{figure}[t]
+  \centering
+\begin{verbatim}
+  crl [sys-receive] :
+    < P | exp: EXSEQ, store-stack: STORE, ASET > ||
+    < sender: SENDER, receiver: P, payload: GVALUE > =>
+    < P | exp: EXSEQ', store-stack: STORE', ASET >
+  if < received, STORE', EXSEQ' > :=
+     < req-receive(GVALUE), STORE, EXSEQ > .
+\end{verbatim}
+  \caption{System rule receive}
+  \label{fig:rule-rec}
+\end{figure}
 
 %Since no information from the
 %system level are needed on the expression one to perform a send the starting
 %label is a generic one, i.e., \verb_req-gen_.
 
-To fully understand why we took some design choices, while we proceed in the
-explanation of the operational semantics, we discuss the differences w.r.t. the
-formalization in~\cite{Gonzalez-AbrilV21}.
 
-First, in~\cite{Gonzalez-AbrilV21} the expression semantics is not directly
-defined on expressions, but on an
-operator $C[\bullet]$, which is used to select the part of the expression that has to be
-evaluated, however no definition of such operator is given. For example, if the expression under evaluation is
+
+ For example, if the expression under evaluation is
 $\ms{case}~foo(42)~\ms{of}\ldots$ the context operator would put automatically
 the focus on $foo(42)$, i.e., $C[foo(42)]$. The convenience of using such
 operator is that in this way one can avoid the definition of all the rules to
@@ -690,22 +755,6 @@ environment. Then, once the
 subcomputation is over the old contest and environment are retrieved from the
 stack and the final value of the subcomputation is replaced inside the expression
 which gave rise to it.
-
-\begin{figure}[t]
-  \centering
-\begin{verbatim}
-
-  crl [sys-send] :
-      < P | exp: EXSEQ, store-stack: STORE, ASET > =>
-      < P | exp: EXSEQ', store-stack: STORE', ASET > ||
-      < sender: P, receiver: DEST, payload: GVALUE >
-      if < DEST ! GVALUE, STORE', EXSEQ' > :=
-         < req-gen, STORE, EXSEQ > .
-\end{verbatim}
-  \caption{System rule send}
-  \label{fig:rule-send}
-\end{figure}
-
 
 Again the context operators makes the formalization of this mechanism
 much easier. Indeed in reality, to implement such approach it would be necessary to define, for each supported construct, a rule to start the subcomputation and another rule to replace the
@@ -753,44 +802,7 @@ defined, makes possible to bubble up, from the system level, information so that
 possible to reduce the expression without creating futures, since all the
 elements to reduce are already available locally. 
 
-\begin{example}\label{ex:rec}
-  Let us consider the rule in Fig.~\ref{fig:rule-rec}. Rule $\ms{sys-receive}$
-  is the rule that we apply when a process receives a message. The preconditions
-  for the successful firing of the rule are that the message targeting the
-  selected process is floating in the soup and that the process is performing a
-  receive with a clause aimed at receiving the message. What we do is bubbling
-  up the payload of one of the (potential many) messages ready to be delivered
-  to \verb_P_ with the label \verb_req-receive(GVALUE)_, then, if there is a
-  receive statement to be evaluated and one of its clauses matches the message,
-  we already have all the information necessary to select the appropriate branch
-  locally, as can be seen in the equation $\ms{receive}$. Here, to fit the
-  concrete instance of the rule in to the generic schema presented above we need
-  to instantiate the $E$ on the left-hand side as the message to be received.
-  Then, the operator expressing the side effect corresponds to the removal of
-  the message from the system.
-\end{example}
 
-
-\begin{figure}[t]
-  \centering
-\begin{verbatim}
-  crl [sys-receive] :
-    < P | exp: EXSEQ, store-stack: STORE, ASET > ||
-    < sender: SENDER, receiver: P, payload: GVALUE > =>
-    < P | exp: EXSEQ', store-stack: STORE', ASET >
-  if < received, STORE', EXSEQ' > :=
-     < req-receive(GVALUE), STORE, EXSEQ > .
-
-  ceq [receive] :
-    < req-receive(PAYLOAD), STORE : STORESTACK, receive CLSEQ end, ME > =
-    < received, STORE' : (STORE : STORESTACK), begin EXSEQ end, ME >
-    if #entityMatchSuccess(EXSEQ | STORE') := 
-       #entityMatch(CLSEQ ; #empty-clauselist | PAYLOAD | STORE ) .
-
-\end{verbatim}
-  \caption{System rule receive}
-  \label{fig:rule-rec}
-\end{figure}
 
 \section{Generating the Reversible Semantics}\label{sec:generating}
 
@@ -971,6 +983,12 @@ the instances of the meta-rules used to formalize the languages are correct
 rules in the sense required from~\cite{LaneseM20} so that all the backward rules
 derived are also correctly modeling the backward semantics.
 
+
+\section{Related}\label{sec:related}
+First, in~\cite{Gonzalez-AbrilV21} the expression semantics is not directly
+defined on expressions, but on an
+operator $C[\bullet]$, which is used to select the part of the expression that has to be
+evaluated, however no definition of such operator is given.
 
 \section{Conclusion}\label{sec:conclusion}
 To conclude the technical report let us now briefly resume the work done so far
