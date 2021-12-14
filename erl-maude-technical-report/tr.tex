@@ -118,8 +118,10 @@ left-hand side of a rule are seen as the resources to be \emph{consumed} to
 \emph{produce} the resources on the right-hand side - i.e., the new entities.
 As an example, even without knowing the details that will be explained later on, let
 us consider the following rule. 
-\[\langle p_1, \theta, p_2~\ms{!}~hello, me\rangle \rightarrow \langle p_1, \theta,
-  hello, me\rangle \paral\langle p_1, p_2,hello \rangle\]
+\begin{equation}\label{samplerule}
+\langle p_1, \theta, p_2~\ms{!}~hello, me\rangle \rightarrow \langle p_1, \theta,
+hello, me\rangle \paral\langle p_1, p_2,hello \rangle
+\end{equation}
 On the left we have a process ready to send a
 message, when the rule is fired the process is consumed to produce the message
 $\langle p_1, p_2,hello \rangle$ and the evolution of the process itself after the send.
@@ -341,7 +343,11 @@ operator that takes in input two \verb+Bool+s and produces a \verb+Bool+. Finall
 by the equational theory defined at the bottom of the module. Equations are used
 from left to right to normalize terms. For instance, the first equation,
 \verb+eq true and A = A.+ is used to evaluate the \verb+and+ operator when the first
-argument has been normalized to \verb+true+. For simplicity, this example does not include rewriting rules nor conditional equations.
+argument has been normalized to \verb+true+. For simplicity, this example does not include rewriting rules, memberships nor conditional equations.
+
+As an additional example we show a rewriting rule generating the reduction \ref{samplerule} in the Introduction.
+
+TODO
 
 
 \begin{figure}[t]
@@ -383,14 +389,14 @@ produces new modules, which define the reversible semantics.
 
 The following of this section summarizes the main ideas of~\cite{LaneseM20}
 where Lanese et al.\ propose a methodology to automatically
-derive a reversible semantics starting from a non-reversible one, provided that
+derive a causal-consistent reversible semantics starting from a non-reversible one, provided that
 the latter is modelled as a reduction semantics which satisfies some syntactic conditions.
 %% One of the main advantages of using such method is that the format is general
 %% enough that can be applied to any formalism that fits the criteria imposed.
 %% Also, we are guaranteed that all the reversible semantics derived with this
 %% method will all enjoy the same properties, which means that they must be proved only once. 
 
-\subsubsection{Format of the Reduction Semantics}
+\subsubsection{Format of the Input Reduction Semantics}
 
 We now describe the shape that the reduction semantics taken as input
 must have.
@@ -411,7 +417,8 @@ a message traveling the network.
 Second, the rules defining the operational semantics must fit the schema in Fig.~\ref{fig:forwardrules}.
 The schema contains rules to: i) allow entities to interact with each other (\textsc{Scm-Act}); ii)
 exploit structural congruence (\textsc{Eqv}); iii) allow single entities to execute inside a context (\textsc{Scm-Opn});
-iv) execute two systems in parallel (\textsc{Par}). Notably, while (\textsc{Eqv}) and (\textsc{Par}) are rule that must belong to the semantics, (\textsc{Scm-Act}) and (\textsc{Scm-Opn}) are schemas, and the semantics may contain any number of instances of the schemas. Actually, rule (\textsc{Par}) is an instance of schema (\textsc{Scm-Opn}), highlighting that such an instance is required. Also, notice that a notion of structural congruence on systems is assumed. 
+iv) execute two systems in parallel (\textsc{Par}). Notably, while (\textsc{Eqv}) and (\textsc{Par}) are rules that must belong to the semantics, (\textsc{Scm-Act}) and (\textsc{Scm-Opn}) are schemas, and the semantics may contain any number of instances of the schemas. Actually, rule (\textsc{Par}) is an instance of schema (\textsc{Scm-Opn}), highlighting that such an instance is required. As another example, reduction~\ref{samplerule} from the Introduction is an instance of schema (\textsc{Scm-Act}).
+Also, notice that a notion of structural congruence on systems is assumed. 
 
 \begin{figure}[t]
   {\footnotesize
@@ -439,8 +446,8 @@ iv) execute two systems in parallel (\textsc{Par}). Notably, while (\textsc{Eqv}
 \subsubsection{Methodology}\label{sec:methodology}
 
 
-To obtain a forward reversible semantics, tracking enough history and causality information to allow one to define a backward semantics exploiting it, first, the syntax of the
-reduction semantics is updated as follow:\\
+To obtain a forward reversible semantics, we need to track enough history and causality information to allow one to define a backward semantics exploiting it. First, the syntax of the
+reduction semantics is updated as follows:\\
 \[
 \begin{array}{l}
   R   \; ::=\;  k:P \paral \op(R_1,\ldots,R_n)\paral \nil \paral \mem{R}{\str} \\[1ex]
@@ -459,7 +466,11 @@ track of past states of the system so that they can be restored.
 
 Then, the rules of the non-reversible operational semantics are updated as depicted in
 Fig.~\ref{fig:revforward}. Now each time a forward step is performed each resulting entity is tagged with a fresh
-key and a memory, connecting the old configuration with the new one, is produced.
+key, and a memory, connecting the old configuration with the new one, is produced.
+E.g., the forward rule corresponding to reduction~\ref{samplerule} in the Introduction is:
+
+TODO
+
 Here, it is possible to manipulate the rules without actually knowing them
 because they fit the schema and they cannot have completely arbitrary forms. 
 
@@ -510,11 +521,14 @@ The backward rules, depicted in Fig.~\ref{fig:revbackward}, are symmetric to the
 forward ones: when a memory $\mu$ and
 the entities tagged with the keys in $C$ are both available then a backward step can be
 performed and the old configuration $R$ can be restored.
+E.g., the backward rule undoing the reduction~\ref{samplerule} in the Introduction is:
+
+TODO
 
 The reversible semantics produced by this approach captures causal dependencies
 in terms of resources produced and consumed, since, thanks to the memory, a
-causal link is created each time that some entities are rewritten. We refer
-to~\cite{LaneseM20} for the formal demonstration of the causal-consistency and of other relevant properties of
+causal link is created each time some entities are rewritten. We refer
+to~\cite{LaneseM20} for the formal proof of the causal-consistency and of other relevant properties of
 the reversible semantics. We also remark
 that the semantics produced is uncontrolled~\cite{LaneseMS12}, i.e., if multiple (forward and/or backward) steps are enabled at the same time there is no policy on which one to choose.
 
@@ -530,20 +544,19 @@ ground values, which greatly simplified the formalization task.
 
 Our formalization of the semantics follows the style of the one
 in~\cite{Gonzalez-AbrilV21}, with some differences which we will soon discuss. As
-in~\cite{Gonzalez-AbrilV21}, the semantics is a two
-layer semantics, one layer for the expressions level and another layer for the system
-level. This division is quite convenient for the formalization in Maude, as we
+in~\cite{Gonzalez-AbrilV21}, the semantics has two
+layers: one for expressions and one for the system. This division is quite convenient for the formalization in Maude, as we
 can formalize the expression level as an equational theory and then using rewriting
 rules to describe the concurrent features, i.e., the system level.
 
 The system level comprises a rewriting rule for each concurrent feature and a
 rewriting rule $\tau$ for sequential operations. While it would have been
 possible to
-define all the sequential operations as an equational theory we still decided to
-have a rewriting rule to perform single sequential steps to better simulate the
-behavior of a step-by-step debugger.
+define the sequential operations as an equational theory also at the system level, we take a different approach. Indeed, using rule $\tau$ is the only way to evaluate expressions (relying on the equational theory), but it forces evaluation to stop when some base cases are reached. This is more suitable to define the behaviour of a reversible debugger, which is our intended application. Notably, also a different semantics where expressions are fully evaluated could be made reversible using the approach we will describe in the next section.
 
-Before diving in discussing the rewriting logic let us first
+
+
+Before discussing the rewriting logic let us first
 discuss the entities that compose our Erlang system.
 Processes are defined as tuples of the form:
 \[\langle p, \theta, e, me \rangle\]
