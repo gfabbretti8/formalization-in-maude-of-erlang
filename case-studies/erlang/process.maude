@@ -2,7 +2,7 @@ mod SEM_PROCESS is
   protecting MAUDE-SYNTAX-UPDOWN .
 	protecting SEM_LABEL .
 	protecting SEM_RESULT .
-  protecting SEM_STORE .
+  protecting SEM_ENV .
 	protecting SYNTAX .
   protecting SEM_MODENV .
   protecting SEM_ENTITY .
@@ -15,13 +15,13 @@ mod SEM_PROCESS is
 
   op <_|_> : Pid AttributeSet -> Process [ctor frozen] .
 
-  sorts ExpAtt ModEnvAtt StoreAtt StackAtt .
-  subsorts ExpAtt ModEnvAtt StoreAtt < Attribute .
+  sorts ExpAtt ModEnvAtt EnvAtt StackAtt .
+  subsorts ExpAtt ModEnvAtt EnvAtt < Attribute .
 
   sort EmptyExp .
 
   op exp:_ : NeExpSeq -> ExpAtt [ctor gather (&)] .
-  op store-stack:_ : StoreStack -> StoreAtt [ctor gather (&)] .
+  op env-stack:_ : EnvStack -> EnvAtt [ctor gather (&)] .
   op mod-env:_ : ModEnv -> ModEnvAtt [ctor gather (&)] .
 
 
@@ -42,7 +42,7 @@ mod SEM_PROCESS is
   var A : Attribute .
   var ASET : AttributeSet .
   var SUB : Substitution .
-  var STORESTACK : StoreStack .
+  var ENVSTACK : EnvStack .
 
 
 	eq #up(< P | ASET >) = '<_|_>[#up(P),#up(ASET)] .
@@ -51,7 +51,7 @@ mod SEM_PROCESS is
    if A =/= (none).AttributeSet /\ ASET =/= (none).AttributeSet .
 
   eq #up(exp: EXSEQ) = 'exp:_[#up(EXSEQ)] .
-  eq #up(store-stack: STORESTACK) = 'store-stack:_[#up(STORESTACK)] .
+  eq #up(env-stack: ENVSTACK) = 'env-stack:_[#up(ENVSTACK)] .
   eq #up(mod-env: ME) = 'mod-env:_[#up(ME)] .
 
 
@@ -63,7 +63,7 @@ mod SEM_PROCESS is
   eq #downAttributeSet(T1) = #downAttribute(T1) [owise] .
 
   eq #downAttribute('exp:_[T1]) = exp: #downExpSeq(T1) .
-  eq #downAttribute('store-stack:_[T1]) = store-stack: #downStoreStack(T1) .
+  eq #downAttribute('env-stack:_[T1]) = env-stack: #downEnvStack(T1) .
   eq #downAttribute('mod-env:_[T1]) = mod-env: #downModEnv(T1) .
 
 

@@ -622,8 +622,8 @@ the appropriate one.
 The unconditional equation below describes the behavior of \verb+self+ at the expression level.
 \begin{verbatim}
 eq [self] :
-    < self(pid(INT)), STORESTACK, atom("self")() > =
-    < tau, STORESTACK, int(INT) > .
+    < self(pid(INT)), ENVSTACK, atom("self")() > =
+    < tau, ENVSTACK, int(INT) > .
 \end{verbatim}
 It reads roughly as follows: if the system level asks to check whether a \verb+self+ can be performed, communicating that the pid of the current process is \verb+INT+ (via \verb+self(pid(INT))+) and the expression is actually a self (\verb+atom("self")()+) then the expression reduces to the pid (\verb+int(INT)+) and the label becomes \verb+tau+, denoting successful evaluation.
 \end{example}
@@ -638,10 +638,10 @@ reach a canonic form.
   \centering
 \begin{verbatim}
   ceq [receive] :
-    < req-receive(PAYLOAD), STORE : STORESTACK, receive CLSEQ end> =
-    < received, STORE' : (STORE : STORESTACK), begin EXSEQ end>
-    if #entityMatchSuccess(EXSEQ | STORE') := 
-       #entityMatch(CLSEQ ; #empty-clauselist | PAYLOAD | STORE ) .
+    < req-receive(PAYLOAD), ENV : ENVSTACK, receive CLSEQ end> =
+    < received, ENV' : (ENV : ENVSTACK), begin EXSEQ end>
+    if #entityMatchSuccess(EXSEQ | ENV') := 
+       #entityMatch(CLSEQ ; #empty-clauselist | PAYLOAD | ENV ) .
 \end{verbatim}
   \caption{Conditional equation for receive}
   \label{fig:eq-rec}
@@ -653,8 +653,8 @@ receive. It reads roughly as follows. If the system level asks whether
 a message with a given payload can be received
 (\verb+req-receive(PAYLOAD)+) and the current expression is a receive
 (\verb+receive CLSEQ end+) then one tries to match the body
-\verb+CLSEQ+ of the receive against the payload using the environment \verb|STORE|. If the match succeeds then it returns the selected clause of the receive \verb+EXSEQ+ as well as the environment enriched with the bindings from the match
- \verb+STORE'+. In this case the expression can reduce to \verb+EXSEQ+ and will be evaluated in the new environment. Label \verb+received+ denotes successful reception.
+\verb+CLSEQ+ of the receive against the payload using the environment \verb+ENV+. If the match succeeds then it returns the selected clause of the receive \verb+EXSEQ+ as well as the environment enriched with the bindings from the match
+ \verb+ENV'+. In this case the expression can reduce to \verb+EXSEQ+ and will be evaluated in the new environment. Label \verb+received+ denotes successful reception.
 \end{example}
 
 \subsection{Rewriting Rules}
@@ -681,11 +681,11 @@ some sample rewriting rules.
   \centering
 \begin{verbatim}
   crl [sys-send] :
-      < P | exp: EXSEQ, store-stack: STORE, ASET > =>
-      < P | exp: EXSEQ', store-stack: STORE', ASET > ||
+      < P | exp: EXSEQ, env-stack: ENV, ASET > =>
+      < P | exp: EXSEQ', env-stack: ENV', ASET > ||
       < sender: P, receiver: DEST, payload: GVALUE >
       if < DEST ! GVALUE, STORE', EXSEQ' > :=
-         < req-gen, STORE, EXSEQ > .
+         < req-gen, ENV, EXSEQ > .
 \end{verbatim}
   \caption{System rule send}
   \label{fig:rule-send}
@@ -693,7 +693,7 @@ some sample rewriting rules.
 
 \begin{example}\label{ex:send}
   Let us consider the conditional rewriting rule in Fig.~\ref{fig:rule-send}, which is used to send a message. In the conditional part of the
-  rule we use the equational theory to check which kind of reduction the current expression \verb+EXSEQ+ can perform. If it can perform a send of a \verb+GVALUE+ to \verb+DEST+, then the process evolves so to evaluate the new expression \verb+EXSEQ'+ in the new environment \verb+STORE'+, and the new message is added to the system. Note that \verb+P+ is the pid of the process (Maude needs a unique identifier for this notation), and \verb+ASET+ includes other elements of the process which are not relevant here (currently, only the module environment).
+  rule we use the equational theory to check which kind of reduction the current expression \verb+EXSEQ+ can perform. If it can perform a send of a \verb+GVALUE+ to \verb+DEST+, then the process evolves so to evaluate the new expression \verb+EXSEQ'+ in the new environment \verb+ENV'+, and the new message is added to the system. Note that \verb+P+ is the pid of the process (Maude needs a unique identifier for this notation), and \verb+ASET+ includes other elements of the process which are not relevant here (currently, only the module environment).
   With respect to the general schema described above, here $E$ on the left-hand side is empty, and
   on the right-hand $op$ will add the message to $E$.
   This exemplifies how the label serves to communicate information from the
@@ -727,11 +727,11 @@ some sample rewriting rules.
   \centering
 \begin{verbatim}
   crl [sys-receive] :
-    < P | exp: EXSEQ, store-stack: STORE, ASET > ||
+    < P | exp: EXSEQ, env-stack: ENV, ASET > ||
     < sender: SENDER, receiver: P, payload: GVALUE > =>
-    < P | exp: EXSEQ', store-stack: STORE', ASET >
-  if < received, STORE', EXSEQ' > :=
-     < req-receive(GVALUE), STORE, EXSEQ > .
+    < P | exp: EXSEQ', env-stack: ENV', ASET >
+  if < received, ENV', EXSEQ' > :=
+     < req-receive(GVALUE), ENV, EXSEQ > .
 \end{verbatim}
   \caption{System rule receive}
   \label{fig:rule-rec}
@@ -785,18 +785,18 @@ corresponding to each block of code. To do so, rather than having a single
 environment inside each process, we have a stack of environments, so $\theta$ in reality has the
 shape $\theta_1:\ldots:\theta_n$. To sum up, each
 time an expression $e$ that produces a sequence of expressions $e_1,\ldots,e_n$ is encountered we wrap
-the sequence with $\ms{begin}~e_1,\ldots,e_n~\ms{end}$ and we push on the stack of stores
-the appropriate store to evaluate $e_1,\ldots,e_n$. 
+the sequence with $\ms{begin}~e_1,\ldots,e_n~\ms{end}$ and we push on the stack of environments
+the appropriate environment to evaluate $e_1,\ldots,e_n$. 
 
 In case $e$ is a function call the
-appropriate store is a new environment where eventual formal parameters of
+appropriate environment is a new environment where eventual formal parameters of
 the function are bound to the actual ones, while if $e$ is a $\ms{case}$ or a
-$\ms{receive}$ statement then the appropriate store is the previous one enriched
+$\ms{receive}$ statement then the appropriate environment is the previous one enriched
 with the eventual variables that got bounded during the pattern matching.
 Fig.~\ref{fig:rule-rec} shows the concrete \verb+receive+ meta-rule.
 
 Finally, once the subcomputation is over and the expression has the shape $\ms{begin}~v~\ms{end}$ we simply replace it
-with $v$ and we pop one store from the stack. 
+with $v$ and we pop one environment from the stack. 
 
 \section{Generating the Reversible Semantics}\label{sec:generating}
 
@@ -899,19 +899,19 @@ application of the rule will also produce a memory binding the two states.
   \centering
 \begin{verbatim}
   crl [sys-send] :
-      < P | exp: EXSEQ, store-stack: STORE, ASET > =>
-      < P | exp: EXSEQ', store-stack: STORE', ASET > ||
+      < P | exp: EXSEQ, env-stack: ENV, ASET > =>
+      < P | exp: EXSEQ', env-stack: ENV', ASET > ||
       < sender: P, receiver: DEST, payload: GVALUE >
-      if < DEST ! GVALUE, STORE', EXSEQ' > :=
-         < req-gen, STORE, EXSEQ > .
+      if < DEST ! GVALUE, ENV', EXSEQ' > :=
+         < req-gen, ENV, EXSEQ > .
 
 crl [label sys-send]:
-    < P | ASET, exp: EXSEQ, store-stack: STORE > * key(N)
+    < P | ASET, exp: EXSEQ, env-stack: ENV > * key(N)
     => < sender: P, receiver: DEST, payload: GVALUE > * key(0 N) || 
-       < P | exp: EXSEQ', store-stack: STORE', ASET > * key(1 N) || 
-       [< P | ASET, exp: EXSEQ,store-stack: STORE > * key(N) ;
+       < P | exp: EXSEQ', env-stack: ENV', ASET > * key(1 N) || 
+       [< P | ASET, exp: EXSEQ, env-stack: ENV > * key(N) ;
         @: key(0 N) || @: key(1 N)]
-     if < DEST ! GVALUE, STORE', EXSEQ' > := < req-gen,STORE, EXSEQ > .
+     if < DEST ! GVALUE, ENV', EXSEQ' > := < req-gen, ENV, EXSEQ > .
 \end{verbatim}
   \caption{Forward And Forward Reversible Rule Send}
   \label{fig:revsend}
@@ -933,10 +933,10 @@ the entities bound by the placeholder inside the memory itself.
 \begin{verbatim}
 rl [label sys-send]:
    < sender: P, receiver: DEST,payload: GVALUE > * key(0 N) || 
-   < P | exp: EXSEQ', store-stack: STORE', ASET > * key(1 N) || 
-   [< P | ASET, exp: EXSEQ, store-stack: STORE > * key N ;
+   < P | exp: EXSEQ', env-stack: ENV', ASET > * key(1 N) || 
+   [< P | ASET, exp: EXSEQ, env-stack: ENV > * key N ;
      @: key(0 N) || @: key(1 N)]
-   => < P | ASET, exp: EXSEQ, store-stack: STORE > * key N 
+   => < P | ASET, exp: EXSEQ, env-stack: ENV > * key N 
 \end{verbatim}
   
   \caption{Reversible backward rule send}
@@ -1060,7 +1060,7 @@ possible to generate new unique identifiers in a ``distributed manner''.
 
 To conclude, let us discuss a couple of possible future directions for the presented
 work. First, one could investigate ways to optimize the implementation of the
-semantics, for example the way in which stores are managed is very naive,
+semantics, for example the way in which environments are managed is very naive,
 the main advantage of doing so would be the ability of simulate even
 computationally expensive erlang
 programs. Second, one could expand the set of supported primitives to widen the

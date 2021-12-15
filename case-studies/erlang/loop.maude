@@ -42,14 +42,14 @@ endfm
 
 mod FORWARD-EXPLORATION is
   protecting META-LEVEL .
-	protecting SEM_ENTITIES .
+	protecting SEM_SYSTEM .
 
-  op #computeFwdSteps : Entities -> Entities [frozen] .
+  op #computeFwdSteps : Sys -> Sys [frozen] .
 
   var RES : ResultPair .
-  var SYS : Entities .
+  var SYS : Sys .
 
-  eq #computeFwdSteps(SYS) = #downEntities(getTerm(metaRewrite(['THEORY], #up(SYS), 1))) .
+  eq #computeFwdSteps(SYS) = #downSystem(getTerm(metaRewrite(['THEORY], #up(SYS), 1))) .
 
 endm
 
@@ -60,7 +60,7 @@ mod ERLANG-LOOP is
 	protecting PARSING-SYNTAX-DOWN .
 	protecting PRINT-SYNTAX-ERROR .
 	protecting MAUDE-SYNTAX-UP .
-  protecting SEM_ENTITIES .
+  protecting SEM_SYSTEM .
   protecting FORWARD-EXPLORATION .
   protecting PRETTY_PRINT .
   protecting SEM_TRANSITIONS .
@@ -84,36 +84,36 @@ mod ERLANG-LOOP is
 
 
   op init : -> System .
-	eq init = [nil, < idle, #no-parse, #empty-entities >, nil] .
+	eq init = [nil, < idle, #no-parse, #empty-system >, nil] .
 
 	*** the state-component of the loop-mode tuple
-	op <_,_,_> : Phase ParseResult Entities -> State [frozen] .
+	op <_,_,_> : Phase ParseResult Sys -> State [frozen] .
 
 	vars QIL QIL' : QidList .
 	vars T T1 T2 T3 : Term .
 	var Result : ResultPair? .
-  var ENTS : Entities .
+  var SYS : Sys .
 
-	crl [in] : [QIL, < idle, #no-parse, ENTS >, QIL']
+	crl [in] : [QIL, < idle, #no-parse, SYS >, QIL']
 		=> if Result :: ResultPair
 		   then
-			[nil, < parsed, getTerm(Result), ENTS >, 'command 'parsed 'complete]
+			[nil, < parsed, getTerm(Result), SYS >, 'command 'parsed 'complete]
 		   else
-			[nil, < error, #no-parse, ENTS >, printSyntaxError(Result, QIL)]
+			[nil, < error, #no-parse, SYS >, printSyntaxError(Result, QIL)]
 		   fi
 	    if QIL =/= nil /\
 	       Result := metaParse(GRAMMAR, QIL, 'Command) .
 
-	rl [add-module] : [nil, < parsed, 'add-module[T1,T2,T3], ENTS >, QIL']
-		=> [nil, < idle, #no-parse, #setup-first-proc(ENTS, #downExp(T2), #downFunDefSeq(T1), #downExpSeq(T3)) >, QIL' 'module 'included '.] .
+	rl [add-module] : [nil, < parsed, 'add-module[T1,T2,T3], SYS >, QIL']
+		=> [nil, < idle, #no-parse, #setup-first-proc(SYS, #downExp(T2), #downFunDefSeq(T1), #downExpSeq(T3)) >, QIL' 'module 'included '.] .
 
-  crl [fwd-step] : [nil, < parsed, 'fwd-step.Command, ENTS >, QIL' ]
-     => [nil, < idle, 'pprint-sys.Command, (#computeFwdSteps(ENTS)) >, QIL' ]
-     if ENTS =/= #computeFwdSteps(ENTS) .
+  crl [fwd-step] : [nil, < parsed, 'fwd-step.Command, SYS >, QIL' ]
+     => [nil, < idle, 'pprint-sys.Command, (#computeFwdSteps(SYS)) >, QIL' ]
+     if SYS =/= #computeFwdSteps(SYS) .
 
-  rl [pprint-sys] : [nil, < idle, 'pprint-sys.Command, ENTS >, QIL' ] =>
-   [nil, <  parsed, 'fwd-step.Command, ENTS >, QIL' #pretty-print-sys(ENTS) ] .
+  rl [pprint-sys] : [nil, < idle, 'pprint-sys.Command, SYS >, QIL' ] =>
+   [nil, <  parsed, 'fwd-step.Command, SYS >, QIL' #pretty-print-sys(SYS) ] .
 
-  rl [pprint-sys] : [nil, < parsed, 'pprint-sys.Command, ENTS >, QIL' ] =>
-   [nil, <  parsed, 'fwd-step.Command, ENTS >, QIL' ] .
+  rl [pprint-sys] : [nil, < parsed, 'pprint-sys.Command, SYS >, QIL' ] =>
+   [nil, <  parsed, 'fwd-step.Command, SYS >, QIL' ] .
 endm

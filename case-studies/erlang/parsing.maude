@@ -285,9 +285,9 @@ fmod PARSING-SYNTAX-DOWN is
 			including 'QID-LIST .
 			including 'COMMAND-GRAMMAR .
 			including 'PARSING-SYNTAX .
-      including 'SEM_STORE .
+      including 'SEM_ENV .
       including 'SEM_PROCESS .
-      including 'SEM_ENTITIES .
+      including 'SEM_SYSTEM .
       including 'SEM_MODENV .
 			sorts none .
 			none
@@ -308,14 +308,12 @@ fmod PARSING-SYNTAX-DOWN is
 	eq #downVar('token[T]) = var(substr(string(getName(T)), 1, length(string(getName(T))))) .
 	eq #downErlInt('token[T]) = int(rat(substr(string(getName(T)), 1, length(string(getName(T)))), 10)) .
 
-
 	ceq #downExp('token[T]) = #downErlInt('token[T])
 		if syntaxCheckInt('token[T]) .
 	ceq #downExp('token[T]) = #downAtom('token[T])
     if syntaxCheckAtom1('token[T]) or syntaxCheckAtom2('token[T]) .
 	ceq #downExp('token[T]) = #downVar('token[T])
 		if syntaxCheckVar('token[T]) .
-
 
 endfm
 

@@ -32,75 +32,75 @@
 
 mod SEM_MATCH is
 	protecting SYNTAX .
-  protecting SEM_STORE .
+  protecting SEM_ENV .
 
-  sort Store? .
-  subsort Store < Store? .
+  sort Env? .
+  subsort Env < Env? .
 
 	*** The #nomatch constructor indicates the failure of a matching
 	*** operation. If it is included in a variable environment and since
 	*** it is not of sort Env, the resulting term is of kind [Env?].
 	*** In this way, we distinguish between successful and unsuccessful
 	*** matching operations.
-	op #nomatch : -> Store? [ctor] .
+	op #nomatch : -> Env? [ctor] .
 
 	*** The #match operation tries to match the given pattern with the
 	*** constant provided as second argument. Because there may be many
 	*** variables that have to be bound to unify the two terms, the
 	*** result term is of sort Env (and not just a single Binding).
-	op #match : Pattern GroundValues Store ~> Store .
+	op #match : Pattern GroundValues Env ~> Env .
 
 	vars GVALUE GVALUE1 GVALUE2 : GroundValues .
 	var PATSEQ : Pattern .
 	vars PAT PAT1 PAT2 : Pattern .
-  var STORE : Store .
+  var ENV : Env .
   var VAR : Var .
 
 
 	*** A pattern may be a list. Therefore we match a list of patterns
 	*** against a list of constants by pairwise matching the list elements.
-	eq #match([PAT1 | PAT2], [GVALUE1 | GVALUE2], STORE)
-     = #match(PAT1, GVALUE1, STORE), #match(PAT2, GVALUE2, STORE) .
+	eq #match([PAT1 | PAT2], [GVALUE1 | GVALUE2], ENV)
+     = #match(PAT1, GVALUE1, ENV), #match(PAT2, GVALUE2, ENV) .
 
   *** A var can be undefined, that means that it is fresh and we must bind it to
-  *** the new value and then we return the updated store.
-  ceq #match(VAR, GVALUE, STORE)
-      = insert(VAR, GVALUE, STORE)
-      if STORE[VAR] == undefined .
+  *** the new value and then we return the updated env.
+  ceq #match(VAR, GVALUE, ENV)
+      = insert(VAR, GVALUE, ENV)
+      if ENV[VAR] == undefined .
 
   *** A var can be defined, if the value matches the ground value(s) then potentially
-  *** there is a match and we return the store
-  ceq #match(VAR, GVALUE, STORE)
-      = STORE
-      if STORE[VAR] =/= undefined /\ STORE[VAR] == GVALUE .
+  *** there is a match and we return the env
+  ceq #match(VAR, GVALUE, ENV)
+      = ENV
+      if ENV[VAR] =/= undefined /\ ENV[VAR] == GVALUE .
 
   *** A var can be defined, if the value does not match the ground value(s) then there is
   *** no match with this branch of the receive
-  ceq #match(VAR, GVALUE, STORE)
+  ceq #match(VAR, GVALUE, ENV)
       = #nomatch
-      if STORE[VAR] =/= undefined /\ STORE[VAR] =/= GVALUE .
+      if ENV[VAR] =/= undefined /\ ENV[VAR] =/= GVALUE .
 
 	*** The second case: Two identical terms are unified (without the need to
 	*** bind any variables)
 	*** Note: The cases of matching two empty lists [] or two 0-ary tuples {}
 	***       are implicitly covered here, too.
-	eq #match(GVALUE, GVALUE, STORE) = STORE .
+	eq #match(GVALUE, GVALUE, ENV) = ENV .
 
 	*** All other cases lead to an incorrect matching.
-	eq #match(PAT, GVALUE, STORE) = #nomatch [owise] .
+	eq #match(PAT, GVALUE, ENV) = #nomatch [owise] .
 
 endm
 
 mod SEM_MATCH_ENTITY is
 	extending SYNTAX .
 	protecting SEM_MATCH .
-  protecting SEM_STORE .
+  protecting SEM_ENV .
   protecting SEM_ENTITY .
 	sort ClauseMatchResult .
 
   op #empty-clauselist : -> ClauseSeq [ctor] .
 
-	op #entityMatchSuccess(_|_) : Exp Store -> ClauseMatchResult [ctor] .
+	op #entityMatchSuccess(_|_) : Exp Env -> ClauseMatchResult [ctor] .
 
 	op #entityMatchFailure : -> ClauseMatchResult [ctor] .
 
@@ -110,15 +110,15 @@ mod SEM_MATCH_ENTITY is
 	var EXSEQ : NeExpSeq .
   var E : Entity .
   var MSG : GroundValues .
-  var STORE STORE' : Store .
+  var ENV ENV' : Env .
 
 
-	op #entityMatch(_|_|_) : ClauseSeq GroundValues Store -> ClauseMatchResult .
-  ceq #entityMatch(CLAUSE ; CLSEQ | MSG | STORE)
-     = #entityMatchSuccess(EXSEQ | STORE')
-		if PAT -> EXSEQ := CLAUSE /\ STORE' := #match(PAT, MSG, STORE) .
-  eq #entityMatch(CLAUSE ; CLSEQ | MSG | STORE)
-     = #entityMatch(CLSEQ | MSG | STORE) [owise] .
-	eq #entityMatch(#empty-clauselist | MSG | STORE) = #entityMatchFailure .
+	op #entityMatch(_|_|_) : ClauseSeq GroundValues Env -> ClauseMatchResult .
+  ceq #entityMatch(CLAUSE ; CLSEQ | MSG | ENV)
+     = #entityMatchSuccess(EXSEQ | ENV')
+		if PAT -> EXSEQ := CLAUSE /\ ENV' := #match(PAT, MSG, ENV) .
+  eq #entityMatch(CLAUSE ; CLSEQ | MSG | ENV)
+     = #entityMatch(CLSEQ | MSG | ENV) [owise] .
+	eq #entityMatch(#empty-clauselist | MSG | ENV) = #entityMatchFailure .
 
 endm

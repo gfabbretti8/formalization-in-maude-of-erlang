@@ -2,7 +2,7 @@ mod SEM_CONTROL is
   protecting MAUDE-SYNTAX-UPDOWN .
 	protecting SEM_LABEL .
 	protecting SEM_RESULT .
-  protecting SEM_STORE .
+  protecting SEM_ENV .
 	protecting SYNTAX .
   protecting SEM_MODENV .
   protecting SEM_ENTITY .
@@ -10,17 +10,17 @@ mod SEM_CONTROL is
 
   sort Control .
 
-  var STORE : Store .
+  var ENV : Env .
   var EXSEQ : Exp .
   var T1 T2 : Term .
 
-  op control(_,_) : Store ExpSeq -> Control [ctor] .
+  op control(_,_) : Env ExpSeq -> Control [ctor] .
 
   op #up : Control -> Term [memo] .
-  eq #up(control(STORE, EXSEQ)) = 'control`(_`,_`)[#up(STORE), #up(EXSEQ)] .
+  eq #up(control(ENV, EXSEQ)) = 'control`(_`,_`)[#up(ENV), #up(EXSEQ)] .
 
   op #downControl : Term -> Control .
-  eq #downControl('control`(_`,_`)[T1,T2]) = control(#downStore(T1), #downExpSeq(T2)) .
+  eq #downControl('control`(_`,_`)[T1,T2]) = control(#downEnv(T1), #downExpSeq(T2)) .
 
 
   sort Stack .

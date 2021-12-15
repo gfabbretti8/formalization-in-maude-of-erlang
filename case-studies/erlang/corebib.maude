@@ -1,15 +1,15 @@
 mod SEM_COREBIB is
 	protecting NAT .
 	protecting STRING .
-	protecting SEM_ENTITIES .
-  protecting SEM_STORE .
+	protecting SEM_SYSTEM .
+  protecting SEM_ENV .
   protecting SEM_MODENV .
   protecting SEM_LABEL .
   protecting SEM_NORMALISATION .
 
 
   var ARGS : GroundValues .
-  var STORESTACK STORESTACK' : StoreStack .
+  var ENVSTACK ENVSTACK' : EnvStack .
   var ME : ModEnv .
   var FUNNAME : FunName .
   var INT : Int .
@@ -18,38 +18,38 @@ mod SEM_COREBIB is
   vars EX1 EX2 EX1' EX EX' : Exp .
   var PID : ErlInt .
   var PAT : Pattern .
-  var STORE STORE' : Store .
+  var ENV ENV' : Env .
   var PAYLOAD : GroundValues .
   var CLSEQ : ClauseSeq .
   var EXSEQ : NeExpSeq .
 
   eq [spawn] :
-    < req-spawn(pid(INT)), STORESTACK, atom("erlang") : atom("spawn")(FUNNAME, ARGS)> =
-    < spawn(FUNNAME,ARGS), STORESTACK, int(INT) > .
+    < req-spawn(pid(INT)), ENVSTACK, atom("erlang") : atom("spawn")(FUNNAME, ARGS)> =
+    < spawn(FUNNAME,ARGS), ENVSTACK, int(INT) > .
 
   eq [send] :
-    < REQLABEL, STORE : STORESTACK, int(INT) ! PAT > =
-    < pid(INT) ! #map-args(PAT, STORE), STORE : STORESTACK, #map-args(PAT, STORE) > .
+    < REQLABEL, ENV : ENVSTACK, int(INT) ! PAT > =
+    < pid(INT) ! #map-args(PAT, ENV), ENV : ENVSTACK, #map-args(PAT, ENV) > .
 
   eq [self] :
-    < self(pid(INT)), STORESTACK, atom("self")() > =
-    < tau, STORESTACK, int(INT) > .
+    < self(pid(INT)), ENVSTACK, atom("self")() > =
+    < tau, ENVSTACK, int(INT) > .
 
   ceq [send] :
-    < REQLABEL, STORESTACK, PID ! EX > =
-    < LABEL, STORESTACK', PID ! EX' >
-    if < LABEL, STORESTACK', EX' > :=
-       < REQLABEL, STORESTACK, EX > .
+    < REQLABEL, ENVSTACK, PID ! EX > =
+    < LABEL, ENVSTACK', PID ! EX' >
+    if < LABEL, ENVSTACK', EX' > :=
+       < REQLABEL, ENVSTACK, EX > .
 
   ceq [send] :
-    < REQLABEL, STORESTACK, EX1 ! EX2 > =
-    < LABEL, STORESTACK, EX1' ! EX2 >
-    if < LABEL, STORESTACK, EX1' > :=
-       < REQLABEL, STORESTACK, EX1 > .
+    < REQLABEL, ENVSTACK, EX1 ! EX2 > =
+    < LABEL, ENVSTACK, EX1' ! EX2 >
+    if < LABEL, ENVSTACK, EX1' > :=
+       < REQLABEL, ENVSTACK, EX1 > .
 
   ceq [receive] :
-    < req-receive(PAYLOAD), STORE : STORESTACK, receive CLSEQ end > =
-    < received, STORE' : (STORE : STORESTACK), begin EXSEQ end >
-    if #entityMatchSuccess(EXSEQ | STORE') := #entityMatch(CLSEQ ; #empty-clauselist | PAYLOAD | STORE ) .
+    < req-receive(PAYLOAD), ENV : ENVSTACK, receive CLSEQ end > =
+    < received, ENV' : (ENV : ENVSTACK), begin EXSEQ end >
+    if #entityMatchSuccess(EXSEQ | ENV') := #entityMatch(CLSEQ ; #empty-clauselist | PAYLOAD | ENV ) .
 
 endm

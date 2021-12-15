@@ -21,11 +21,11 @@ load label.maude .
 load message.maude .
 load control.maude .
 load matching.maude .
-load entities.maude .
+load system.maude .
 load normalisation.maude .
 load process.maude .
 load corebib.maude .
-load system.maude .
+load rew-rules.maude .
 load print.maude .
 load loop.maude .
 
