@@ -745,9 +745,9 @@ some sample rewriting rules.
 %% Recursive expression level rules, conditional equations?
 
 %% Avoiding production of illegal expressions
-
 One of the difficulties of formalizing Erlang lies in the manipulation of the
-expression, in fact a naive management could produce unwanted results.
+expression, in fact a naive management could produce unwanted results or illegal
+expression.
 
 For example, consider
 \begin{equation}\label{funcall}
@@ -765,28 +765,45 @@ Simply replacing the function call with its body would produce
 which is a syntactical erlang expression but which would not have the desired effects, as the variable $X$ would assume the
 value of $N*N$ and not the one of $Z-M$.
 
-More in general, we need to be careful while evaluating statements or functions which produce a
-sequence of expressions as they could produce illegal expressions or unwanted effects.
+While dealing with constructs that produce a sequence of expressions
+we also need to be careful as we may produce illegal terms. Consider the
+following erlang expression
 
-The solution that we adopted consists of wrapping the produced sequence of
+\begin{equation}\label{eq:case}
+  \ms{case}~pow\_and\_sub(N,M)~of \ldots
+\end{equation}
+
+Simply replacing the function call with its body would produce 
+\[
+  \ms{case}~Z = N*N, Z-M~of \ldots
+\]
+which is illegal and would be refused by an erlang compiler.
+
+The solution that we adopted, to solve both problems, consists of wrapping the produced sequence of
 expressions with the construct \verb+begin_end+, which is the corresponding in
 Erlang of parenthesis. For instance in~(\ref{funcall}) the produced expression
 would be 
 \[
   X = \ms{begin}~Z = N*N, Z-M~\ms{end}.
 \]
-and in this case $X$ is bound to the result of $Z-M$.
+and in this case $X$ is bound to the result of $Z-M$. This solution would
+produce the desired effect even in a real Erlang environment.
 
-More in general, wrapping a sequence of expressions with erlang parenthesis
-resolve unwanted ambiguities.
+About \ref{eq:case} the produced expression would be
+\[
+  \ms{case}~\ms{begin}Z = N*N, Z-M\ms{end}~of \ldots
+\]
+which is a correct erlang term, accepted by the compiler, in fact wrapping a sequence of expressions with erlang parenthesis
+transforms the sequence in a single expression, from a syntactical point of
+view.
 
-Doing so requires us to properly manage the environment
-corresponding to each block of code. To do so, rather than having a single
-environment inside each process, we have a stack of environments, so $\theta$ in reality has the
+Adding parenthesis requires us to properly manage the environment
+corresponding to each block of code. So, rather than having a single
+environment inside each process, we have a stack of environments, hence the $\theta$ in reality has the
 shape $\theta_1:\ldots:\theta_n$. To sum up, each
 time an expression $e$ that produces a sequence of expressions $e_1,\ldots,e_n$ is encountered we wrap
-the sequence with $\ms{begin}~e_1,\ldots,e_n~\ms{end}$ and we push on the stack of environments
-the appropriate environment to evaluate $e_1,\ldots,e_n$. 
+the sequence with $\ms{begin}~e_1,\ldots,e_n~\ms{end}$ and we push on the stack
+of environments the appropriate environment to evaluate $e_1,\ldots,e_n$. 
 
 In case $e$ is a function call the
 appropriate environment is a new environment where eventual formal parameters of
@@ -805,55 +822,55 @@ for two main reasons. First, Maude is well-suited to define program transformati
 thanks to its META-LEVEL module which contains facilities to meta-represent a
 module and to manipulate it. Second, since we defined Erlang's semantics inside
 Maude we do not need to define a parser for it as it is already loaded and can
-be easily meta-represented by using the function $upModule$ inside the module
-META-LEVEL.
+be easily meta-represented by taking advantage of Maude's facilities.
 
 \subsection{Format Of The Non-Reversible Semantics}
-Let us now describe the format that the semantics to be transformed must have.
-First, it must have a module named SEM_ENTITIES, which must contain the definition
+As in~\cite{LaneseM20}, the input semantics must follow a given format, so that we
+have a docking point.
+
+Let us describe such format. First, it must have a module named \verb+SEM_SYSTEM+, which must contain the definition
 of the top-level operators, where the operators defined correspond to the upper level
 of the syntactical productions, as discussed
 in~\ref{sec:gener-appr-derive-rev-sem} and the empty-system.
-All the operators inside the module SEM_ENTITIES must be of sort
-'Entities' and their inputs must of sort 'Entities' as well. The subsort
-relation 'Entity' \textless 'Entities' must be declared as well, in fact it is necessary
+All the operators inside the module \verb+SEM_SYSTEM+ must be of sort
+System' and their inputs must of sort 'System' as well. The subsort
+relation 'Entity' \textless 'System' must be declared as well, in fact it is necessary
 to use entities of the lower level inside the operators defined in the module.
-This imply that the sort of the lower level operators must extend the sort
+This implies that the sort of the lower level operators must extend the sort
 Entity.
 
 \begin{figure}[t]
 \begin{Verbatim}
-mod SEM_ENTITIES is 
+mod SEM_SYSTEM is 
 ...
-  sort Entities .
-  subsort Entity < Entities .
+  sort Sys .
+  subsort Entity < Sys .
 
-  op #empty-entities : -> Entities [ctor] .
-  op _||_ : Entities Entities -> Entities [ctor assoc comm .. ] .
+  op #empty-system : -> Sys [ctor] .
+  op _||_ : Sys Sys -> Sys [ctor assoc comm .. ] .
 ...
 endm
 \end{Verbatim}
-  \label{fig:sem-entities}
-  \caption{Example of the SEM_ENTITIES module for Erlang.}
+  \label{fig:sem-system}
+  \caption{Example of the system module for Erlang.}
 \end{figure}
 
-In Fig.~\ref{fig:sem-entities} it is depicted the entities module for the Erlang
-languages. We omitted the import of other modules, as well as the other elements
-since they are not interesting in this context.
+In Fig.~\ref{fig:sem-system} it is depicted the system module for the Erlang
+language. We omitted elements that are not interesting in this context.
 
 The rewriting rules of the rewriting theory that defines the
 single steps of the reduction semantics must be defined under the module
-'SEM_SYSTEM'. Examples of the rules can be found in Fig.~\ref{fig:rule-send} and~\ref{fig:rule-rec}.
+\verb+SEM_TRANSITIONS+. Examples of the rules can be found in Fig.~\ref{fig:rule-send} and~\ref{fig:rule-rec}.
 
 \subsection{Transformation}
 
 The first transformation consists of adding a new \emph{sort} to the module
-SEM_ENTITIES,
+\verb+SEM_SYSTEM+,
 i.e., the sort 'EntityWithKey'. The sort 'EntityWithKey' is built by composing
 an entity of the lower level of the semantics and a key. Keys play the role
 described in~\ref{sec:gener-appr-derive-rev-sem}. Then the subsort relation 'EntityWithKey'
-\textless 'Entities' is added to the module, so that now all the top-level operators can
-deal with tagged entities. 
+\textless 'Entities' is added to the module, so that now all the top-level
+operators can deal with tagged entities. 
 
 Also, a new sort 'Placeholder' is declared and a new operator that when given a key
 builds a placeholder is defined - this operator is what we called $C$ in~\ref{sec:methodology}.
@@ -863,8 +880,13 @@ operator that builds memories by combining a final configuration where the
 entity have been replaced by their placeholders together with tagged entities,
 which represent the state that gave rise to the step.
 
+The transformation done here corresponds to the transformation done on the
+syntactical productions in~\cite{LaneseM20}.
+
+% A bit Technical, perhaps not needed?
 The final transformation concerning the Entities module is to update the
-equations to meta-represents and to lower the entities representation as now they are entities tagged with a key.
+equations to meta-represents and to lower the entities representation as now they 
+are entities tagged with a key.
 
 \subsection{Producing The Reversible Semantics}
 
