@@ -63,7 +63,7 @@
   In recent years, reversibility in concurrent settings has attracted quite
   some interest thanks to its many applications in different areas, like error-recovery,
   debugging, biological systems. Some of the formalisms where it has been
-  investigated are: petri-nets, process algebras and real programming languages.
+  investigated are: Petri nets, process algebras and real programming languages.
   Nonetheless, all the
   attempts made so far suffer from the same limitation:
   they have been studied ad-hoc. To address this limit Lanese et al.~have recently
@@ -80,7 +80,7 @@ Reversibility is the capability to execute a program both in a forward
 and backward manner. While reversibility is well-understood for
 sequential systems the same cannot be said for concurrent
 ones. Indeed, in sequential systems, actions can be undone in reverse
-order of completion.  The major difficulty while reversing the
+order of completion.  The major difficulty when reversing the
 execution of a concurrent system is that the order of actions is no
 more a total order, since execution of concurrent actions may overlap.
 To tackle this problem Danos and Krivine in~\cite{DanosK04} propose a
@@ -93,7 +93,7 @@ builds on a notion of causality.
 
 Following their seminal work, reversibility has been studied in other formalisms
 as well, among which we find: CCS~\cite{DanosK04,PhillipsU07}, $\pi$-calculus~\cite{CristescuKV13}, higher-order $\pi$-calculus~\cite{LaneseMS16},
-$\mu$Klaim~\cite{GiachinoLMT17}, Petri-nets~\cite{PhilippouP18,MelgrattiMU20}, etc.
+$\mu$Klaim~\cite{GiachinoLMT17}, Petri nets~\cite{PhilippouP18,MelgrattiMU20}, etc.
 
 Another stream of research, investigating reversibility as a debugging technique for concurrent systems,
 has risen after \cite{GiachinoLM14}, where Giachino et al.~proposed to
@@ -122,8 +122,8 @@ us consider the following rule.
 \langle p_1, \theta, p_2~\ms{!}~hello, me\rangle \rightarrow \langle p_1, \theta,
 hello, me\rangle \paral\langle p_1, p_2,hello \rangle
 \end{equation}
-On the left we have a process ready to send a
-message, when the rule is fired the process is consumed to produce the message
+On the left we have a process $p_1$ ready to send a
+message ($p_2~\ms{!}~hello$ requires to send atom $hello$ to process $p_2$), when the rule is fired the process is consumed to produce the message
 $\langle p_1, p_2,hello \rangle$ and the evolution of the process itself after the send.
 
 In order to define the reversible semantics, we need two ingredients: keys and memories.
@@ -157,7 +157,7 @@ background in Section~\ref{sec:background}. In
 Section~\ref{sec:formalizing-erlang} we will present the formalization of
 the Erlang semantics in Maude and in Section~\ref{sec:generating} we discuss how the reversible semantics
 is generated. In Section~\ref{sec:ongoing-work} we discuss some
-ongoing work. Finally, in Section~\ref{sec:conclusion} we give some
+ongoing work. In Section~\ref{sec:related} we compare with related work. Finally, in Section~\ref{sec:conclusion} we give some
 conclusions and we hint at possible future directions.
 
 All the code discussed in this report is publicly available
