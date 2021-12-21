@@ -234,7 +234,7 @@ to evaluate according to the shape of the incoming data,
 statements $\ms{receive}~pat_1 \rightarrow exprs_1; \ldots; pat_n
 \rightarrow exprs_n~\ms{end}$, to analyze the shape of the received message, and
 (iv) in function
-definitions, to define the formal parameters. 
+definitions, to give values to the formal parameters. 
 
 We start by explaining the match operation. First, the expression $e_2$ on
 the right-hand side is evaluated until it becomes a ground value,
@@ -271,19 +271,16 @@ the payload and, as a side-effect, the message is sent.
 The $\ms{spawn}$ primitive creates a new process; it takes as argument
 the function $f$ that the new process will execute, together with the
 parameters for $f$ - if any. The spawn returns the
-pid of the newly created process and, as a side effect, a new process is created.
+(fresh) pid of the newly created process and, as a side effect, a new process is created.
 
-Finally, the function $\ms{self}$ returns the process id of the process
+Finally, the function $\ms{self}$ returns the pid of the process
 who invoked it.
 
-Self, send, spawn and receive are the concurrent features, offered by Erlang, that we support in this work.
+%Self, send, spawn and receive are the concurrent features, offered by Erlang, that we support in this work.
 
 \subsection{Maude}
 
 Maude~\cite{maude} is a programming language that efficiently implements rewriting logic~\cite{MeseguerMS96}.
-Rewriting logic can be seen as a framework that unifies equational
-logic with semantics rules.
-
 Formally, a rewriting logic is a tuple $(\Sigma, E, R)$, where $\Sigma$
 represents a collection of typed operators, $E$ a set of equations among the operators, and $R$ is the set of
 semantics rules.
@@ -298,11 +295,12 @@ v = u$. Equations can be conditional and conditions can be either the
 membership of the term to some kind or other equations.
 
 % Rules
-On the other hand, the rewriting rules are well-suited to define the concurrent
-(non-deterministic) part of the programming language. The set of rules $R$
-specifies how to rewrite a (parametrized) term $t$ to another term $t'$.
-Rewriting rules, like equations, can be conditional and as condition they can
-use membership, equations, as well as other rewriting rules.
+On the other hand, the rewriting rules are well-suited to define the
+concurrent (non-deterministic) part of the programming language
+semantics. The set of rules $R$ specifies how to rewrite a
+(parametrized) term $t$ to another term $t'$.  Rewriting rules, like
+equations, can be conditional and as condition they can use
+memberships, equations, as well as other rewriting rules.
 
 In other words the equational theory defines which terms define the same states
 of a system, only using different syntactical elements, while the rewriting rules
@@ -332,7 +330,7 @@ fmod BOOL is
   eq not not A = A .
 endfm
 \end{verbatim}
-  \label{fig:bool}
+\caption{Maude module for Booleans}\label{fig:bool}
 \end{figure}
 
 First, the sort \verb+Bool+ is declared. Then, the values \verb+true+ and \verb+false+ are declared
@@ -345,44 +343,47 @@ from left to right to normalize terms. For instance, the first equation,
 \verb+eq true and A = A.+ is used to evaluate the \verb+and+ operator when the first
 argument has been normalized to \verb+true+. For simplicity, this example does not include rewriting rules, memberships nor conditional equations.
 
-As an additional example we show a rewriting rule generating the reduction
-(\ref{samplerule}), where we omit the concrete instance of the
-module environment for space reasons.
+As an additional example, we show a rewriting rule generating the
+Erlang reduction (\ref{samplerule}) from the Introduction:
 
 \begin{Verbatim}
 < 1 | exp: 2 ! 'hello', env: {}, me: _ > => 
 < 1 | exp : 'hello', env: {}, me: _ > ||
 < sender: 1, receiver: 2, payload: 'hello' >
 \end{Verbatim}
+Labels \verb|exp|, \verb|env| and \verb|me|, and similarly for
+messages, give names to fields. Also, the first argument in each
+process is the pid (pids are integer numbers in our implementation),
+the special notation highlights that it can be used as identifier for
+the tuple. Character \verb|_| means that the actual value is not shown.
 
-\begin{figure}[t]
-\begin{verbatim}
- mod H is
-    IL
-    sorts SS .
-    SSDS
-    OPDS
-    MAS
-    EQS
-    RLS
- endm .
-\end{verbatim}
+%% \begin{figure}[t]
+%% \begin{verbatim}
+%%  mod H is
+%%     IL
+%%     sorts SS .
+%%     SSDS
+%%     OPDS
+%%     MAS
+%%     EQS
+%%     RLS
+%%  endm .
+%% \end{verbatim}
   
-  \caption{A generic maude module.}
-  \label{fig:maude-module}
-\end{figure}
+%%   \caption{A generic maude module.}
+%%   \label{fig:maude-module}
+%% \end{figure}
 
-In general, a module in Maude has the shape depicted in Fig.~\ref{fig:maude-module}, where:
-\verb+H+ is the module name; \verb+IL+ is the import list; \verb+SS+ is the set
-of sort declarations; \verb+SSDS+ is the set of sub-sort declarations; \verb+OPDS+
-is the set of operator declarations; \verb+MAS+ is the set of membership
-declarations; \verb+EQS+ is the set of equations; \verb+RLS+ is the set of
-rewriting rules. 
+%% In general, a module in Maude has the shape depicted in Fig.~\ref{fig:maude-module}, where:
+%% \verb+H+ is the module name; \verb+IL+ is the import list; \verb+SS+ is the set
+%% of sort declarations; \verb+SSDS+ is the set of sub-sort declarations; \verb+OPDS+
+%% is the set of operator declarations; \verb+MAS+ is the set of membership
+%% declarations; \verb+EQS+ is the set of equations; \verb+RLS+ is the set of
+%% rewriting rules. 
 
-The transformation of the non-reversible semantics is defined in terms of a
-program that takes in input the modules of the non-reversible semantics and
+We will define the generation of the reversible semantics as a program
+that takes in input the modules of the non-reversible semantics and
 produces new modules, which define the reversible semantics.
-
 
 \subsection{A General Approach to Derive a Reversible Semantics}\label{sec:gener-appr-derive-rev-sem}
 
@@ -395,7 +396,7 @@ produces new modules, which define the reversible semantics.
 The following of this section summarizes the main ideas of~\cite{LaneseM20}
 where Lanese et al.\ propose a methodology to automatically
 derive a causal-consistent reversible semantics starting from a non-reversible one, provided that
-the latter is modelled as a reduction semantics which satisfies some syntactic conditions.
+the latter is modeled as a reduction semantics which satisfies some syntactic conditions.
 %% One of the main advantages of using such method is that the format is general
 %% enough that can be applied to any formalism that fits the criteria imposed.
 %% Also, we are guaranteed that all the reversible semantics derived with this
@@ -419,10 +420,10 @@ a message traveling the network.
 % Talk about the schema of the forward rules, why it is necessary and how it is
 % used to automatically derive the rev sem.
 
-Second, the rules defining the operational semantics must fit the schema in Fig.~\ref{fig:forwardrules}.
-The schema contains rules to: i) allow entities to interact with each other (\textsc{Scm-Act}); ii)
+Second, the rules defining the operational semantics must fit the format in Fig.~\ref{fig:forwardrules}.
+The format contains rules to: i) allow entities to interact with each other (\textsc{Scm-Act}); ii)
 exploit structural congruence (\textsc{Eqv}); iii) allow single entities to execute inside a context (\textsc{Scm-Opn});
-iv) execute two systems in parallel (\textsc{Par}). Notably, while (\textsc{Eqv}) and (\textsc{Par}) are rules that must belong to the semantics, (\textsc{Scm-Act}) and (\textsc{Scm-Opn}) are schemas, and the semantics may contain any number of instances of the schemas. Actually, rule (\textsc{Par}) is an instance of schema (\textsc{Scm-Opn}), highlighting that such an instance is required. As another example, reduction~\ref{samplerule} from the Introduction is an instance of schema (\textsc{Scm-Act}).
+iv) execute two systems in parallel (\textsc{Par}). Notably, while (\textsc{Eqv}) and (\textsc{Par}) are rules that must belong to the semantics, (\textsc{Scm-Act}) and (\textsc{Scm-Opn}) are schemas, and the semantics may contain any number of instances of the schemas. Actually, rule (\textsc{Par}) is an instance of schema (\textsc{Scm-Opn}), highlighting that such an instance is required. As another example, reduction~(\ref{samplerule}) from the Introduction is an instance of schema (\textsc{Scm-Act}).
 Also, notice that a notion of structural congruence on systems is assumed. 
 
 \begin{figure}[t]
@@ -460,7 +461,7 @@ reduction semantics is updated as follows:\\
 \]
 
 Two modifications have been done. First, each entity of the system is tagged with
-a key. Keys are used to distinguish identical processes with a different
+a key $k$. Keys are used to distinguish identical processes with a different
 history. Second, the syntax is updated with another production: memories. Memories have
 the shape $\mu=[R;C]$, where $R$ is the configuration of the
 system that gave rise to a forward step and $C$ is a context describing the structure of the system resulting from the forward step.
@@ -468,20 +469,16 @@ $C$ acts as a link between $R$ and the actual final configuration. In
 other words, memories link different states of the entities. Moreover, they keep
 track of past states of the system so that they can be restored.
 
-Then, the rules of the non-reversible operational semantics are updated as depicted in
+Then, the forward reversible semantics is defined by decorating the rules of the non-reversible operational semantics as depicted in
 Fig.~\ref{fig:revforward}. Now each time a forward step is performed each resulting entity is tagged with a fresh
 key, and a memory, connecting the old configuration with the new one, is produced.
-E.g., the forward rule corresponding to reduction~(\ref{samplerule}):
+E.g., the forward rule corresponding to reduction~(\ref{samplerule}) from the Introduction is:
+\begin{multline*}
+k:\langle p_1, \theta, p_2~\ms{!}~hello, me\rangle \flts{} k_1:\langle p_1, \theta,
+hello, me\rangle \paral k_2: \langle p_1, p_2,hello \rangle \paral\\ \mem{k:\langle p_1, \theta, p_2~\ms{!}~hello, me\rangle}{k_1:\bullet_1 \paral k_2:\bullet_2}
+\end{multline*}
 
-\begin{Verbatim}
-< 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0 => 
-< 1 | exp : 'hello', env: {}, me: _ > * key 0 0 ||
-< sender: 1, receiver: 2, payload: 'hello' > * key 1 0 ||
-[ < 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0 ; @: key 0 0 || @: key: 1 0 ]
-\end{Verbatim}
-
-We can manipulate the rules without actually knowing them
-because they fit the schema and they cannot have completely arbitrary forms. 
+Notice that our approach allows one to manage different rules since the transformation is defined in terms of the format they must fit.
 
 \begin{figure}[t]
   {\footnotesize
@@ -530,16 +527,13 @@ The backward rules, depicted in Fig.~\ref{fig:revbackward}, are symmetric to the
 forward ones: when a memory $\mu$ and
 the entities tagged with the keys in $C$ are both available then a backward step can be
 performed and the old configuration $R$ can be restored.
-E.g., the backward rule undoing the reduction~(\ref{samplerule}):
-
-\begin{Verbatim}
-< 1 | exp : 'hello', env: {}, me: _ > * key 0 0 ||
-< sender: 1, receiver: 2, payload: 'hello' > * key 1 0 ||
-[ < 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0 ; @: key 0 0 || @: key: 1 0 ]
-=> 
-< 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0
-
-\end{Verbatim}
+E.g., the backward rule undoing the reduction~(\ref{samplerule}) from the Introduction is:
+\begin{multline*}\label{samplerule}
+  k_1:\langle p_1, \theta,
+hello, me\rangle \paral k_2: \langle p_1, p_2,hello \rangle \paral\\ \mem{k:\langle p_1, \theta, p_2~\ms{!}~hello, me\rangle}{k_1:\bullet_1 \paral k_2:\bullet_2}
+  \blts{\quad}
+k:\langle p_1, \theta, p_2~\ms{!}~hello, me\rangle
+\end{multline*}
 
 The reversible semantics produced by this approach captures causal dependencies
 in terms of resources produced and consumed, since, thanks to the memory, a
@@ -549,6 +543,24 @@ the reversible semantics. We also remark
 that the semantics produced is uncontrolled~\cite{LaneseMS12}, i.e., if multiple (forward and/or backward) steps are enabled at the same time there is no policy on which one to choose.
 
 \section{Formalizing Erlang in Maude}\label{sec:formalizing-erlang}
+
+TODO: put in the correct place
+
+\begin{Verbatim}
+< 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0 => 
+< 1 | exp : 'hello', env: {}, me: _ > * key 0 0 ||
+< sender: 1, receiver: 2, payload: 'hello' > * key 1 0 ||
+[ < 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0 ; @: key 0 0 || @: key: 1 0 ]
+\end{Verbatim}
+
+\begin{Verbatim}
+< 1 | exp : 'hello', env: {}, me: _ > * key 0 0 ||
+< sender: 1, receiver: 2, payload: 'hello' > * key 1 0 ||
+[ < 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0 ; @: key 0 0 || @: key: 1 0 ]
+=> 
+< 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0
+
+\end{Verbatim}
 
 The work presented here has been strongly inspired
 by~\cite{NeuhauberN07}, where the authors formalized the semantics of
