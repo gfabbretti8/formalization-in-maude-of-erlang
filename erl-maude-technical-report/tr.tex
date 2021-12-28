@@ -184,7 +184,7 @@ An actor evaluates an expression, and has an environment to store variable bindi
 The rest of this section provides the reader with a basic understanding
 of the Erlang programming language. We begin by illustrating its syntax, depicted in
 Fig.~\ref{ErlangSyntax}\footnote{We support the functional and concurrent fragment of the
-  real Erlang language.}. 
+  Erlang language.}. 
 
 An Erlang program can be seen as a collection of modules, where a module is a sequence of function definitions. Each function is uniquely identified by its name and by the
 number of formal parameters. Each function may be specified by cases via multiple definitions. The correct definition for each invocation is selected by pattern matching on parameters. The body of each definition is represented
@@ -228,7 +228,8 @@ $[v_1|v_2]$, where $v_1$ is the head and $v_2$ the tail.
 Variables can store ground values. Variables, e.g., $X,Age$, start with a capital letter and
 are not enclosed in quotes.
 Patterns, denoted by $pat$, are like the ground values,
-but also admit the presence of variables. Patterns are used for pattern matching in the following contexts: (i) in the matching operation $e_1 = e_2$, (ii) in case statements $\ms{case}~e~\ms{of}~clseq~\ms{end}$ to choose the branch
+but also admit the presence of variables. Patterns are used for pattern matching in the following contexts: (i) in the matching operation $e_1 = e_2$, (ii) in case statements $\ms{case}~e~\ms{of}~pat_1 \rightarrow exprs_1; \ldots; pat_n
+\rightarrow exprs_n~\ms{end}$ to choose the branch
 to evaluate according to the shape of the incoming data,
 (iii) in receive
 statements $\ms{receive}~pat_1 \rightarrow exprs_1; \ldots; pat_n
@@ -261,7 +262,7 @@ is selected.  Contrary to the $\ms{case}$, if no match is found
 then the process suspends.
 
 Despite being - mostly - functional Erlang
-admits some imperative operations that produce side-effects, like the receive
+admits some imperative operations that produce side-effects, like the $\ms{receive}$
 above, spawning a new process, and sending a message. 
 
 The syntax of message send is $e_1!e_2$, where $e_1$ must
@@ -271,14 +272,14 @@ the payload and, as a side-effect, the message is sent.
 The $\ms{spawn}$ primitive creates a new process; it takes as argument
 the function $f$ that the new process will execute, together with the
 parameters for $f$ - if any. The spawn returns the
-(fresh) pid of the newly created process and, as a side effect, a new process is created.
+(fresh) pid of the newly created process and, as a side effect, the new process is created.
 
 Finally, the function $\ms{self}$ returns the pid of the process
 who invoked it.
 
 %Self, send, spawn and receive are the concurrent features, offered by Erlang, that we support in this work.
 
-\subsection{Maude}
+\subsection{Maude}\label{sec:maude}
 
 Maude~\cite{maude} is a programming language that efficiently implements rewriting logic~\cite{MeseguerMS96}.
 Formally, a rewriting logic is a tuple $(\Sigma, E, R)$, where $\Sigma$
@@ -299,7 +300,7 @@ On the other hand, the rewriting rules are well-suited to define the
 concurrent (non-deterministic) part of the programming language
 semantics. The set of rules $R$ specifies how to rewrite a
 (parametrized) term $t$ to another term $t'$.  Rewriting rules, like
-equations, can be conditional and as condition they can use
+equations, can be conditional and conditions can be
 memberships, equations, as well as other rewriting rules.
 
 In other words the equational theory defines which terms define the same states
@@ -351,7 +352,7 @@ Erlang reduction (\ref{samplerule}) from the Introduction:
 < 1 | exp : 'hello', env: {}, me: _ > ||
 < sender: 1, receiver: 2, payload: 'hello' >
 \end{Verbatim}
-Labels \verb|exp|, \verb|env| and \verb|me|, and similarly for
+Labels \verb|exp| (for the expression under evaluation), \verb|env| (for the environment) and \verb|me| (for the module environment, containing function definitions), and similarly for
 messages, give names to fields. Also, the first argument in each
 process is the pid (pids are integer numbers in our implementation),
 the special notation highlights that it can be used as identifier for
@@ -413,16 +414,16 @@ form:
   S::=P\;\paral \;\op(S_1,\ldots,S_n)\; \paral \nil
 \]
 
-where $\nil$ is the empty system, $P$ an entity of the lower level and $op(S_1,\ldots,S_n)$ an operator
-composing entities. An entity of the lower-level could be, for example, a process of the system or
-a message traveling the network.
+where $\nil$ is the empty system, $P$ an entity of the lower level and $\op(S_1,\ldots,S_n)$ an $n$-ary operator
+composing entities. An entity of the lower level could be, for example, a process of the system or
+a message traveling the network. Among the operators we always assume a binary parallel operator $\paral$.
 
 % Talk about the schema of the forward rules, why it is necessary and how it is
 % used to automatically derive the rev sem.
 
 Second, the rules defining the operational semantics must fit the format in Fig.~\ref{fig:forwardrules}.
 The format contains rules to: i) allow entities to interact with each other (\textsc{Scm-Act}); ii)
-exploit structural congruence (\textsc{Eqv}); iii) allow single entities to execute inside a context (\textsc{Scm-Opn});
+exploit a structural congruence (\textsc{Eqv}); iii) allow single entities to execute inside a context (\textsc{Scm-Opn});
 iv) execute two systems in parallel (\textsc{Par}). Notably, while (\textsc{Eqv}) and (\textsc{Par}) are rules that must belong to the semantics, (\textsc{Scm-Act}) and (\textsc{Scm-Opn}) are schemas, and the semantics may contain any number of instances of the schemas. Actually, rule (\textsc{Par}) is an instance of schema (\textsc{Scm-Opn}), highlighting that such an instance is required. As another example, reduction~(\ref{samplerule}) from the Introduction is an instance of schema (\textsc{Scm-Act}).
 Also, notice that a notion of structural congruence on systems is assumed. 
 
@@ -524,7 +525,7 @@ Notice that our approach allows one to manage different rules since the transfor
 \end{figure}
 
 The backward rules, depicted in Fig.~\ref{fig:revbackward}, are symmetric to the
-forward ones: when a memory $\mu$ and
+forward ones: if a memory $\mu=\mem{R}{C}$ and
 the entities tagged with the keys in $C$ are both available then a backward step can be
 performed and the old configuration $R$ can be restored.
 E.g., the backward rule undoing the reduction~(\ref{samplerule}) from the Introduction is:
@@ -543,44 +544,25 @@ the reversible semantics. We also remark
 that the semantics produced is uncontrolled~\cite{LaneseMS12}, i.e., if multiple (forward and/or backward) steps are enabled at the same time there is no policy on which one to choose.
 
 \section{Formalizing Erlang in Maude}\label{sec:formalizing-erlang}
-
-TODO: put in the correct place
-
-\begin{Verbatim}
-< 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0 => 
-< 1 | exp : 'hello', env: {}, me: _ > * key 0 0 ||
-< sender: 1, receiver: 2, payload: 'hello' > * key 1 0 ||
-[ < 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0 ; @: key 0 0 || @: key: 1 0 ]
-\end{Verbatim}
-
-\begin{Verbatim}
-< 1 | exp : 'hello', env: {}, me: _ > * key 0 0 ||
-< sender: 1, receiver: 2, payload: 'hello' > * key 1 0 ||
-[ < 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0 ; @: key 0 0 || @: key: 1 0 ]
-=> 
-< 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0
-
-\end{Verbatim}
-
 The work presented here has been strongly inspired
 by~\cite{NeuhauberN07}, where the authors formalized the semantics of
 Core Erlang~\cite{Car01} to do model-checking on it. While our final semantics is quite
 different from the one they presented (the most notable differences are that we formalize
-full Erlang and the use of labels) we were still able to re-use some of their
+a fragment of Erlang instead of one of Core Erlang and the use of labels) we were still able to re-use some of their
 modules and some of their ideas, like the internal representation of
 ground values, which greatly simplified the formalization task.
 
 Our formalization of the semantics follows the style of the one
 in~\cite{Gonzalez-AbrilV21}, with some differences which we will soon discuss. As
 in~\cite{Gonzalez-AbrilV21}, the semantics has two
-layers: one for expressions and one for the system. This division is quite convenient for the formalization in Maude, as we
-can formalize the expression level as an equational theory and then using rewriting
-rules to describe the concurrent features, i.e., the system level.
+layers: one for expressions and one for systems. This division is quite convenient for the formalization in Maude, as we
+can formalize the expression level as an equational theory and then use rewriting
+rules to describe the system level.
 
 The system level comprises a rewriting rule for each concurrent feature and a
 rewriting rule $\tau$ for sequential operations. While it would have been
 possible to
-define the sequential operations as an equational theory also at the system level, we take a different approach. Indeed, using rule $\tau$ is the only way to evaluate expressions (relying on the equational theory), but it forces evaluation to stop when some base cases are reached. This is more suitable to define the behaviour of a reversible debugger, which is our intended application. Notably, also a different semantics where expressions are fully evaluated could be made reversible using the approach we will describe in the next section.
+define the sequential operations as an equational theory also at the system level, we take a different approach. Indeed, using rule $\tau$ is the only way to evaluate expressions (relying on the equational theory), but it forces evaluation to stop when some base cases are reached. This is more suitable to define the behavior of a (reversible) debugger, which is our intended application. Notably, also a different semantics where expressions are fully evaluated could be made reversible using the approach we describe in the next section.
 
 Before presenting the rewriting logic, let us
 discuss the entities that compose an Erlang system.
@@ -622,8 +604,8 @@ The theory is defined as a set of equations which have one of the following gene
 As we can see from above, to evaluate an expression we also need two additional items:
 an environment $\theta$ and a label $l$. The environment binds each variable to its
 value, if any. The label plays two roles:
-i) communicates the kind of side effect performed by the expression, if any; ii) communicates information of the details of the side effect back and
-forth between the expression level and the system level. Examples of this mechanism will be soon introduced.
+i) it communicates the kind of side effect performed by the expression, if any; ii) it communicates information of the details of the side effect back and
+forth between the expression level and the system level. Examples of this mechanism are introduced below.
 
 Two kinds of equations are used: conditional ones, featuring an
 $\ms{if}$ clause, and unconditional ones. Unconditional equations
@@ -637,7 +619,7 @@ eq [self] :
     < self(pid(INT)), ENVSTACK, atom("self")() > =
     < tau, ENVSTACK, int(INT) > .
 \end{verbatim}
-It reads roughly as follows: if the system level asks to check whether a \verb+self+ can be performed, communicating that the pid of the current process is \verb+INT+ (via \verb+self(pid(INT))+) and the expression is actually a self (\verb+atom("self")()+) then the expression reduces to the pid (\verb+int(INT)+) and the label becomes \verb+tau+, denoting successful evaluation.
+It reads roughly as follows: if the system level asks to check whether a \verb+self+ can be performed, communicating that the pid of the current process is \verb+INT+ (via \verb+self(pid(INT))+) and the expression is actually a self (\verb+atom("self")()+) then the expression reduces to the pid (\verb+int(INT)+) and the label becomes \verb+tau+, denoting successful evaluation of a sequential step.
 \end{example}
 
 Conditional equations can: either define a single step, that requires
@@ -661,11 +643,11 @@ reach a canonic form.
 
 \begin{example}[Conditional equation for receive]\label{ex:eqrec}
 Figure~\ref{fig:eq-rec} describes the conditional equation for
-receive. It reads roughly as follows. If the system level asks whether
+\verb+receive+. It reads roughly as follows. If the system level asks whether
 a message with a given payload can be received
 (\verb+req-receive(PAYLOAD)+) and the current expression is a receive
 (\verb+receive CLSEQ end+) then one tries to match the body
-\verb+CLSEQ+ of the receive against the payload using the environment \verb+ENV+. If the match succeeds then it returns the selected clause of the receive \verb+EXSEQ+ as well as the environment enriched with the bindings from the match
+\verb+CLSEQ+ of the receive against the payload using the environment \verb+ENV+. If the match succeeds (that is the result of applying \verb+#entityMatch+ matches the pattern \verb+#entityMatchSuccess(EXSEQ | ENV')+) then it returns the selected clause of the receive \verb+EXSEQ+ as well as the environment enriched with the bindings from the match
  \verb+ENV'+. In this case the expression can reduce to \verb+EXSEQ+ and will be evaluated in the new environment. Label \verb+received+ denotes successful reception.
 \end{example}
 
@@ -675,7 +657,7 @@ Let us now focus on rewriting rules, which have the following general shape:
 \[
   \begin{array}{l}
     \ms{crl}:~[rule-name]\\
-    ~~~~\langle p, \theta, e, me \rangle \paral E => \langle p,\theta',~e', me \rangle \paral op(l', E)\\
+    ~~~~\langle p, \theta, e, me \rangle \paral E => \langle p,\theta', e', me \rangle \paral op(l', E)\\
     ~~~~\ms{if}~\langle l', \theta', e'\rangle := \langle l,\theta,e\rangle
   \end{array}
 \]
@@ -705,11 +687,11 @@ some sample rewriting rules.
 
 \begin{example}\label{ex:send}
   Let us consider the conditional rewriting rule in Fig.~\ref{fig:rule-send}, which is used to send a message. In the conditional part of the
-  rule we use the equational theory to check which kind of reduction the current expression \verb+EXSEQ+ can perform. If it can perform a send of a \verb+GVALUE+ to \verb+DEST+, then the process evolves so to evaluate the new expression \verb+EXSEQ'+ in the new environment \verb+ENV'+, and the new message is added to the system. Note that \verb+P+ is the pid of the process (Maude needs a unique identifier for this notation), and \verb+ASET+ includes other elements of the process which are not relevant here (currently, only the module environment).
+  rule we use the equational theory to check which kind of reduction the current expression \verb+EXSEQ+ can perform. If it can perform a send of a \verb+GVALUE+ to \verb+DEST+, then the process evolves so to evaluate the new expression \verb+EXSEQ'+ in the new environment \verb+ENV'+, and the new message is added to the system. Note that \verb+P+ is the pid of the process (as already mentioned, Maude needs a unique identifier for this notation), and \verb+ASET+ includes other elements of the process which are not relevant here (currently, only the module environment).
   With respect to the general schema described above, here $E$ on the left-hand side is empty, and
-  on the right-hand $op$ will add the message to $E$.
+  on the right-hand side $op$ will add the message to $E$.
   This exemplifies how the label serves to communicate information from the
-  expression level to the system one. Using this information, side effects (in this case the send of a message) are performed at the system level.
+  expression level to the system one. Using this information, side effects (in this case the send of a message) are performed at the system level. Note that the rewriting rule in Section~\ref{sec:maude} is an instance of the one above.
 \end{example}
 
 \begin{example}\label{ex:rec}
@@ -719,7 +701,7 @@ some sample rewriting rules.
   Example~\ref{ex:eqrec}) to check whether the message can be received in the
   current state. If this is the case then the state is updated and the message
   is removed from the system. This rule shows how the label can be used to
-  bubble up information from the system level the expression one.
+  bubble up information from the system level to the expression one.
   %% The preconditions
   %% for the successful firing of the rule are that the message targeting the
   %% selected process is floating in the soup and that the process is performing a
@@ -757,11 +739,11 @@ some sample rewriting rules.
 %% Recursive expression level rules, conditional equations?
 
 %% Avoiding production of illegal expressions
-One of the difficulties of formalizing Erlang lies in the manipulation of the
-expression, in fact a naive management could produce unwanted results or illegal
+One of the difficulties of formalizing Erlang lies in the manipulation of
+expressions. In fact, a naive management could produce unwanted results or illegal
 expression.
 
-For example, consider
+For example, consider the function invocation
 \begin{equation}\label{funcall}
   X=pow\_and\_sub(N,M) 
 \end{equation}
@@ -774,12 +756,12 @@ Simply replacing the function call with its body would produce
 \[
   X = Z = N*N, Z-M.
 \]
-which is a syntactical erlang expression but which would not have the desired effects, as the variable $X$ would assume the
-value of $N*N$ and not the one of $Z-M$.
+which is a syntactically correct Erlang expression, but which would not have the desired effect, as the variable $X$ would assume the
+value $N*N$ instead of $Z-M$ as desired.
 
-While dealing with constructs that produce a sequence of expressions
-we also need to be careful as we may produce illegal terms. Consider the
-following erlang expression
+Constructs that produce a sequence of expressions
+may also produce illegal terms. Consider, e.g., the
+following Erlang expression:
 
 \begin{equation}\label{eq:case}
   \ms{case}~pow\_and\_sub(N,M)~of \ldots
@@ -789,67 +771,55 @@ Simply replacing the function call with its body would produce
 \[
   \ms{case}~Z = N*N, Z-M~of \ldots
 \]
-which is illegal and would be refused by an erlang compiler.
+which is illegal and would be refused by an Erlang compiler.
 
-The solution that we adopted, to solve both problems, consists of wrapping the produced sequence of
-expressions with the construct \verb+begin_end+, which is the corresponding in
-Erlang of parenthesis. For instance in~(\ref{funcall}) the produced expression
+The solution that we adopted to solve both the problems consists of wrapping the produced sequence of
+expressions with the construct \verb+begin_end+, which turns a sequence of expressions into a single expression. For instance, in~(\ref{funcall}) the produced expression
 would be 
 \[
   X = \ms{begin}~Z = N*N, Z-M~\ms{end}.
 \]
-and in this case $X$ is bound to the result of $Z-M$. This solution would
-produce the desired effect even in a real Erlang environment.
+and in this case $X$ is correctly bound to the result of $Z-M$. This solution indeed
+produces the desired effect also in a real Erlang environment.
 
-About \ref{eq:case} the produced expression would be
+In statement \ref{eq:case} the produced expression is:
 \[
-  \ms{case}~\ms{begin}Z = N*N, Z-M\ms{end}~of \ldots
+  \ms{case}~\ms{begin}~Z = N*N, Z-M~\ms{end}~of \ldots
 \]
-which is a correct erlang term, accepted by the compiler, in fact wrapping a sequence of expressions with erlang parenthesis
-transforms the sequence in a single expression, from a syntactical point of
-view.
+which is a correct Erlang term, accepted by the compiler. 
 
-Adding parenthesis requires us to properly manage the environment
+Adding \verb+begin_end+ blocks
+requires us to properly manage the environment
 corresponding to each block of code. So, rather than having a single
-environment inside each process, we have a stack of environments, hence the $\theta$ in reality has the
-shape $\theta_1:\ldots:\theta_n$. To sum up, each
-time an expression $e$ that produces a sequence of expressions $e_1,\ldots,e_n$ is encountered we wrap
-the sequence with $\ms{begin}~e_1,\ldots,e_n~\ms{end}$ and we push on the stack
+environment inside each process, we have a stack of environments, hence what we previously denoted as $\theta$ actually has the
+shape $\theta_1:\ldots:\theta_n$. To sum up, whenever an expression $e$ that produces a sequence of expressions $e_1,\ldots,e_n$ is evaluated, we wrap
+the sequence in $\ms{begin}~e_1,\ldots,e_n~\ms{end}$ and we push on the stack
 of environments the appropriate environment to evaluate $e_1,\ldots,e_n$. 
 
-In case $e$ is a function call the
-appropriate environment is a new environment where eventual formal parameters of
-the function are bound to the actual ones, while if $e$ is a $\ms{case}$ or a
+If $e$ is a function call then the
+appropriate environment has to bind the formal parameters of
+the function to the actual ones, while if $e$ is a $\ms{case}$ or a
 $\ms{receive}$ statement then the appropriate environment is the previous one enriched
-with the eventual variables that got bounded during the pattern matching.
-Fig.~\ref{fig:rule-rec} shows the concrete \verb+receive+ meta-rule.
+with the bindings obtained from pattern matching.
+%Fig.~\ref{fig:rule-rec} shows the concrete \verb+receive+ meta-rule.
 
-Finally, once the subcomputation is over and the expression has the shape $\ms{begin}~v~\ms{end}$ we simply replace it
-with $v$ and we pop one environment from the stack. 
+Finally, once the subcomputation terminates producing an expression of the shape $\ms{begin}~v~\ms{end}$, we simply replace it
+with the value $v$ and we pop one environment from the stack. 
 
 \section{Generating the Reversible Semantics}\label{sec:generating}
-
-To produce the reversible semantics we decided to remain within Maude,
+We decided to define the generation of the reversible semantics in Maude,
 for two main reasons. First, Maude is well-suited to define program transformations
 thanks to its META-LEVEL module which contains facilities to meta-represent a
-module and to manipulate it. Second, since we defined Erlang's semantics inside
-Maude we do not need to define a parser for it as it is already loaded and can
+module and to manipulate it. Second, since we defined Erlang's semantics in
+Maude, we do not need to define a parser for it as it is already loaded and can
 be easily meta-represented by taking advantage of Maude's facilities.
 
-\subsection{Format Of The Non-Reversible Semantics}
-As in~\cite{LaneseM20}, the input semantics must follow a given format, so that we
-have a docking point.
+\subsection{Format of the Non-Reversible Semantics}
+As in~\cite{LaneseM20}, the input semantics must follow a given
+format so that the approach can be applied.
 
-Let us describe such format. First, it must have a module named \verb+SEM_SYSTEM+, which must contain the definition
-of the top-level operators, where the operators defined correspond to the upper level
-of the syntactical productions, as discussed
-in~\ref{sec:gener-appr-derive-rev-sem} and the empty-system.
-All the operators inside the module \verb+SEM_SYSTEM+ must be of sort
-System' and their inputs must of sort 'System' as well. The subsort
-relation 'Entity' \textless 'System' must be declared as well, in fact it is necessary
-to use entities of the lower level inside the operators defined in the module.
-This implies that the sort of the lower level operators must extend the sort
-Entity.
+Let us describe such format. First, it must include a module named \verb+SEM_SYSTEM+ which defines the system level. As an example, Fig.~\ref{fig:sem-system} depicts the system module for the Erlang
+language. We omit elements that are not interesting in this context.
 
 \begin{figure}[t]
 \begin{Verbatim}
@@ -864,17 +834,41 @@ mod SEM_SYSTEM is
 endm
 \end{Verbatim}
   \label{fig:sem-system}
-  \caption{Example of the system module for Erlang.}
+  \caption{Extract of the system module for Erlang.}
 \end{figure}
 
-In Fig.~\ref{fig:sem-system} it is depicted the system module for the Erlang
-language. We omitted elements that are not interesting in this context.
+The module defines the operators of the system level, as discussed in Section~\ref{sec:gener-appr-derive-rev-sem}. In the case of Erlang, we just have parallel composition \verb+||+ and the empty system.
+
+Both inputs and outputs of all the operators inside the module \verb+SEM_SYSTEM+ must be of sort
+\verb+Sys+. The subsort
+relation \verb+Entity < Sys+ must be declared as well, to specify that
+entities of the lower level can be used as systems.
+To this end, the sorts produced by the lower level operators must extend the sort
+\verb+Entity+.
+
 
 The rewriting rules of the rewriting theory that defines the
 single steps of the reduction semantics must be defined under the module
-\verb+SEM_TRANSITIONS+. Examples of the rules can be found in Fig.~\ref{fig:rule-send} and~\ref{fig:rule-rec}.
+\verb+SEM_TRANSITIONS+. We have discussed sample rules in Figures~\ref{fig:rule-send} and~\ref{fig:rule-rec}.
 
 \subsection{Transformation}
+TODO: put in the correct place
+
+\begin{Verbatim}
+< 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0 => 
+< 1 | exp : 'hello', env: {}, me: _ > * key 0 0 ||
+< sender: 1, receiver: 2, payload: 'hello' > * key 1 0 ||
+[ < 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0 ; @: key 0 0 || @: key: 1 0 ]
+\end{Verbatim}
+
+\begin{Verbatim}
+< 1 | exp : 'hello', env: {}, me: _ > * key 0 0 ||
+< sender: 1, receiver: 2, payload: 'hello' > * key 1 0 ||
+[ < 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0 ; @: key 0 0 || @: key: 1 0 ]
+=> 
+< 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0
+
+\end{Verbatim}
 
 The first transformation consists of adding a new \emph{sort} to the module
 \verb+SEM_SYSTEM+,
