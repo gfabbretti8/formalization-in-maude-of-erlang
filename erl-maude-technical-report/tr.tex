@@ -846,12 +846,37 @@ entities of the lower level can be used as systems.
 To this end, the sorts produced by the lower level operators must extend the sort
 \verb+Entity+.
 
-
 The rewriting rules of the rewriting theory that defines the
 single steps of the reduction semantics must be defined under the module
 \verb+SEM_TRANSITIONS+. We have discussed sample rules in Figures~\ref{fig:rule-send} and~\ref{fig:rule-rec}.
 
-\subsection{Transformation}
+\subsection{Transformation to the Syntax}
+We describe here how to transform a non-reversible syntax as
+described above into a reversible syntax, as described
+in~\cite{LaneseM20} and recalled in
+Section~\ref{sec:gener-appr-derive-rev-sem}. Roughly, we need to add
+keys and memories.
+
+Keys are a sort, and we also define the sort \verb+EntityWithKey+ composing an entity and a key using operator \verb+*+.
+The subsort relation \verb+EntityWithKey < Entities+ is added to the module, so that now all system-level
+operators can deal with entities with key. 
+
+To define memories, first we declare a new sort \verb+Placeholder+,
+together with an operator \verb+@+ to create a \verb+Placeholder+ from a key.
+Then, memories are added by defining the sort \verb+Memory+ and by defining an
+operator that builds a memory by combining the interacting entities with keys with the final configuration, where the
+entities have been replaced by their placeholders. E.g., the memory created by the reversible version of the reduction in Section~\ref{sec:maude} is:
+
+\begin{verbatim}
+[ < 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0 ; 
+                         @: key 0 0 || @: key: 1 0 ]
+\end{verbatim}
+
+% A bit Technical, perhaps not needed?
+The final transformation concerning the \verb+Entities+ module updates the
+equations to translate entities between their representation and their meta-representation so to work on entities with keys.
+
+\subsection{Generating the Reversible Semantics}
 TODO: put in the correct place
 
 \begin{Verbatim}
@@ -869,32 +894,6 @@ TODO: put in the correct place
 < 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0
 
 \end{Verbatim}
-
-The first transformation consists of adding a new \emph{sort} to the module
-\verb+SEM_SYSTEM+,
-i.e., the sort 'EntityWithKey'. The sort 'EntityWithKey' is built by composing
-an entity of the lower level of the semantics and a key. Keys play the role
-described in~\ref{sec:gener-appr-derive-rev-sem}. Then the subsort relation 'EntityWithKey'
-\textless 'Entities' is added to the module, so that now all the top-level
-operators can deal with tagged entities. 
-
-Also, a new sort 'Placeholder' is declared and a new operator that when given a key
-builds a placeholder is defined - this operator is what we called $C$ in~\ref{sec:methodology}.
-
-Then, memories are added, by adding the sort 'Memory' and by defining the
-operator that builds memories by combining a final configuration where the
-entity have been replaced by their placeholders together with tagged entities,
-which represent the state that gave rise to the step.
-
-The transformation done here corresponds to the transformation done on the
-syntactical productions in~\cite{LaneseM20}.
-
-% A bit Technical, perhaps not needed?
-The final transformation concerning the Entities module is to update the
-equations to meta-represents and to lower the entities representation as now they 
-are entities tagged with a key.
-
-\subsection{Producing The Reversible Semantics}
 
 The transformation to be performed over the rewriting rules again is the same as
 the one described in~\ref{sec:methodology}. Rules now must deal with tagged
