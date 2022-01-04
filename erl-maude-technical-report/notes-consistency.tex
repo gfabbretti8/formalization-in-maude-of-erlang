@@ -29,6 +29,7 @@
 \usepackage{float}
 \usepackage{hyperref}
 \usepackage{thm-restate}
+
 \usetikzlibrary{matrix}
 
 \renewcommand{\labelenumi}{\alph{enumi}.} % Make numbering in the enumerate environment by letter rather than number (e.g. section 6)
@@ -43,21 +44,6 @@
 \newtheorem{lemma}{Lemma}
 \newcommand{\paral}{\;|\;}
 \newcommand{\cons}{\mbox{:}}
-
-\usetikzlibrary{calc,decorations.pathmorphing,shapes}
-\newcounter{sarrow}
-\newcommand\blts[1]{%
-  \stepcounter{sarrow}%
-  \mathrel{\begin{tikzpicture}[baseline= {( $ (current bounding box.south) + (0,-0.5ex) $ )}]
-      \node[inner sep=.5ex] (\thesarrow) {$\scriptstyle #1$};
-      \path[draw,<-,decorate,
-      decoration={zigzag,amplitude=1.2pt,segment length=1.5mm,pre=lineto,pre length=6pt}]
-      (\thesarrow.south east) -- (\thesarrow.south west);
-    \end{tikzpicture}}%
-}
-\algnewcommand\algorithmicforeach{\textbf{for each}}
-\algdef{S}[FOR]{ForEach}[1]{\algorithmicforeach\ #1\ \algorithmicdo}
-
 
 \begin{document}
 
@@ -99,7 +85,7 @@ where $t$ and $t'$ are inductively defined as
 \[
   \begin{array}{l}
     t,t',t_1,\ldots,t_n: ::=\\
-    \hspace{1ex}|~e:\\
+    \hspace{1ex}|~e\\
     \hspace{1ex}|~op(t_1,\ldots,t_n)\\
   \end{array}
 \]
@@ -113,148 +99,182 @@ Where $t_r$ and $t'_r$ are inductively defined as
 \[
   \begin{array}{l}
     t_r,t'_r,t_{1r},\ldots,t_{nr} ::=\\
-    \hspace{1ex}|~E*K\\
+    \hspace{1ex}|~e*k\\
     \hspace{1ex}|~op(t_{1r},\ldots,t_{nr})\\
   \end{array}
 \]
 and $\mu$ is defined as $[R;C]$ where $R$ is the configuration that gave rise to
-the step, i.e., $t_r$ and $C$ is a context describing the structure of the
-resulting one, where entities have been removed while keys are kept.
+the step, i.e., $t_r$, and $C$ is a context describing the structure of the
+resulting one, where entities have been removed and replaced with a hole $\bullet$, while keys are kept.
 
-Let us now define some auxiliary functions.
-
+In symbols $C$ is inductively defined as
 \[
   \begin{array}{l}
-    ukeys(t\rightarrow t') ::=\\
-    \hspace{2ex} \ms{let}(b,keys)=ukeys(t, \{\})~\ms{in}\\
-    \hspace{2ex} \ms{let}(b',\_)=ukeys(t', keys)~\ms{in}\\
-    \hspace{2ex} b \wedge b'
+    c,c',c_1,\ldots,c_n ::=\\
+    \hspace{1ex}|~\bullet*k\\
+    \hspace{1ex}|~op(c_1,\ldots,c_n)\\
   \end{array}
 \]
-\[
-  \begin{array}{l}
-    ukeys(t, keys) ::=\\
-    \hspace{2ex}\ms{match}~t~\ms{with}\\
-    \hspace{4ex}| e*k: \rightarrow (k\in keys, k::keys)\\
-    \hspace{4ex}| op(t_1,\ldots,t_n) \rightarrow \\
-    \hspace{6ex} \ms{let}~F=\ms{fun}(x,\langle b, keys'\rangle)\rightarrow~ukeys(t,keys')\\
-    \hspace{6ex} \ms{foldl}~(t_1,\ldots,t_n)~(true, keys)(F)
-  \end{array}
-\]
-
-\[
-  \begin{array}{l}
-  cmp(t,t_r) ::=\\
-    \hspace{2ex}\ms{match}~t~\ms{with}\\
-    \hspace{4ex}| e \rightarrow \ms{match}~t_r~\ms{with}\\
-    \hspace{6ex}| e*k: ~\rightarrow~true\\
-    \hspace{6ex}| \_ \rightarrow false\\
-    \hspace{4ex}| op(t_1,\ldots,t_n) \rightarrow \ms{match}~t_r~\ms{with}\\
-    \hspace{6ex}| op(t_{1r},\ldots,t_{nr})\rightarrow~cmp(t_1,t_{1r}) \wedge\ldots\wedge cmp(t_n,t_{nr})\\
-    \hspace{6ex}| \_ \rightarrow false
-
-  \end{array}
-\]
-
+  
 Let us define the $tag$ operation
-\[
-  \begin{array}{l}
-    tag(t\rightarrow t') ::=\\
-    \hspace{2ex}\ms{let} (t_r, keys) = tag\_left(t, K)~\ms{in}\\
-    \hspace{2ex}\ms{let} (t_r') = tag\_right(t', keys, 0)~\ms{in}\\
-    \hspace{4ex}t_r \rightarrow t'_r
-  \end{array}
-\]
 
-where $tag\_left$ is defined as
 \[
   \begin{array}{l}
-    tag\_left(t, keys) ::=\\
+    \begin{array}{l}
+      tag(t\rightarrow t') ::=\\
+      \hspace{2ex}\ms{let} (t_r, keys) = tag\_left(t, K)~\ms{in}\\
+      \hspace{2ex}\ms{let} (t_r',\_,\_) = tag\_right(t', keys, 0)~\ms{in}\\
+      \hspace{4ex}t_r \rightarrow t'_r
+    \end{array}\\
+
+  \begin{array}{l}
+    tag\_left(t, k :: keys) ::=\\
     \hspace{2ex}\ms{match}~t~\ms{with}\\
-    \hspace{4ex}| e: \rightarrow \ms{let}~k'=fresh(keys)~\ms{in}~
-    (e*k',k'::keys)\\
-    \hspace{4ex}| op(t_1,\ldots,t_n) \rightarrow \\
-    \hspace{6ex} \ms{let}~F=\ms{fun}(x,\langle T_r, keys'\rangle) \rightarrow \ms{let}(x_r,keys'')=tag\_left(x, keys')~\ms{in}~(T_r::x_r, keys'')\\
-    \hspace{6ex} \ms{foldl}~(t_1,\ldots,t_n)~([],keys)(F)
-  \end{array}
-\]
+    \hspace{4ex}| e \rightarrow (e*k',k'::k::keys)\\
+    \hspace{4ex}| op(tlist) \rightarrow \\
+    \hspace{6ex} \ms{let}~f=\ms{fun}(x,(rtlist, keys')) \rightarrow \ms{let}(x_r,keys'')=tag\_left(x, keys')~\ms{in}~(rtlist::x_r, keys'')~\ms{end}~\ms{in}\\
+    \hspace{6ex} \ms{let}~(rtlist, keys') = \ms{foldl}~tlist~([],keys)~f~\ms{in}\\
+    \hspace{8ex} (op(rtlist), keys')
+  \end{array}\\
 
-and where $tag\_right$ is defined as
-\[
   \begin{array}{l}
     tag\_right(t, keys, c) ::=\\
     \hspace{2ex}\ms{match}~t~\ms{with}\\
-    \hspace{4ex}| e \rightarrow \ms{let}~c'=c+1~\ms{in}~
-    (e*c'::keys,c')\\
-    \hspace{4ex}| op(t_1,\ldots,t_n) \rightarrow \\
-    \hspace{6ex} \ms{let}~F = (x,\langle T_r,C,keys\rangle)\rightarrow \ms{let}(x_r,C')=tag\_right(x, keys, C)~\ms{in}~(T_r::x_r,C', keys)\\
-    \hspace{6ex} \ms{foldl}~(t_1,\ldots,t_n)~([],c,keys)~(F)
+    \hspace{4ex}| e \rightarrow \ms{let}~c'=c+1~\ms{in}\\
+    \hspace{6ex} (e*c'::keys,c')\\
+    \hspace{4ex}| op(tlist) \rightarrow \\
+    \hspace{6ex} \ms{let}~f = (x,(rtlist,C,keys))\rightarrow \ms{let}(x_r,C')=tag\_right(x, keys, C)~\ms{in}~(rtlist::x_r,C', keys)~\ms{end}~\ms{in}\\
+    \hspace{6ex} \ms{let}~(rtlist, C, keys') = \ms{foldl}~tlist~([],c,keys)~f~\ms{in}\\
+    \hspace{8ex} (op(rtlist), C, keys')    
+  \end{array}
   \end{array}
 \]
 
-Comparison operator up to keys.
+The function $tag$ takes in input a non reversible schema and produces a
+tagged version of the schema, where each entity is tagged with a unique meta-key. The meta-keys used to tag the
+entities must be unique since then in the concrete instances each entity has to
+be tagged with a unique concrete key, if in the schema two (or more) entities
+would be tagged with the same meta-key then it would be impossible to
+instantiate them to different values.
+
+Once a non-reversible schema has been tagged we need to produce the memory, for
+that we rely on the function $mem$, that given a rule returns the rule together
+with the appropriate memory.
 \[
   \begin{array}{l}
-    eqk(t_r,t'_r) ::=\\
+  \begin{array}{l}
+    mem(t_r \rightarrow t'_r) ::=\\
+    \hspace{2ex}\ms{let}~C=ctx(t'_r)~\ms{in}\\
+    \hspace{2ex}t_r \rightarrow t'_r~|~[C;t_r]
+  \end{array}\\[5ex]
+  
+  \begin{array}{l}
+    ctx(t)::=\\
     \hspace{2ex}\ms{match}~t~\ms{with}\\
-    \hspace{4ex}| e*k \rightarrow \ms{match}~t_r~\ms{with}\\
-    \hspace{6ex}| e*k'\rightarrow~true\\
-    \hspace{6ex}| \_ \rightarrow false\\
-    \hspace{4ex}| op(t_{1r},\ldots,t_{nr}): \ms{System} \rightarrow \ms{match}~t_r~\ms{with}\\
-    \hspace{6ex}| op(t'_{1r},\ldots,t'_{nr}): \rightarrow~cmp(t_1,t_{1r}) \wedge\ldots\wedge cmp(t_n,t_{nr})\\
-    \hspace{6ex}| \_ \rightarrow false\\
-    \hspace{4ex}| t_1 \rightarrow t_2 \rightarrow \ms{match}~t'_r~\ms{with}\\
-    \hspace{6ex}| t'_1 \rightarrow t'_2 \rightarrow eqk(t_1,t_1')\wedge eqk(t_2,t_2')\\
-    \hspace{6ex}| \_ \rightarrow false
-
+    \hspace{4ex}| e*k \rightarrow \bullet * k\\
+    \hspace{4ex}| op(\overline{t_r}) \rightarrow \\
+    \hspace{6ex} \ms{let}~f=\ms{fun}(x,\overline{c_m})\rightarrow~\overline{c_m}::ctx(x)~\ms{end}~\ms{in}\\
+    \hspace{6ex}\ms{let}~\overline{c_n} =
+    \ms{foldl}~(\overline{t_r})~[\:]~f~\ms{in}\\
+    \hspace{8ex} op(\overline{c_n})
+  \end{array}
   \end{array}
 \]
 
-\begin{lemma}
-  \[
-    \forall t,t',t_r,t'_r.~\ms{if}~cmp(t,t_r)~\wedge~
-    cmp(t',t'_r) \Rightarrow eqk(tag(t\rightarrow t'),t_r\rightarrow t'_r)
-  \]
-\end{lemma}
-\begin{proof}
-  We proceed by induction on $t,t'$.\\
-  \begin{case}[$t=E,t'=E'$]
-    easy.
-  \end{case}
-  \begin{case}[$t=E,t'=op(t'_1,\ldots,t'_n)$]
-    By hypothesis we know that $cmp(t',t'_r)$, by inductive hypothesis we
-    know that for each $t_i$ in $t'_1,\ldots,t'_n$ we have 
-    $eqk(tag(t_i), t_{ir})$, where $t_{ir}$ is the subterm corresponding to
-    $t_i$ in $t'_r$, so we can conclude
-    $eqk(tag(t\rightarrow t'), t_r\rightarrow t'_r)$.
-  \end{case}
-  \begin{case}[$t=op(t'_1,\ldots,t'_n),t'=E$]
-    Similar to above.
-  \end{case}
-  \begin{case}[$t=op(t'_1,\ldots,t'_n),t'=op'(t''_1,\ldots,t''_n)$]
-    Like above, both on $t$ and $t'$.
-  \end{case}
-\end{proof}
+The predicate $ukeys$ checks if a reversible schema is correct in the sense of
+each entity being tagged with a unique meta-key.
+\[
+  \begin{array}{l}
+    \begin{array}{l}
+      ukeys(t\rightarrow t') ::=\\
+      \hspace{2ex} \ms{let}(b,keys)=ukeys(t, \{\})~\ms{in}\\
+      \hspace{2ex} \ms{let}(b',\_)=ukeys(t', keys)~\ms{in}\\
+      \hspace{2ex} b \wedge b'
+    \end{array}\\[6ex]
 
+    \begin{array}{l}
+      ukeys(t, keys) ::=\\
+      \hspace{2ex}\ms{match}~t~\ms{with}\\
+      \hspace{4ex}| e*k \rightarrow (not(k\in keys), \{k\}\cup keys)\\
+      \hspace{4ex}| op(tlist) \rightarrow \\
+      \hspace{6ex} \ms{let}~f=\ms{fun}(x,( b, keys'))\rightarrow~\ms{let}(b',
+      keys'') = ukeys(x,keys')~\ms{in}\\
+      \hspace{8ex} (b\wedge b', keys')~\ms{end}~\ms{in}\\
+      \hspace{6ex} \ms{foldl}~tlist~(true, keys)~f
+    \end{array}
+  \end{array}
+\]
+
+Finally, $eqtctx$ compares a term $t$ and a context $C$ and returns true when $C$ is the
+right context for $t$, i.e., when all the entities in $t$ have been replaced by a
+hole $\bullet$ in $C$.
+\[
+  \begin{array}{l}      
+    eqtctx(t,C) ::=\\
+    \hspace{2ex}\ms{match}~t,C~\ms{with}\\
+    \hspace{4ex}| e*k, \bullet *k \rightarrow true\\
+    \hspace{4ex}| op(tlsist), op(tlist') \rightarrow \\
+    \hspace{6ex}\ms{let}~f=\ms{fun}(b,(t_1,t_2))\rightarrow b \wedge eqtctx(t_1,t_2)~\ms{end}~\ms{in}\\
+    \hspace{6ex}\ms{foldl}~\ms{zip}(tlist,tlist')~true~f\\
+    \hspace{4ex}| \_, \_ \rightarrow false
+  \end{array}
+\]
+
+Now, to prove the correctness of the transformation of a non-reversible schema
+to a reversible one we need to prove that the $tag$ function correctly tags each
+entity with a unique meta-key and that the function $mem$ correctly produces the memory.
+
+We begin by proving that the $tag$ function attach unique meta-keys to
+each entity.
 \begin{lemma}
   \[
-    \forall t.~ ukeys(tag\_left(t),\{\})
+    \forall t \rightarrow t'.~ ukeys(tag(t\rightarrow t'))
   \]
 \end{lemma}
 \begin{proof}
   We proceed by induction on $t$.\\
-  \begin{case}[$t=E$]
+  \begin{case}[$t=e,t'=e'$]
     easy.
   \end{case}
-  \begin{case}[$t=op(\overline{t_n})$]
-    We proceed by induction on $t_n$, the case empty list is easy (cannot
-    occur) and the case single element follows by the inductive hypothesis on $t$.
-    The case $t_x::t$ follows by using the inductive hypothesis on $t_n$ and by
-    the one on $t$.
-    
+  \begin{case}[$t=e,t'=op(tlist)$]
+    It is easy to see that $t$ will be tagged with a unique meta-key. About $t'$
+    the $tag$ function will call itself recursively on each element, each time
+    that an entity will be encountered the list of meta-keys used to tag the
+    left-hand side will be used to tag the entity and a counter will be attached
+    to it, making sure that the key is fresh. 
+  \end{case}
+  \begin{case}[$t=op(tlist), t'=e$]
+    Here function tag will call itself recursively on each element of
+    $tlist$, each time that an entity will be encountered the function
+    will take the last meta-key used, add an $'$ to it and use it to tag the
+    entity. So each entity is tagged with a fresh key. Finally $t'$ is tagged
+    using the list of all the meta-keys used so far concatenated with a fresh counter.
+  \end{case}
+  \begin{case}[$t=op(tlist), t'=op'(tlist')$]
+    Same reasoning as case 3 for $t$ and same reasoning as case 2 for $t'$. 
   \end{case}
 \end{proof}
 
+Finally, we need to prove that $mem$ produces the right memory for a generic
+right-hand side of a rule.
 
+\begin{lemma}
+  $
+  \forall t.~eqctx(t, ctx(t))
+  $
+\end{lemma}
+\begin{proof}
+  We proceed by induction on $t$.
+  \begin{case}[$t=e$]
+    easy.
+  \end{case}
+  \begin{case}[$t=op(tlist)$]
+    We proceed by induction on $tlist$. The base-case single element is taken
+    care by the inductive hypothesis on $t$, while the inductive case is taken
+    care by the inductive hypothesis on $tlist$ and on $t$.
+  \end{case}
+\end{proof}
+
+By Lemma 1,2 we can conclude that the transformation is correct.
 
 \end{document}
