@@ -877,50 +877,52 @@ The final transformation concerning the \verb+Entities+ module updates the
 equations to translate entities between their representation and their meta-representation so to work on entities with keys.
 
 \subsection{Generating the Reversible Semantics}
-TODO: put in the correct place
+%% TODO: put in the correct place
 
-\begin{Verbatim}
-< 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0 => 
-< 1 | exp : 'hello', env: {}, me: _ > * key 0 0 ||
-< sender: 1, receiver: 2, payload: 'hello' > * key 1 0 ||
-[ < 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0 ; @: key 0 0 || @: key: 1 0 ]
-\end{Verbatim}
+%% \begin{Verbatim}
+%% < 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0 => 
+%% < 1 | exp : 'hello', env: {}, me: _ > * key 0 0 ||
+%% < sender: 1, receiver: 2, payload: 'hello' > * key 1 0 ||
+%% [ < 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0 ; @: key 0 0 || @: key: 1 0 ]
+%% \end{Verbatim}
 
-\begin{Verbatim}
-< 1 | exp : 'hello', env: {}, me: _ > * key 0 0 ||
-< sender: 1, receiver: 2, payload: 'hello' > * key 1 0 ||
-[ < 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0 ; @: key 0 0 || @: key: 1 0 ]
-=> 
-< 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0
+%% \begin{Verbatim}
+%% < 1 | exp : 'hello', env: {}, me: _ > * key 0 0 ||
+%% < sender: 1, receiver: 2, payload: 'hello' > * key 1 0 ||
+%% [ < 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0 ; @: key 0 0 || @: key: 1 0 ]
+%% => 
+%% < 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0
 
-\end{Verbatim}
+%% \end{Verbatim}
 
-The transformation to be performed over the rewriting rules again is the same as
-the one described in~\ref{sec:methodology}. Rules now must deal with tagged
-entities and each time that a forward step is taken the resulting entities must
-be tagged with unique keys and the appropriate memory must be created.
+The transformation to be performed over the rewriting rules is the one
+described in Section~\ref{sec:methodology}, rephrased in Maude
+notation. Thus, rules must be extended to deal with tagged entities,
+and each time a forward step is taken the resulting entities must
+be tagged with fresh keys and the appropriate memory must be created.
 
-The transformation is mostly forward, the only tricky part concerns the
-uniqueness of the keys and their generation. Indeed, we must have a 'distributed' way to compute
-them, as passing around a key generator would produce spurious dependencies. To
-solve the problem we resorted to the following idea. Keys are represented as lists of
-integers. Each time we need to produce new unique keys, to tag the (new) entities on
-the right-hand side of a rule, we first collect all the keys on
-the left-hand side of the rule, then we concatenate them together to a new list, say
-$l$, and finally we tag
-each of the new entities with $l$ concatenated with a different number for each
-entity.
+The transformation is mostly straightforward, the only tricky part
+concerns the generation of fresh keys. Indeed, we must have a
+'distributed' way to compute them, as passing around a key generator
+would produce spurious causal dependencies. To solve the problem we
+resorted to the following idea. Keys are lists of integers. Each time
+we need to produce a fresh key, to tag a new entity on the right-hand
+side of a rule, we first collect all the keys on the left-hand side of
+the rule, then we concatenate them together into a new list, say $l$,
+and finally we tag each of the new entities with $l$ concatenated with
+a different number for each entity.
 
-In practice, to transform a rule, we tag each entity of the left-hand
-side with a variable that represents the key and we keep track of the variables
-used. Then, to transform the right-hand side we tag all the created entities as
-described above, using the keys of which we kept track, and we also introduce the memory created by the rule application.
+In practice, when transforming a rule, we match each key on the
+left-hand side against a variable, and we use the variables on the
+right-hand side to generate the new keys. Furthermore, we create the
+required memory.
 
-In Fig.~\ref{fig:revsend} it is possible to observe rule \verb_send_ before and after being
-transformed. As one can see, on the left-hand side, of the reversible version, the process is initially
-tagged with some key, then the new entities on the right side are tagged with
-fresh keys, built from the one already available locally. Moreover, now each
-application of the rule will also produce a memory binding the two states.
+Fig.~\ref{fig:revsend} recalls rule \verb_send_ and shows the
+corresponding reversible rule. In the latter, on the left-hand side,
+the process is initially tagged with a key \verb_key(N)_, then the new
+entities on the right side are tagged with fresh keys \verb_key(0 N)_
+and \verb_key( 1N)_, built from \verb_key(N)_. Moreover, the rule also
+produces a memory binding the old and the new states.
 
 \begin{figure}[t]
   \centering
@@ -940,20 +942,21 @@ crl [label sys-send]:
         @: key(0 N) || @: key(1 N)]
      if < DEST ! GVALUE, ENV', EXSEQ' > := < req-gen, ENV, EXSEQ > .
 \end{verbatim}
-  \caption{Forward And Forward Reversible Rule Send}
+  \caption{Original and forward reversible rule send}
   \label{fig:revsend}
 \end{figure}
 
-The production of the backward semantics is even more straightforward of the
-forward one, in fact to produce it it is sufficient swap the left-hand side of
-each forward reversible rule with its right-hand side and get rid of the
-conditional branch.
+The production of the backward semantics is easy: to produce a
+backward rule it is enough to swap the left- and the right-hand side
+of the corresponding forward reversible rule and to drop the
+conditional branch.  Indeed, the latter is not required any more
+because if the process has performed the forward step, as proved by
+the existence of a memory for it, then it can always perform the
+backward one. One has only to check that all the consequences of the
+action have been already undone. This is ensured by the presence of
+the entities bound by the placeholders inside the memory.
 
-The conditional branch is not required anymore because if the process has
-performed the forward step then it can always perform the backward one, given
-that all the consequences of the action have been already undone. This last
-condition is 'automatically' ensured by the presence of the memory together with
-the entities bound by the placeholder inside the memory itself.
+The backward rule for send is shown in Figure~\ref{fig:revsend}.
 
 \begin{figure}[t]
   \centering
@@ -972,16 +975,18 @@ rl [label sys-send]:
 
 \section{Ongoing Work}\label{sec:ongoing-work}
 
-The last step to conclude this work is to close the gap between the format of
-the rules expected by the general method and the actual format of the rules
-provided in input. In fact, the schema of the general method allows for an
-arbitrary number of rules (potentially infinite) describing the internal steps
-of the system. Obviously, to efficiently describe a system we cannot produce
-infinite rules, actually quite the contrary, i.e., the less we have the better
-it is. So, in the formalization of the rules we resorted to the expression level
-semantics. In particular, we used predicates - i.e., the expression level semantics - to gather
-under the same meta-rule all infinite rules that would describe the same
-behavior.
+The last step to conclude this work is to prove the correctness of the
+generated reversible semantics. This requires to close the gap between
+the format of the rules expected by the general method and the actual
+format of the rules provided in input. In fact, the schema of the
+general method allows for an arbitrary number of rules (potentially
+infinite) describing the internal steps of the system. Obviously, to
+efficiently describe a system we cannot produce infinite rules,
+actually quite the contrary, i.e., the less we have the better it
+is. So, in the formalization of the rules we resorted to the
+expression level semantics. In particular, we used predicates - i.e.,
+the expression level semantics - to gather under the same meta-rule
+all infinite rules that would describe the same behavior.
 
 Let us consider the following processes:
 \[
