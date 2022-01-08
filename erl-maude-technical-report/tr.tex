@@ -386,7 +386,7 @@ We will define the generation of the reversible semantics as a program
 that takes in input the modules of the non-reversible semantics and
 produces new modules, which define the reversible semantics.
 
-\subsection{A General Approach to Derive a Reversible Semantics}\label{sec:gener-appr-derive-rev-sem}
+\subsection{Derivation of the Reversible Semantics}\label{sec:gener-appr-derive-rev-sem}
 
 %% One of the main limitations of the approach described in
 %% Section~\ref{sec:fst-rev-sem} is that the causal dependencies introduced by each
@@ -396,7 +396,7 @@ produces new modules, which define the reversible semantics.
 
 The following of this section summarizes the main ideas of~\cite{LaneseM20}
 where Lanese et al.\ propose a methodology to automatically
-derive a causal-consistent reversible semantics starting from a non-reversible one, provided that
+derive a causal-consistent reversible semantics starting from a non-reversible one. The approach requires that
 the latter is modeled as a reduction semantics which satisfies some syntactic conditions.
 %% One of the main advantages of using such method is that the format is general
 %% enough that can be applied to any formalism that fits the criteria imposed.
@@ -408,24 +408,25 @@ the latter is modeled as a reduction semantics which satisfies some syntactic co
 We now describe the shape that the reduction semantics taken as input
 must have.
 
-First, the syntax must be divided in two levels: a lower level of entities on which there are no restrictions, and an upper level of systems of the following
+The syntax must be divided in two levels: a lower level of entities on which there are no restrictions, and an upper level of systems of the following
 form:
 \[
   S::=P\;\paral \;\op(S_1,\ldots,S_n)\; \paral \nil
 \]
 
-where $\nil$ is the empty system, $P$ an entity of the lower level and $\op(S_1,\ldots,S_n)$ an $n$-ary operator
-composing entities. An entity of the lower level could be, for example, a process of the system or
+where $\nil$ is the empty system, $P$ any entity of the lower level and $\op(S_1,\ldots,S_n)$ any $n$-ary operator to
+compose entities. An entity of the lower level could be, for example, a process of the system or
 a message traveling the network. Among the operators we always assume a binary parallel operator $\paral$.
 
 % Talk about the schema of the forward rules, why it is necessary and how it is
 % used to automatically derive the rev sem.
 
-Second, the rules defining the operational semantics must fit the format in Fig.~\ref{fig:forwardrules}.
+The rules defining the operational semantics must fit the format in Fig.~\ref{fig:forwardrules}.
 The format contains rules to: i) allow entities to interact with each other (\textsc{Scm-Act}); ii)
 exploit a structural congruence (\textsc{Eqv}); iii) allow single entities to execute inside a context (\textsc{Scm-Opn});
 iv) execute two systems in parallel (\textsc{Par}). Notably, while (\textsc{Eqv}) and (\textsc{Par}) are rules that must belong to the semantics, (\textsc{Scm-Act}) and (\textsc{Scm-Opn}) are schemas, and the semantics may contain any number of instances of the schemas. Actually, rule (\textsc{Par}) is an instance of schema (\textsc{Scm-Opn}), highlighting that such an instance is required. As another example, reduction~(\ref{samplerule}) from the Introduction is an instance of schema (\textsc{Scm-Act}).
-Also, notice that a notion of structural congruence on systems is assumed. 
+Also, notice that a notion of structural congruence on systems is assumed.
+We refer to~\cite{LaneseM20} for more details on the definition of strucural congruence. This is of limited relevance here, since the only structural congruence needed for Erlang is that parallel composition forms a commutative monoid, which translates to the same property in the reversible semantics.
 
 \begin{figure}[t]
   {\footnotesize
@@ -453,7 +454,7 @@ Also, notice that a notion of structural congruence on systems is assumed.
 \subsubsection{Methodology}\label{sec:methodology}
 
 To obtain a forward reversible semantics, we need to track enough history and causality information to allow one to define a backward semantics exploiting it. First, the syntax of the
-reduction semantics is updated as follows:\\
+systems is updated as follows:\\
 \[
 \begin{array}{l}
   R   \; ::=\;  k:P \paral \op(R_1,\ldots,R_n)\paral \nil \paral \mem{R}{\str} \\[1ex]
@@ -470,7 +471,7 @@ $C$ acts as a link between $R$ and the actual final configuration. In
 other words, memories link different states of the entities. Moreover, they keep
 track of past states of the system so that they can be restored.
 
-Then, the forward reversible semantics is defined by decorating the rules of the non-reversible operational semantics as depicted in
+Then, the forward reversible semantics is defined by decorating the rules of the non-reversible reduction semantics as depicted in
 Fig.~\ref{fig:revforward}. Now each time a forward step is performed each resulting entity is tagged with a fresh
 key, and a memory, connecting the old configuration with the new one, is produced.
 E.g., the forward rule corresponding to reduction~(\ref{samplerule}) from the Introduction is:
