@@ -60,18 +60,19 @@
 \maketitle % typeset the header of the contribution 
 
 \abstract{
-  In recent years, reversibility in concurrent settings has attracted quite
-  some interest thanks to its many applications in different areas, like error-recovery,
-  debugging, biological systems. Some of the formalisms where it has been
-  investigated are: Petri nets, process algebras and real programming languages.
-  Nonetheless, all the
-  attempts made so far suffer from the same limitation:
-  they have been studied ad-hoc. To address this limit Lanese et al.~have recently
-  proposed a new general method to derive a reversible semantics starting from a
-non-reversible one. The general method though lacks an implementation
-that proves its feasibility in practice. The
-aim of this work is to provide such an implementation and
-to apply it to a case study on the Erlang programming language. }
+  In recent years, reversibility in concurrent settings has
+  attracted quite some interest thanks to its many applications in
+  different areas, like error-recovery, debugging, biological
+  systems. It has been investigated in formalisms such as
+  Petri nets, process algebras and real programming languages.
+  Nonetheless, all the attempts made so far suffer from the same
+  limitation: they have been devised ad-hoc. To address this limit
+  Lanese et al.~have recently proposed a novel general method to derive
+  a concurrent reversible semantics starting from a non-reversible one. The
+  general method though lacks an implementation that proves its
+  feasibility in practice. The aim of this work is to provide such an
+  implementation and to apply it to a case study on the Erlang
+  programming language. }
 
 \section{Introduction}
 
@@ -92,7 +93,7 @@ definition does not need a (temporal) total order of actions, but
 builds on a notion of causality.
 
 Following their seminal work, reversibility has been studied in other formalisms
-as well, among which we find: CCS~\cite{DanosK04,PhillipsU07}, $\pi$-calculus~\cite{CristescuKV13}, higher-order $\pi$-calculus~\cite{LaneseMS16},
+as well, such as: CCS~\cite{DanosK04,PhillipsU07}, $\pi$-calculus~\cite{CristescuKV13}, higher-order $\pi$-calculus~\cite{LaneseMS16},
 $\mu$Klaim~\cite{GiachinoLMT17}, Petri nets~\cite{PhilippouP18,MelgrattiMU20}, etc.
 
 Another stream of research, investigating reversibility as a debugging technique for concurrent systems,
@@ -117,13 +118,13 @@ semantics taken in input must be a reduction semantics and the entities on the
 left-hand side of a rule are seen as the resources to be \emph{consumed} to
 \emph{produce} the resources on the right-hand side - i.e., the new entities.
 As an example, even without knowing the details that will be explained later on, let
-us consider the following rule. 
+us consider the following reduction. 
 \begin{equation}\label{samplerule}
 \langle p_1, \theta, p_2~\ms{!}~hello, me\rangle \rightarrow \langle p_1, \theta,
 hello, me\rangle \paral\langle p_1, p_2,hello \rangle
 \end{equation}
 On the left we have a process $p_1$ ready to send a
-message ($p_2~\ms{!}~hello$ requires to send atom $hello$ to process $p_2$), when the rule is fired the process is consumed to produce the message
+message ($p_2~\ms{!}~hello$ requires to send atom $hello$ to process $p_2$), when the reduction is executed the process is consumed to produce the message
 $\langle p_1, p_2,hello \rangle$ and the evolution of the process itself after the send.
 
 In order to define the reversible semantics, we need two ingredients: keys and memories.
@@ -152,13 +153,12 @@ The main contributions of this work are:
     semantics starting from a non reversible one.
 \end{itemize}
 
-The rest of the report provides the reader with the required
+The rest of this report is structured as follows. We provide the reader with the required
 background in Section~\ref{sec:background}. In
-Section~\ref{sec:formalizing-erlang} we will present the formalization of
+Section~\ref{sec:formalizing-erlang} we present the formalization of
 the Erlang semantics in Maude and in Section~\ref{sec:generating} we discuss how the reversible semantics
-is generated. In Section~\ref{sec:ongoing-work} we discuss some
-ongoing work. In Section~\ref{sec:related} we compare with related work. Finally, in Section~\ref{sec:conclusion} we give some
-conclusions and we hint at possible future directions.
+is generated. In Section~\ref{sec:ongoing-work} we give some hints on the correctness of the reversible semantics. In Section~\ref{sec:related} we compare with related work. Finally, in Section~\ref{sec:conclusion} we give some
+conclusion and we hint at possible future directions.
 
 All the code discussed in this report is publicly available
 at~\cite{erl-maude-repo}. 
@@ -283,7 +283,7 @@ who invoked it.
 
 Maude~\cite{maude} is a programming language that efficiently implements rewriting logic~\cite{MeseguerMS96}.
 Formally, a rewriting logic is a tuple $(\Sigma, E, R)$, where $\Sigma$
-represents a collection of typed operators, $E$ a set of equations among the operators, and $R$ is the set of
+represents a collection of typed operators, $E$ a set of equations among the operators, and $R$ a set of
 semantics rules.
 
 Using a rewriting logic is quite convenient to formalize the
@@ -354,7 +354,7 @@ Erlang reduction (\ref{samplerule}) from the Introduction:
 \end{Verbatim}
 Labels \verb|exp| (for the expression under evaluation), \verb|env| (for the environment) and \verb|me| (for the module environment, containing function definitions), and similarly for
 messages, give names to fields. Also, the first argument in each
-process is the pid (pids are integer numbers in our implementation),
+process is the pid (pids are integers in our implementation),
 the special notation highlights that it can be used as identifier for
 the tuple. Character \verb|_| means that the actual value is not shown.
 
