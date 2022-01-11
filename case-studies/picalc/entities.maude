@@ -1,12 +1,12 @@
 mod SYSTEM is
   protecting SEM_ENTITY .
 
-  sort Sys .
-  subsort Entity < Sys .
+  sort Entities .
+  subsort Entity < Entities .
 
-  op _||_ : Sys Sys -> Sys [ctor assoc comm prec 9 id: #empty-sys] .
-  op [_]_ : Qid Sys -> Sys [ctor prec 7] .
-  op #empty-sys : -> Sys [ctor] .
+  op _||_ : Entities Entities -> Entities [ctor assoc comm prec 9 id: #empty-entities] .
+  op [_]_ : Qid Entities -> Entities [ctor prec 7] .
+  op #empty-entities : -> Entities [ctor] .
   *** Scope extension
   vars P P1 P2 : Proc .
   vars x y : Qid .

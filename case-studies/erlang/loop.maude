@@ -42,7 +42,7 @@ endfm
 
 mod FORWARD-EXPLORATION is
   protecting META-LEVEL .
-	protecting SEM_SYSTEM .
+	protecting SYSTEM .
 
   op #computeFwdSteps : Sys -> Sys [frozen] .
 
@@ -60,10 +60,10 @@ mod ERLANG-LOOP is
 	protecting PARSING-SYNTAX-DOWN .
 	protecting PRINT-SYNTAX-ERROR .
 	protecting MAUDE-SYNTAX-UP .
-  protecting SEM_SYSTEM .
+  protecting SYSTEM .
   protecting FORWARD-EXPLORATION .
   protecting PRETTY_PRINT .
-  protecting SEM_TRANSITIONS .
+  protecting TRANSITIONS .
 
 	*** This system module is a simple interface to Maude's LOOP-MODE module.
 	*** We use LOOP-MODE as the input/output facility. If a command according

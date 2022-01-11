@@ -27,10 +27,10 @@
 
 ***)
 
-mod SEM_TRANSITIONS is
+mod TRANSITIONS is
 	protecting SYNTAX .
 	protecting SEM_LABEL .
-	protecting SEM_SYSTEM .
+	protecting SYSTEM .
   protecting SEM_MATCH_ENTITY .
   protecting SEM_NORMALISATION .
   protecting SEM_PROCESS .
@@ -131,5 +131,5 @@ endm
 mod THEORY is
 	protecting SYNTAX .
 	protecting SEM_EQUATIONS .
-  protecting SEM_TRANSITIONS .
+  protecting TRANSITIONS .
 endm

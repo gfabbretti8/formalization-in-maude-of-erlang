@@ -1,7 +1,7 @@
 mod SEM_COREBIB is
 	protecting NAT .
 	protecting STRING .
-	protecting SEM_SYSTEM .
+	protecting SYSTEM .
   protecting SEM_ENV .
   protecting SEM_MODENV .
   protecting SEM_LABEL .

@@ -1,7 +1,7 @@
 mod PRETTY_PRINT is
 
   protecting QID .
-  protecting SEM_SYSTEM .
+  protecting SYSTEM .
   protecting SEM_PROCESS .
 	protecting META-LEVEL .
 
