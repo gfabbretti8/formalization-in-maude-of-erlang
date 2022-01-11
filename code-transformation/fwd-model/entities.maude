@@ -1,37 +1,32 @@
-mod SEM_ENTITIES is
+mod SYSTEM is
+  protecting SEM_ENTITY .
 
-  protecting META-LEVEL .
-	protecting MAUDE-SYNTAX-UPDOWN .
-	protecting SEM_ENTITY .
-  protecting SEM_MESSAGE .
-  protecting SEM_PID .
-  protecting SEM_MODENV .
   sort Entities .
   subsort Entity < Entities .
 
-	op #empty-entities : -> Entities [ctor] .
-	op _||_ : Entities Entities -> Entities [ctor assoc comm id: #empty-entities prec 90 format(d sm! o d) ] .
+  op _||_ : Entities Entities -> Entities [ctor assoc comm prec 9 id: #empty-entities] .
+  op [_]_ : Qid Entities -> Entities [ctor prec 7] .
+  op #empty-entities : -> Entities [ctor] .
+  *** Scope extension
+  vars P P1 P2 : Proc .
+  vars x y : Qid .
 
-	*******************************
-  *** METAREPRESENTATION PART ***
-	*******************************
+  eq [x] nil = nil .
+  ceq [x] P1 || P2 = [x] (P1 || [shift x] P2)
+    if P1 =/= nil and P2 =/= nil .
+  ceq [x] [y] P = [y] [x] P if string(y) < string(x) .
+  ceq nil + P = P if P =/= nil .
 
-	op #downEntities : Term -> Entities [memo] .
+  var S : Subst .
+  vars a b : Chan .
 
-  var E : Entity .
-  var ENTS : Entities .
-  var EX : Exp .
-  var ME : ModEnv .
-	var SUB : Substitution .
-	vars T T1 T2 : Term .
-
-	eq #up(#empty-entities) = '#empty-entities.Entities .
-	ceq #up(E || ENTS) = '_||_[#up(E), #up(ENTS)]
-     if ENTS =/= #empty-entities .
-
-	eq #downEntities('#empty-entities.Entities) = #empty-entities .
-	ceq #downEntities(T) = #downEntity(T1) || #downEntities(T2)
-  if SUB := metaMatch(GRAMMAR, '_||_['E:Entity, 'ENTS:Entities], T, nil, 0)
-		/\ 'E:Entity <- T1 ; 'ENTS:Entities <- T2 := SUB .
+  eq S (tau . P) = tau . (S P) .
+  eq S (a < b > . P) = (S a) < (S b) > . (S P) .
+  eq S (a(x) . P) = (S a)(x) . ([lift x S] P) .
+  ceq S (P1 || P2) = (S P1) || (S P2) if P1 =/= nil and P2 =/= nil .
+  eq S ([x] P) = [x] ([lift x S] P) .
+  eq S (! a(x) . P) = ! (S a)(x) . ([lift x S] P) .
+  eq S nil = nil .
+  eq S (P1 + P2) = (S P1) + (S P2) .
 
 endm

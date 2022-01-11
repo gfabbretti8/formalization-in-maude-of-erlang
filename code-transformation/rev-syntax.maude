@@ -12,7 +12,7 @@ set show command off .
 set show advisories off .
 set show loop stats off .
 
-(show module CODE-MANIPULATION[SEM_ENTITIES, 'X] .)
+(show module CODE-MANIPULATION[SYSTEM, 'X] .)
 quit
 
 *** load ../erlang-model/framework.maude

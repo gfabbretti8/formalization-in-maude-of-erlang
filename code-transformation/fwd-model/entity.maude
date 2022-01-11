@@ -1,16 +1,32 @@
-
 mod SEM_ENTITY is
-  protecting MAUDE-SYNTAX-UPDOWN .
-  protecting CONFIGURATION .
+  protecting CINNI .
+
   sort Entity .
 
-  op #up : Entity -> Term [memo] .
-  op #downEntity : Term -> Entity [memo] .
+  *** Syntax definition
+  sorts Guard Input .
+  subsort Input < Guard .
+  subsort Input < Entity .
+  subsort Guard < Entity .
 
-  op #up : Attribute -> Term [memo] .
-  op #downAttribute : Term -> Attribute [memo] .
 
-  op #up : AttributeSet -> Term [memo] .
-  op #downAttributeSet : Term -> AttributeSet [memo] .
+  op tau : -> Guard [ctor] .
+  op _<_> : Chan Chan -> Guard [ctor prec 4] .
+  op _(_) : Chan Qid -> Input [ctor prec 3] .
+
+  sort Proc .
+  subsort Proc < Entity .
+  op !_._ : Input Proc -> Proc [ctor prec 6] .
+
+  sort SumProc .
+  subsort SumProc < Proc .
+
+  op nil : -> SumProc [ctor] .
+  op _._ : Guard Proc -> SumProc [ctor prec 5] .
+  op _+_ : SumProc SumProc -> SumProc [ctor assoc comm prec 8 ] .
+
+  *** Substitution rules
+  op __ : Subst Proc -> Proc [ctor prec 1] .
 
 endm
+
