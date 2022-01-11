@@ -25,13 +25,13 @@ fmod CODE-MANIPULATION is
 *** The operation #transform-mod, according to the header of the module, decides
 *** which kind of transformations must be performed on the module.
  op #transform-mod : Module Qid -> Module .
- eq #transform-mod(mod 'SEM_ENTITIES is IL sorts SS . SSDS OPDS MAS EQS RLS endm, Q)
-    = #transform-syntax-mod(mod 'SEM_ENTITIES is IL sorts SS . SSDS OPDS MAS EQS RLS endm) .
+ eq #transform-mod(mod 'SYSTEM is IL sorts SS . SSDS OPDS MAS EQS RLS endm, Q)
+    = #transform-syntax-mod(mod 'SYSTEM is IL sorts SS . SSDS OPDS MAS EQS RLS endm) .
 
- eq #transform-mod(mod 'SEM_TRANSITIONS is IL sorts SS . SSDS OPDS MAS EQS RLS endm, ''FWD.Qid)
-    = #produce-fwd-sem(mod 'SEM_TRANSITIONS is IL sorts SS . SSDS OPDS MAS EQS RLS endm) .
+ eq #transform-mod(mod 'TRANSITIONS is IL sorts SS . SSDS OPDS MAS EQS RLS endm, ''FWD.Qid)
+    = #produce-fwd-sem(mod 'TRANSITIONS is IL sorts SS . SSDS OPDS MAS EQS RLS endm) .
 
- eq #transform-mod(mod 'SEM_TRANSITIONS is IL sorts SS . SSDS OPDS MAS EQS RLS endm, ''BWD.Qid)
-    = #produce-bwd-sem(mod 'SEM_TRANSITIONS is IL sorts SS . SSDS OPDS MAS EQS RLS endm) .
+ eq #transform-mod(mod 'TRANSITIONS is IL sorts SS . SSDS OPDS MAS EQS RLS endm, ''BWD.Qid)
+    = #produce-bwd-sem(mod 'TRANSITIONS is IL sorts SS . SSDS OPDS MAS EQS RLS endm) .
 
 endfm

@@ -1,6 +1,4 @@
 
-
-
 load utilities.maude .
 load helper.maude .
 load syntax-transform.maude .

@@ -29,4 +29,3 @@ mod SEM_ENTITY is
   op __ : Subst Proc -> Proc [ctor prec 1] .
 
 endm
-

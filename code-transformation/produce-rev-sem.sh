@@ -10,26 +10,24 @@ cp ./key-modules/* ./rev-model/
 
 gsed -i '/^load entity ./a load entity-with-key .' ./rev-model/framework.maude
 
-rm rev-model/entities.maude rev-model/system.maude
-
+rm rev-model/system.maude ./rev-model/rew-rules.maude
 
 #Producing the reversible syntax
 echo "Producing the reversible syntax."
-echo $(maude -no-banner -no-advise -no-ansi-color -no-mixfix -no-tecla rev-syntax.maude) >> rev-model/entities.maude
+echo $(maude -no-banner -no-advise -no-ansi-color -no-mixfix -no-tecla rev-syntax.maude) >> rev-model/system.maude
 
 maude -no-banner -no-advise rev-syntax.maude
 
-truncate -s -5 ./rev-model/entities.maude
+truncate -s -5 ./rev-model/system.maude
 
 echo "Producing the forward reversible rules."
 #Producing the forward reversible rules
-echo "$(maude -no-banner -no-advise -no-ansi-color -no-mixfix -no-tecla transform-std-op-sem.maude )" >> rev-model/system.maude
+echo "$(maude -no-banner -no-advise -no-ansi-color -no-mixfix -no-tecla transform-std-op-sem.maude )" >> rev-model/rew-rules.maude
 
 maude -no-banner -no-advise transform-std-op-sem.maude
 
-truncate -s -5 ./rev-model/system.maude
-
+truncate -s -5 ./rev-model/rew-rules.maude
 
 echo "Producing the backward reversible rules."
 #Producing the forward reversible rules
-maude -no-banner -no-advise  -no-mixfix -no-tecla -no-wrap transform-fwd-op-sem.maude
+maude -no-banner -no-advise -no-mixfix -no-tecla -no-wrap transform-fwd-op-sem.maude

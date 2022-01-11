@@ -1,4 +1,3 @@
-
 mod SEM_ENTITY is
   protecting MAUDE-SYNTAX-UPDOWN .
   protecting CONFIGURATION .

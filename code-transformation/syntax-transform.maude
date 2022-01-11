@@ -2,7 +2,7 @@
 *** This module takes in input another maude module, which follows the standard defined in \cite{..},
 *** and transforms it in a module that preserves the semantics but also includes the concept of keys.
 *** The transformation adds the sort 'EntityWithKey' to the sorts of the module, extends the set of
-*** subsorts by extending the sort 'Entities' with 'EnitityWithKey' and then traverses the equations and
+*** subsorts by extending the sort 'Sys' with 'EnitityWithKey' and then traverses the equations and
 *** rules of the module and replaces each occurrence of the var 'Entity' and replaces it with a variable
 *** 'EntityWithKey'.
 
@@ -33,7 +33,6 @@ fmod SYNTAX-TRANSFORM is
   var VAR : Variable .
   var CONST : Constant .
 
-
 *** transform-syntax-mod acts as entry point for the transformation, takes in
 *** input a module, adds the sort 'EntityWithKey' and proceed by
 *** transforming the equations.
@@ -59,7 +58,7 @@ fmod SYNTAX-TRANSFORM is
   op #updateOperatorDeclSet : OpDeclSet -> OpDeclSet .
   eq #updateOperatorDeclSet(OPDS)
      = (op '@:_ : 'Key -> 'PlaceHolder [ctor prec(10) ] .
-        op '`[_;_`] : ('Entities 'PlaceHolder) -> 'Memory
+        op '`[_;_`] : ('Sys 'PlaceHolder) -> 'Memory
          [ctor frozen(1 2) prec(40) format('sg! 'o 'g! 'o 'g! 'o) ] .
         OPDS) .
 
@@ -69,9 +68,9 @@ fmod SYNTAX-TRANSFORM is
 
   op #updateSubsortDeclSet : SubsortDeclSet -> SubsortDeclSet .
   eq #updateSubsortDeclSet(SSDS)
-     = (subsort 'EntityWithKey < 'Entities .
-        subsort 'Memory < 'Entities .
-        subsort 'PlaceHolder < 'Entities . SSDS) .
+     = (subsort 'EntityWithKey < 'Sys .
+        subsort 'Memory < 'Sys .
+        subsort 'PlaceHolder < 'Sys . SSDS) .
 
   op #transform-eqs : EquationList -> EquationSet .
   ceq #transform-eqs(EQ, EQL)
@@ -107,7 +106,6 @@ fmod SYNTAX-TRANSFORM is
     if OPNAME == '#downEntity .
   eq #transform-op-name( OPNAME )
     = OPNAME .
-
 
 *** The transform-eqconds set of equations below parse a
 *** conjuctions of `EqConditions` updating eventual use of

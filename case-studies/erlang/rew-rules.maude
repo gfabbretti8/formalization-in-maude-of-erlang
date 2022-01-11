@@ -56,8 +56,6 @@ mod SEM_TRANSITIONS is
   var FUNNAME : FunName .
   vars DEST SENDER : Pid .
 
-
-
 	*******************************
   ******** INIT FUNCTION ********
 	*******************************
@@ -72,7 +70,6 @@ mod SEM_TRANSITIONS is
 	*******************************
   ******** SYSTEM RULES  ********
 	*******************************
-
 
   crl [sys-receive] :
       < P | exp: EXSEQ, env-stack: ENV, ASET > ||

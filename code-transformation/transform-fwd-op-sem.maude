@@ -5,19 +5,15 @@ load ./rev-model/entity-with-key.maude
 
 load ./rev-model/framework.maude
 
-
-
 load framework.maude
-
 
 load full-maude31.maude
 load code-manipulation-mod-expr.maude
-
 
 set show command off .
 set show advisories off .
 set show loop stats off .
 
-(show module CODE-MANIPULATION[SEM_TRANSITIONS, 'BWD] .)
+(show module CODE-MANIPULATION[TRANSITIONS, 'BWD] .)
 
 quit

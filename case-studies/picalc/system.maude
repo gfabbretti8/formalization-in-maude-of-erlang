@@ -1,14 +1,32 @@
-mod SEM_TRANSITIONS is
-  protecting SEM_ENTITIES .
+mod SYSTEM is
+  protecting SEM_ENTITY .
 
-  vars P1 P1' P2 : Proc .
-  vars M1 M2 : SumProc .
-  var x : Qid .
+  sort Sys .
+  subsort Entity < Sys .
+
+  op _||_ : Sys Sys -> Sys [ctor assoc comm prec 9 id: #empty-sys] .
+  op [_]_ : Qid Sys -> Sys [ctor prec 7] .
+  op #empty-sys : -> Sys [ctor] .
+  *** Scope extension
+  vars P P1 P2 : Proc .
+  vars x y : Qid .
+
+  eq [x] nil = nil .
+  ceq [x] P1 || P2 = [x] (P1 || [shift x] P2)
+    if P1 =/= nil and P2 =/= nil .
+  ceq [x] [y] P = [y] [x] P if string(y) < string(x) .
+  ceq nil + P = P if P =/= nil .
+
+  var S : Subst .
   vars a b : Chan .
 
-  *** Reduction rules without alpha equivalence
-  rl [R-COM] : a < b > . P1 + M1 || a(x) . P2 + M2 => P1 || [x := b] P2 .
-  rl [R-REP] : a < b > . P1 + M1 || ! a(x) . P2 + M2 => P1 || [x := b] P2 || ! a(x) . P2 .
-  rl [R-TAU] : tau . P1 + M1 => P1 .
+  eq S (tau . P) = tau . (S P) .
+  eq S (a < b > . P) = (S a) < (S b) > . (S P) .
+  eq S (a(x) . P) = (S a)(x) . ([lift x S] P) .
+  ceq S (P1 || P2) = (S P1) || (S P2) if P1 =/= nil and P2 =/= nil .
+  eq S ([x] P) = [x] ([lift x S] P) .
+  eq S (! a(x) . P) = ! (S a)(x) . ([lift x S] P) .
+  eq S nil = nil .
+  eq S (P1 + P2) = (S P1) + (S P2) .
 
 endm

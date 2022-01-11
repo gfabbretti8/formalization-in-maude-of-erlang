@@ -1,20 +1,17 @@
 
-
 load ./fwd-model/framework.maude
 
 load ./rev-model/entity-with-key.maude
-load ./rev-model/entities.maude
+load ./rev-model/system.maude
 
 load framework.maude
 
 load full-maude31.maude
 load code-manipulation-mod-expr.maude
 
-
 set show advisories off .
 set show loop stats off .
-set print attribute on .
+set print attribute off .
 
-
-(show module CODE-MANIPULATION[SEM_TRANSITIONS, 'FWD] .)
+(show module CODE-MANIPULATION[TRANSITIONS, 'FWD] .)
 quit

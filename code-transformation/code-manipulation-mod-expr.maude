@@ -50,7 +50,7 @@
     var  VIS : Set{ViewInfo} .
     var  QIL : QidList .
     var  VDS : VariableSet .
-    var  Q : Qid . 
+    var  Q : Qid .
   *** As for TUPLE, the equation for the \texttt{evalModExp} is reduced to the
   *** creation of a new module. A module expression POW[n]{Nat} produces a
   *** module

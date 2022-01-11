@@ -1,0 +1,24 @@
+
+	          
+
+
+mod TRANSITIONS is
+  protecting SEM_ENTITY_WITH_KEY .
+  including BOOL .
+  protecting SYSTEM .
+  rl M1:SumProc + tau . P1:Proc * key L:NatList
+    => (P1:Proc * key(0 L:NatList))||( [M1:SumProc + tau . P1:Proc * key
+    L:NatList ; @: key(0 L:NatList)]) [label R-TAU] .
+  rl M1:SumProc + a:Chan < b:Chan > . P1:Proc || M2:SumProc + ! a:Chan(x:Qid).
+    P2:Proc * key L:NatList
+    => (P1:Proc || ! a:Chan(x:Qid). P2:Proc ||[x:Qid := b:Chan]P2:Proc * key(0
+    L:NatList))||( [M1:SumProc + a:Chan < b:Chan > . P1:Proc || M2:SumProc + !
+    a:Chan(x:Qid). P2:Proc * key L:NatList ; @: key(0 L:NatList)]) [label
+    R-REP] .
+  rl M1:SumProc + a:Chan < b:Chan > . P1:Proc || M2:SumProc + a:Chan(x:Qid).
+    P2:Proc * key L:NatList
+    => (P1:Proc ||[x:Qid := b:Chan]P2:Proc * key(0 L:NatList))||( [M1:SumProc +
+    a:Chan < b:Chan > . P1:Proc || M2:SumProc + a:Chan(x:Qid). P2:Proc * key
+    L:NatList ; @: key(0 L:NatList)]) [label R-COM] .
+endm
+

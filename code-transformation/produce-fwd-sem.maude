@@ -118,7 +118,7 @@ fmod PRODUCE-FWD-SEM is
   *** #transform-rl-left-term checks the form of the term that appears in
   *** the tree of left terms of the rule, two possible scenarios exist.
   *** The first one, when declared-in is true, is when the term under
-  *** analysis is a top-level operator, declared inside the module SEM_ENTITIES.
+  *** analysis is a top-level operator, declared inside the module SEM_SYSTEM.
   *** In that case we must proceed recursively on its arguments, in fact the goal
   *** here is to tag each single entity.
   *** In the other scenario, when declared-in is false, we are dealing with an
@@ -131,14 +131,14 @@ fmod PRODUCE-FWD-SEM is
 
   op #transform-rl-left-term : Term QidList -> TermWithKeys .
   ceq #transform-rl-left-term(OPNAME[TERMS], KEYS) = (OPNAME[TERMS']) * KEYS'
-    if #declared-in(upModule('SEM_ENTITIES, false), OPNAME) /\
+    if #declared-in(upModule('SEM_SYSTEM, false), OPNAME) /\
        TERMS' * KEYS' := foldl-term(TERMS, (empty * KEYS), f) .
   ceq #transform-rl-left-term(T, KEYS)
      =  ('_*_[T,'key_[FKEY]]) * (FKEY KEYS)
     if FKEY := #freshKey(KEYS) .
 
   op #freshKey : QidList -> Qid .
-  eq #freshKey(nil) = 'N:NatList .
+  eq #freshKey(nil) = 'L:NatList .
   eq #freshKey(FKEY OTHERS) = qid( substr(string(FKEY), 0, find(string(FKEY), ":", 0)) + "'" + ":NatList") .
 
 	*********************************
@@ -156,7 +156,7 @@ fmod PRODUCE-FWD-SEM is
   op #transform-rl-right-term : Term Nat QidList -> TermIdPlKeys .
   ceq #transform-rl-right-term(OPNAME[TERMS], ID, KEYS)
     = OPNAME[TERMS'] x ID x OPNAME[PL] x KEYS
-    if #declared-in(upModule('SEM_ENTITIES, false), OPNAME) /\
+    if #declared-in(upModule('SEM_SYSTEM, false), OPNAME) /\
        TERMS' x ID' x PL x KEYS := foldl-term(TERMS, (empty x ID x empty x KEYS), h) .
 
   eq #transform-rl-right-term(T, ID, KEYS)

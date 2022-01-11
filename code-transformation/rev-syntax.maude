@@ -7,15 +7,9 @@ load framework.maude
 load full-maude31.maude
 load code-manipulation-mod-expr.maude
 
-
 set show command off .
 set show advisories off .
 set show loop stats off .
 
-(show module CODE-MANIPULATION[SEM_ENTITIES, 'X] .)
+(show module CODE-MANIPULATION[SYSTEM, 'X] .)
 quit
-
-*** load ../erlang-model/framework.maude
-*** load framework.maude
-*** (load-module('SEM_ENTITIES))
-*** (transform-mod)
