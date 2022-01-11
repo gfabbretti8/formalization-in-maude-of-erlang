@@ -54,7 +54,7 @@
 
 \title{Generation of a Reversible Semantics for Erlang in Maude (Technical Report)}
 
-\author{Giovanni Fabbretti, Ivan Lanese}
+\author{Giovanni Fabbretti, Ivan Lanese, Jean-Bernard Stefani}
 \date{}
 
 \maketitle % typeset the header of the contribution 
@@ -239,7 +239,7 @@ definitions, to give values to the formal parameters.
 
 We start by explaining the match operation. First, the expression $e_2$ on
 the right-hand side is evaluated until it becomes a ground value,
-occurrences of free variables, if any, raise an exception.
+occurrences of free variables, if any, raise an exception (however we do not support exception propagation and management in this work).
 Then, the expression on the left-hand side, $e_1$, is evaluated until
 it becomes a pattern, or a ground value in case no free variables
 occur in it. Then the
@@ -545,25 +545,35 @@ the reversible semantics. We also remark
 that the semantics produced is uncontrolled~\cite{LaneseMS12}, i.e., if multiple (forward and/or backward) steps are enabled at the same time there is no policy on which one to choose.
 
 \section{Formalizing Erlang in Maude}\label{sec:formalizing-erlang}
-The work presented here has been strongly inspired
-by~\cite{NeuhauberN07}, where the authors formalized the semantics of
-Core Erlang~\cite{Car01} to do model-checking on it. While our final semantics is quite
-different from the one they presented (the most notable differences are that we formalize
-a fragment of Erlang instead of one of Core Erlang and the use of labels) we were still able to re-use some of their
-modules and some of their ideas, like the internal representation of
-ground values, which greatly simplified the formalization task.
+In this section we present the formalization of the semantics of
+Erlang in Maude. We mostly follow the semantics defined
+in~\cite{Gonzalez-AbrilV21}. Technically, we used as starting point
+the formalization of Core Erlang~\cite{Car01} in Maude presented
+in~\cite{NeuhauberN07}, which was aimed at model checking.  While our
+formalization is quite different from the one they presented (the most
+notable differences are that we formalize a fragment of Erlang instead
+of one of Core Erlang and the use of labels), we were still able to
+re-use some of their modules and some of their ideas, like the
+internal representation of ground values, which greatly simplified the
+formalization task.
 
-Our formalization of the semantics follows the style of the one
-in~\cite{Gonzalez-AbrilV21}, with some differences which we will soon discuss. As
-in~\cite{Gonzalez-AbrilV21}, the semantics has two
-layers: one for expressions and one for systems. This division is quite convenient for the formalization in Maude, as we
-can formalize the expression level as an equational theory and then use rewriting
+As in~\cite{Gonzalez-AbrilV21}, our semantics of Erlang has two
+layers: one for expressions and one for systems. This division is
+quite convenient for the formalization in Maude, as we can formalize
+the expression level as an equational theory and then use rewriting
 rules to describe the system level.
 
-The system level comprises a rewriting rule for each concurrent feature and a
-rewriting rule $\tau$ for sequential operations. While it would have been
-possible to
-define the sequential operations as an equational theory also at the system level, we take a different approach. Indeed, using rule $\tau$ is the only way to evaluate expressions (relying on the equational theory), but it forces evaluation to stop when some base cases are reached. This is more suitable to define the behavior of a (reversible) debugger, which is our intended application. Notably, also a different semantics where expressions are fully evaluated could be made reversible using the approach we describe in the next section.
+The system level comprises a rewriting rule for each concurrent
+feature and a rewriting rule $\tau$ (actually two, for efficiency
+reasons) for sequential operations. While it would have been possible
+to define the sequential operations as an equational theory also at
+the system level, we take a different approach. Indeed, using rule
+$\tau$ is the only way to evaluate expressions (relying on the
+equational theory), but it forces evaluation to stop when some base
+cases are reached. This is more suitable to define the behavior of a
+(reversible) debugger, which is our intended application. Notably,
+also a different semantics where expressions are fully evaluated could
+be made reversible using the approach we describe in the next section.
 
 Before presenting the rewriting logic, let us
 discuss the entities that compose an Erlang system.
@@ -606,7 +616,7 @@ As we can see from above, to evaluate an expression we also need two additional 
 an environment $\theta$ and a label $l$. The environment binds each variable to its
 value, if any. The label plays two roles:
 i) it communicates the kind of side effect performed by the expression, if any; ii) it communicates information of the details of the side effect back and
-forth between the expression level and the system level. Examples of this mechanism are introduced below.
+forth between the expression level and the system level. Examples of this mechanism are presented below.
 
 Two kinds of equations are used: conditional ones, featuring an
 $\ms{if}$ clause, and unconditional ones. Unconditional equations
@@ -626,7 +636,8 @@ It reads roughly as follows: if the system level asks to check whether a \verb+s
 Conditional equations can: either define a single step, that requires
 some side condition (e.g., binding a variable to its value), or
 perform some intermediate operation (e.g., selecting an inner
-expression to evaluate) and then use recursively other equations (with the clause \verb+t:=t'+) to
+expression to evaluate) and then use recursively other equations (with the clause $\langle
+    l'',\theta'',~e'' \rangle := \langle l',\theta',e'\rangle$) to
 reach a canonic form.
 
 \begin{figure}[t]
@@ -648,7 +659,7 @@ Figure~\ref{fig:eq-rec} describes the conditional equation for
 a message with a given payload can be received
 (\verb+req-receive(PAYLOAD)+) and the current expression is a receive
 (\verb+receive CLSEQ end+) then one tries to match the body
-\verb+CLSEQ+ of the receive against the payload using the environment \verb+ENV+. If the match succeeds (that is the result of applying \verb+#entityMatch+ matches the pattern \verb+#entityMatchSuccess(EXSEQ | ENV')+) then it returns the selected clause of the receive \verb+EXSEQ+ as well as the environment enriched with the bindings from the match
+\verb+CLSEQ+ of the receive against the payload using the environment \verb+ENV+. If the match succeeds (that is the result of applying the operator \verb+#entityMatch+ matches the pattern \verb+#entityMatchSuccess(EXSEQ | ENV')+) then it returns the selected clause of the receive \verb+EXSEQ+ as well as the environment enriched with the bindings from the match
  \verb+ENV'+. In this case the expression can reduce to \verb+EXSEQ+ and will be evaluated in the new environment. Label \verb+received+ denotes successful reception.
 \end{example}
 
@@ -679,7 +690,7 @@ some sample rewriting rules.
       < P | exp: EXSEQ, env-stack: ENV, ASET > =>
       < P | exp: EXSEQ', env-stack: ENV', ASET > ||
       < sender: P, receiver: DEST, payload: GVALUE >
-      if < DEST ! GVALUE, STORE', EXSEQ' > :=
+      if < DEST ! GVALUE, ENV', EXSEQ' > :=
          < req-gen, ENV, EXSEQ > .
 \end{verbatim}
   \caption{System rule send}
@@ -736,7 +747,7 @@ some sample rewriting rules.
 %system level are needed on the expression one to perform a send the starting
 %label is a generic one, i.e., \verb_req-gen_.
 
-\subsection{Design Choices}
+\subsection{Management of Environments}
 %% Recursive expression level rules, conditional equations?
 
 %% Avoiding production of illegal expressions
@@ -794,7 +805,7 @@ requires us to properly manage the environment
 corresponding to each block of code. So, rather than having a single
 environment inside each process, we have a stack of environments, hence what we previously denoted as $\theta$ actually has the
 shape $\theta_1:\ldots:\theta_n$. To sum up, whenever an expression $e$ that produces a sequence of expressions $e_1,\ldots,e_n$ is evaluated, we wrap
-the sequence in $\ms{begin}~e_1,\ldots,e_n~\ms{end}$ and we push on the stack
+the sequence as $\ms{begin}~e_1,\ldots,e_n~\ms{end}$ and we push on the stack
 of environments the appropriate environment to evaluate $e_1,\ldots,e_n$. 
 
 If $e$ is a function call then the
@@ -810,17 +821,20 @@ with the value $v$ and we pop one environment from the stack.
 \section{Generating the Reversible Semantics}\label{sec:generating}
 We decided to define the generation of the reversible semantics in Maude,
 for two main reasons. First, Maude is well-suited to define program transformations
-thanks to its META-LEVEL module which contains facilities to meta-represent a
+thanks to its META-LEVEL module, which contains facilities to meta-represent a
 module and to manipulate it. Second, since we defined Erlang's semantics in
 Maude, we do not need to define a parser for it as it is already loaded and can
 be easily meta-represented by taking advantage of Maude's facilities.
 
 \subsection{Format of the Non-Reversible Semantics}
-As in~\cite{LaneseM20}, the input semantics must follow a given
-format so that the approach can be applied.
-
-Let us describe such format. First, it must include a module named \verb+SEM_SYSTEM+ which defines the system level. As an example, Fig.~\ref{fig:sem-system} depicts the system module for the Erlang
-language. We omit elements that are not interesting in this context.
+As in~\cite{LaneseM20}, the input semantics must follow a given format
+so that the approach can be applied.  Let us describe such
+format. First, the formalization must include a module named
+\verb+SEM_SYSTEM+ which defines the system level. As an example,
+Fig.~\ref{fig:sem-system} depicts the system module for the Erlang
+language. We omit elements that are not interesting in this context
+(import of other modules and auxiliary functions needed to customize
+the translation between the module and its meta-representation).
 
 \begin{figure}[t]
 \begin{Verbatim}
@@ -844,7 +858,7 @@ Both inputs and outputs of all the operators inside the module \verb+SEM_SYSTEM+
 \verb+Sys+. The subsort
 relation \verb+Entity < Sys+ must be declared as well, to specify that
 entities of the lower level can be used as systems.
-To this end, the sorts produced by the lower level operators must extend the sort
+To this end, the sorts of the lower level (in Erlang, messages and processes) must be subsorts of
 \verb+Entity+.
 
 The rewriting rules of the rewriting theory that defines the
@@ -859,7 +873,7 @@ Section~\ref{sec:gener-appr-derive-rev-sem}. Roughly, we need to add
 keys and memories.
 
 Keys are a sort, and we also define the sort \verb+EntityWithKey+ composing an entity and a key using operator \verb+*+.
-The subsort relation \verb+EntityWithKey < Entities+ is added to the module, so that now all system-level
+The subsort relation \verb+EntityWithKey < Sys+ is added to the module, so that now all system-level
 operators can deal with entities with key. 
 
 To define memories, first we declare a new sort \verb+Placeholder+,
@@ -874,31 +888,14 @@ entities have been replaced by their placeholders. E.g., the memory created by t
 \end{verbatim}
 
 % A bit Technical, perhaps not needed?
-The final transformation concerning the \verb+Entities+ module updates the
-equations to translate entities between their representation and their meta-representation so to work on entities with keys.
+The final transformation concerning the system module updates the
+equations to translate entities between their representation and their
+meta-representation so to work on entities with keys.
 
 \subsection{Generating the Reversible Semantics}
-%% TODO: put in the correct place
-
-%% \begin{Verbatim}
-%% < 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0 => 
-%% < 1 | exp : 'hello', env: {}, me: _ > * key 0 0 ||
-%% < sender: 1, receiver: 2, payload: 'hello' > * key 1 0 ||
-%% [ < 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0 ; @: key 0 0 || @: key: 1 0 ]
-%% \end{Verbatim}
-
-%% \begin{Verbatim}
-%% < 1 | exp : 'hello', env: {}, me: _ > * key 0 0 ||
-%% < sender: 1, receiver: 2, payload: 'hello' > * key 1 0 ||
-%% [ < 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0 ; @: key 0 0 || @: key: 1 0 ]
-%% => 
-%% < 1 | exp: 2 ! 'hello', env: {}, me: _ > * key 0
-
-%% \end{Verbatim}
-
 The transformation to be performed over the rewriting rules is the one
 described in Section~\ref{sec:methodology}, rephrased in Maude
-notation. Thus, rules must be extended to deal with tagged entities,
+notation. Thus, rules must be extended to deal with entities with keys,
 and each time a forward step is taken the resulting entities must
 be tagged with fresh keys and the appropriate memory must be created.
 
@@ -908,21 +905,18 @@ concerns the generation of fresh keys. Indeed, we must have a
 would produce spurious causal dependencies. To solve the problem we
 resorted to the following idea. Keys are lists of integers. Each time
 we need to produce a fresh key, to tag a new entity on the right-hand
-side of a rule, we first collect all the keys on the left-hand side of
-the rule, then we concatenate them together into a new list, say $l$,
-and finally we tag each of the new entities with $l$ concatenated with
-a different number for each entity.
-
-In practice, when transforming a rule, we match each key on the
-left-hand side against a variable, and we use the variables on the
-right-hand side to generate the new keys. Furthermore, we create the
+side of a rule, we take the key \verb-L- of the first entity on the
+left-hand side of the rule, and we tag each of the new entities with
+\verb-L- concatenated with a number corresponding to the position of
+the entity on the right-hand side.
+Furthermore, we create the
 required memory.
 
 Fig.~\ref{fig:revsend} recalls rule \verb_send_ and shows the
 corresponding reversible rule. In the latter, on the left-hand side,
-the process is initially tagged with a key \verb_key(N)_, then the new
-entities on the right side are tagged with fresh keys \verb_key(0 N)_
-and \verb_key( 1N)_, built from \verb_key(N)_. Moreover, the rule also
+the process is initially tagged with a key \verb_key(L)_, then the new
+entities on the right side are tagged with fresh keys \verb_key(0 L)_
+and \verb_key(1 L)_, built from \verb_key(L)_. Moreover, the rule also
 produces a memory binding the old and the new states.
 
 \begin{figure}[t]
@@ -936,11 +930,11 @@ produces a memory binding the old and the new states.
          < req-gen, ENV, EXSEQ > .
 
 crl [label sys-send]:
-    < P | ASET, exp: EXSEQ, env-stack: ENV > * key(N)
-    => < sender: P, receiver: DEST, payload: GVALUE > * key(0 N) || 
-       < P | exp: EXSEQ', env-stack: ENV', ASET > * key(1 N) || 
-       [< P | ASET, exp: EXSEQ, env-stack: ENV > * key(N) ;
-        @: key(0 N) || @: key(1 N)]
+    < P | ASET, exp: EXSEQ, env-stack: ENV > * key(L)
+    => < sender: P, receiver: DEST, payload: GVALUE > * key(0 L) || 
+       < P | exp: EXSEQ', env-stack: ENV', ASET > * key(1 L) || 
+       [< P | ASET, exp: EXSEQ, env-stack: ENV > * key(L) ;
+        @: key(0 L) || @: key(1 L)]
      if < DEST ! GVALUE, ENV', EXSEQ' > := < req-gen, ENV, EXSEQ > .
 \end{verbatim}
   \caption{Original and forward reversible rule send}
@@ -963,11 +957,11 @@ The backward rule for send is shown in Figure~\ref{fig:revsend}.
   \centering
 \begin{verbatim}
 rl [label sys-send]:
-   < sender: P, receiver: DEST,payload: GVALUE > * key(0 N) || 
-   < P | exp: EXSEQ', env-stack: ENV', ASET > * key(1 N) || 
-   [< P | ASET, exp: EXSEQ, env-stack: ENV > * key N ;
-     @: key(0 N) || @: key(1 N)]
-   => < P | ASET, exp: EXSEQ, env-stack: ENV > * key N 
+   < sender: P, receiver: DEST,payload: GVALUE > * key(0 L) || 
+   < P | exp: EXSEQ', env-stack: ENV', ASET > * key(1 L) || 
+   [< P | ASET, exp: EXSEQ, env-stack: ENV > * key L ;
+     @: key(0 L) || @: key(1 L)]
+   => < P | ASET, exp: EXSEQ, env-stack: ENV > * key L 
 \end{verbatim}
   
   \caption{Reversible backward rule send}
