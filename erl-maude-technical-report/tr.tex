@@ -27,6 +27,7 @@
 \usepackage{float}
 \usepackage{hyperref}
 \usepackage{thm-restate}
+\usetikzlibrary{matrix}
 
 
 \renewcommand{\labelenumi}{\alph{enumi}.} % Make numbering in the enumerate environment by letter rather than number (e.g. section 6)
@@ -157,7 +158,7 @@ The rest of this report is structured as follows. We provide the reader with the
 background in Section~\ref{sec:background}. In
 Section~\ref{sec:formalizing-erlang} we present the formalization of
 the Erlang semantics in Maude and in Section~\ref{sec:generating} we discuss how the reversible semantics
-is generated. In Section~\ref{sec:ongoing-work} we give some hints on the correctness of the reversible semantics. In Section~\ref{sec:related} we compare with related work. Finally, in Section~\ref{sec:conclusion} we give some
+is generated. In Section~\ref{sec:ongoing-work} we give some hints on the correctness of the reversible semantics. Finally, in Section~\ref{sec:conclusion} we give some
 conclusion and we hint at possible future directions.
 
 All the code discussed in this report is publicly available
@@ -968,20 +969,18 @@ rl [label sys-send]:
   \label{fig:revsend}
 \end{figure}
 
-\section{Ongoing Work}\label{sec:ongoing-work}
+\section{Hint on Correctness}\label{sec:ongoing-work}
 
 The last step to conclude this work is to prove the correctness of the
 generated reversible semantics. This requires to close the gap between
 the format of the rules expected by the general method and the actual
 format of the rules provided in input. In fact, the schema of the
-general method allows for an arbitrary number of rules (potentially
-infinite) describing the internal steps of the system. Obviously, to
-efficiently describe a system we cannot produce infinite rules,
-actually quite the contrary, i.e., the less we have the better it
-is. So, in the formalization of the rules we resorted to the
-expression level semantics. In particular, we used predicates - i.e.,
-the expression level semantics - to gather under the same meta-rule
-all infinite rules that would describe the same behavior.
+general method allows for an arbitrary number of rules, potentially
+infinitely many, describing the system evolution. Obviously, to
+efficiently describe a system we cannot produce infinitely many rules.
+Thus, in the formalization of the semantics we resorted to meta-rules,
+and we used the expression level semantics so to select only a subset
+of the possible instances.
 
 Let us consider the following processes:
 \[
@@ -996,105 +995,117 @@ The three processes above are all ready to perform the same action, even though
 they have a different configuration, nonetheless thanks to the expression level
 semantics we are able to formalize their behavior in one meta-rule send.
 
-Finally, what is required is a (set of) correctness theorem(s) to prove that all
-the instances of the meta-rules used to formalize the languages are correct
-rules in the sense required from~\cite{LaneseM20} so that all the backward rules
-derived are also correctly modeling the backward semantics.
+Finally, what is required is a (set of) correctness theorem(s) to
+prove that all the instances of the meta-rules used to formalize the
+languages are correct rules in the sense required
+from~\cite{LaneseM20}. We also need to show that by generating the
+reversible semantics of the schemas, as we do here, and then
+instantiating, we obtain the same set of instances obtained by first
+instantiating the original meta-rules and then generating their
+reversible versions following~\cite{LaneseM20}. That is, we need to
+show that the diagram in Fig.~\ref{fig:square} commutes.
 
-\section{Related}\label{sec:related}
-First, in~\cite{Gonzalez-AbrilV21} the expression semantics is not directly
-defined on expressions, but on an
-operator $C[\bullet]$, which is used to select the part of the expression that has to be
-evaluated, however no definition of such operator is given.
+\begin{figure}
+  \centering
+  \begin{tikzpicture}
+    \centering \matrix (m) [matrix of math nodes,row sep=3em,column
+    sep=4em,minimum width=2em] {
+      \text{Sch} & \text{R-Sch} \\
+      \text{Ins} & \text{R-Ins} \\}; \path[-stealth] (m-1-1) edge node [left]
+    {inst} (m-2-1) edge node [below] {this paper} (m-1-2)
+    (m-2-1.east|-m-2-2) edge node [below] {\cite{LaneseM20}} node [] {} (m-2-2)
+    (m-1-2) edge node [right] {inst} (m-2-2);
+  \end{tikzpicture}
+  \caption{ Schema of the proof of correctness. }
+  \label{fig:square}
+\end{figure}
 
-In Maude, since the semantics is
-runnable, we need to define every operator. So, we opted for an approach closer
-to the one in~\cite{LaneseNPV18}, where we have rules that recursively evaluate
-the expression until a computation is executed - as already discussed, we can use
-conditional equations to first perform operations and then use others equations
-to further reduce.
+This is part of our ongoing work.
+
+%% \section{Related}\label{sec:related}
+%% First, in~\cite{Gonzalez-AbrilV21} the expression semantics is not directly
+%% defined on expressions, but on an
+%% operator $C[\bullet]$, which is used to select the part of the expression that has to be
+%% evaluated, however no definition of such operator is given.
+
+%% In Maude, since the semantics is
+%% runnable, we need to define every operator. So, we opted for an approach closer
+%% to the one in~\cite{LaneseNPV18}, where we have rules that recursively evaluate
+%% the expression until a computation is executed - as already discussed, we can use
+%% conditional equations to first perform operations and then use others equations
+%% to further reduce.
 
 
-For example, if the expression under evaluation is
-$\ms{case}~foo(42)~\ms{of}\ldots$ the context operator would put automatically
-the focus on $foo(42)$, i.e., $C[foo(42)]$. The convenience of using such
-operator is that in this way one can avoid the definition of all the rules to
-evaluate inner parts of an expression, like in the example just presented.
+%% For example, if the expression under evaluation is
+%% $\ms{case}~foo(42)~\ms{of}\ldots$ the context operator would put automatically
+%% the focus on $foo(42)$, i.e., $C[foo(42)]$. The convenience of using such
+%% operator is that in this way one can avoid the definition of all the rules to
+%% evaluate inner parts of an expression, like in the example just presented.
 
-To avoid these problems the solution adopted
-in~\cite{Gonzalez-AbrilV21} is to push the current environment together with the
-context operator, where the term under evaluation is replaced with a
-placeholder, in a stack and to start a new subcomputation - with the appropriate
-environment. Then, once the
-subcomputation is over the old contest and environment are retrieved from the
-stack and the final value of the subcomputation is replaced inside the expression
-which gave rise to it.
+%% To avoid these problems the solution adopted
+%% in~\cite{Gonzalez-AbrilV21} is to push the current environment together with the
+%% context operator, where the term under evaluation is replaced with a
+%% placeholder, in a stack and to start a new subcomputation - with the appropriate
+%% environment. Then, once the
+%% subcomputation is over the old contest and environment are retrieved from the
+%% stack and the final value of the subcomputation is replaced inside the expression
+%% which gave rise to it.
 
-Again the context operators makes the formalization of this mechanism
-much easier. Indeed in reality, to implement such approach it would be necessary to define, for each supported construct, a rule to start the subcomputation and another rule to replace the
-value once the subcomputation is over.
+%% Again the context operators makes the formalization of this mechanism
+%% much easier. Indeed in reality, to implement such approach it would be necessary to define, for each supported construct, a rule to start the subcomputation and another rule to replace the
+%% value once the subcomputation is over.
 
-To address the problem the solution proposed in~\cite{Gonzalez-AbrilV21},
-already used in~\cite{LaneseNPV18}, is to evaluate those rules that need some information
-available at the system level to a symbol $\kappa$, in other words a
-\emph{future}. Then, the duty of replacing $\kappa$ with the
-appropriate information is delegated to the system level.
+%% To address the problem the solution proposed in~\cite{Gonzalez-AbrilV21},
+%% already used in~\cite{LaneseNPV18}, is to evaluate those rules that need some information
+%% available at the system level to a symbol $\kappa$, in other words a
+%% \emph{future}. Then, the duty of replacing $\kappa$ with the
+%% appropriate information is delegated to the system level.
 
-The final difference between our semantics and the one proposed
-in~\cite{Gonzalez-AbrilV21} concerns those rules of the expression semantics
-that need to rely on some information held by the system level. This is the case
-for instance for the $\ms{self}$ primitive or the $\ms{receive}$ statement, in
-the first case the information required is the process pid, held in the process
-tuple, and in the second case the information required is the message which has
-to be received.
+%% The final difference between our semantics and the one proposed
+%% in~\cite{Gonzalez-AbrilV21} concerns those rules of the expression semantics
+%% that need to rely on some information held by the system level. This is the case
+%% for instance for the $\ms{self}$ primitive or the $\ms{receive}$ statement, in
+%% the first case the information required is the process pid, held in the process
+%% tuple, and in the second case the information required is the message which has
+%% to be received.
 
 
 
 \section{Conclusion}\label{sec:conclusion}
-To conclude the technical report let us now briefly resume the work done so far
-and quickly discuss some future items.
-
-First, we presented a new formalization of the Erlang language using Maude.
+We presented a new formalization of the Erlang language using Maude.
 Having a mechanized version of the Erlang semantics makes it much easier to
-debug it and to get convinced that the semantics correctly captures the
+debug it and to become confident that the semantics correctly captures the
 behavior of the language. Indeed, to test the semantics, in our work, one can
-load an Erlang module and actually run an arbitrary complex program (as long as
-the program uses supported primitives) and the various states traversed can be
-compared with an actual execution to make sure that the first adheres to the
-latter.
+load an Erlang module and actually run an arbitrary program (as long as
+the program uses supported primitives) and the states traversed can be
+compared against an actual execution to make sure that the two agree.
 
-Concretely formalizing a languages poses also some challenges that
-usually do not rise. For instance, it is often the case that 'theoretical
-semantics' are not directly implementable, in fact to keep them compact and
-elegant sometimes some operators are not fully defined or sometimes some
-parameters appears out of the blue. In section~\ref{sec:formalizing-erlang} we
-have discussed some examples.
+Concretely, defining an executable semantics of a language poses also
+some challenges that do not rise for arbitrary semantics. For
+instance, the semantics in~\cite{Gonzalez-AbrilV21} resorts to the
+existence of suitable contexts to identify the redex inside an
+expression, while we needed to explicitly give an inductive definition
+to find the redex.
 
-Conversely, while defining a mechanized semantics it is not possible to leave
-operators undefined or make parameters appearing out of the blue. This
-constraint forced us to get creative during the formalization process, to
-contain the number of rules, e.g., using labels to communicate information back
-and forth between the two layers of the semantics.
+We also implemented a program able to transform a non-reversible
+semantics into a reversible one, providing an implementation of the
+general method described in~\cite{LaneseM20}. Again, ensuring that the
+method can be actually executed poses some challenges.
+E.g.~\cite{LaneseM20}, just declares that
+keys are generated fresh, while we had to provide a concrete and
+distributed algorithm to generate keys ensuring their freshness.
 
-Second, we implemented a program able to transform a non-reversible semantics in to a
-reversible one, providing an implementation of the general method described
-by~\cite{LaneseM20}. One interesting detail of the implementation, where again we had to be
-creative, is the implementation of keys. In their work, due to the abstract
-setting, to generate new keys the authors resorted to the use of a predicate
-to generate fresh keys. In a concrete setting such predicate must be fully
-defined, to do so we implemented keys as list of integers so that it would be
-possible to generate new unique identifiers in a ``distributed manner''.
-
-To conclude, let us discuss a couple of possible future directions for the presented
-work. First, one could investigate ways to optimize the implementation of the
-semantics, for example the way in which environments are managed is very naive,
-the main advantage of doing so would be the ability of simulate even
-computationally expensive erlang
-programs. Second, one could expand the set of supported primitives to widen the
-set of supported programs, in doing so of course it is important to make sure
-that the causal-dependencies captured by the producer-consumer model are
-appropriate - for example the model is not well-suited to capture read
-dependencies.
+Let us now discuss possible future improvements for the presented
+work. First, one could investigate ways to optimize the implementation
+of the semantics, so to be able to simulate more computationally
+expensive Erlang computations. For instance, right now the top-level
+environment also includes the bindings from the lower levels, and this
+increase the needed memory.  Second, one could support further
+primitives to widen the set of executable programs. In doing so it is
+important to make sure that the causal-dependencies captured by the
+producer-consumer model used in~\cite{LaneseM20} are appropriate - for
+example the model is not well-suited to capture dependencies due to
+shared memory.
 
 \bibliographystyle{unsrt}
 \bibliography{references.bib}
