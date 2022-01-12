@@ -27,6 +27,8 @@
 \usepackage{float}
 \usepackage{hyperref}
 \usepackage{thm-restate}
+\usepackage{caption}
+\captionsetup[figure]{font=small,labelfont=small}
 \usetikzlibrary{matrix}
 
 
@@ -100,7 +102,7 @@ $\mu$Klaim~\cite{GiachinoLMT17}, Petri nets~\cite{PhilippouP18,MelgrattiMU20}, e
 Another stream of research, investigating reversibility as a debugging technique for concurrent systems,
 has risen after \cite{GiachinoLM14}, where Giachino et al.~proposed to
 equip a concurrent debugger with reversible primitives.
-The approach by Giachino et al.~has subsequently been applied in the context of a real programming language, namely Erlang~\cite{LaneseNPV18,Lanese0PV18,Gonzalez-AbrilV21,FabbrettiLS21}.
+The approach proposed by Giachino et al.~has subsequently been applied in the context of a real programming language, namely Erlang~\cite{LaneseNPV18,Lanese0PV18,Gonzalez-AbrilV21,FabbrettiLS21}.
 
 However, as anticipated, all the works cited so far suffer from the same limitation: reversibility has always been
 devised manually. Given a forward non-reversible semantics, the authors manually
@@ -136,7 +138,7 @@ they can be restored during backward execution.
 In~\cite{LaneseM20} the approach is only described theoretically and
 no implementation is provided. Actually, the method relies on
 reversing instances of rules such as the one above, which are infinitely many in almost any
-non trivial formalism, what makes not immediately clear that an
+non trivial formalism, which makes not immediately clear that an
 implementation could exist. Our work aims at showing that indeed the
 method can be implemented and used in practice.  The key idea here is
 that the instances of rules can be captured by a finite (and
@@ -179,7 +181,7 @@ process is an actor that can interact with other actors
 only through the exchange of messages, no memory is shared. Indeed,
 central in Erlang are the $\ms{send}$, $\ms{receive}$ and $\ms{spawn}$
 operations, to, respectively, send a message, receive a message, and
-create a new actor. Actors are identified by a pid (process identifier) and have a queue of messages which have arrived but have not yet been processed.
+create a new actor. Actors are identified by a unique pid (process identifier) and have a queue of messages which have arrived but have not yet been processed.
 An actor evaluates an expression, and has an environment to store variable bindings.
 
 The rest of this section provides the reader with a basic understanding
@@ -238,7 +240,7 @@ statements $\ms{receive}~pat_1 \rightarrow exprs_1; \ldots; pat_n
 (iv) in function
 definitions, to give values to the formal parameters. 
 
-We start by explaining the match operation. First, the expression $e_2$ on
+We start by explaining the match operation, $e_1 = e_2$. First, the expression $e_2$ on
 the right-hand side is evaluated until it becomes a ground value,
 occurrences of free variables, if any, raise an exception (however we do not support exception propagation and management in this work).
 Then, the expression on the left-hand side, $e_1$, is evaluated until
@@ -648,7 +650,7 @@ reach a canonic form.
     < req-receive(PAYLOAD), ENV : ENVSTACK, receive CLSEQ end> =
     < received, ENV' : (ENV : ENVSTACK), begin EXSEQ end>
     if #entityMatchSuccess(EXSEQ | ENV') := 
-       #entityMatch(CLSEQ ; #empty-clauselist | PAYLOAD | ENV ) .
+       #entityMatch(CLSEQ | PAYLOAD | ENV ) .
 \end{verbatim}
   \caption{Conditional equation for receive}
   \label{fig:eq-rec}
@@ -777,12 +779,12 @@ may also produce illegal terms. Consider, e.g., the
 following Erlang expression:
 
 \begin{equation}\label{eq:case}
-  \ms{case}~pow\_and\_sub(N,M)~of \ldots
+  \ms{case}~pow\_and\_sub(N,M)~\ms{of} \ldots
 \end{equation}
 
 Simply replacing the function call with its body would produce 
 \[
-  \ms{case}~Z = N*N, Z-M~of \ldots
+  \ms{case}~Z = N*N, Z-M~\ms{of} \ldots
 \]
 which is illegal and would be refused by an Erlang compiler.
 
@@ -797,7 +799,7 @@ produces the desired effect also in a real Erlang environment.
 
 In statement \ref{eq:case} the produced expression is:
 \[
-  \ms{case}~\ms{begin}~Z = N*N, Z-M~\ms{end}~of \ldots
+  \ms{case}~\ms{begin}~Z = N*N, Z-M~\ms{end}~\ms{of} \ldots
 \]
 which is a correct Erlang term, accepted by the compiler. 
 
@@ -831,7 +833,7 @@ be easily meta-represented by taking advantage of Maude's facilities.
 As in~\cite{LaneseM20}, the input semantics must follow a given format
 so that the approach can be applied.  Let us describe such
 format. First, the formalization must include a module named
-\verb+SEM_SYSTEM+ which defines the system level. As an example,
+\verb+SYSTEM+ which defines the system level. As an example,
 Fig.~\ref{fig:sem-system} depicts the system module for the Erlang
 language. We omit elements that are not interesting in this context
 (import of other modules and auxiliary functions needed to customize
@@ -839,7 +841,7 @@ the translation between the module and its meta-representation).
 
 \begin{figure}[t]
 \begin{Verbatim}
-mod SEM_SYSTEM is 
+mod SYSTEM is 
 ...
   sort Sys .
   subsort Entity < Sys .
@@ -855,7 +857,7 @@ endm
 
 The module defines the operators of the system level, as discussed in Section~\ref{sec:gener-appr-derive-rev-sem}. In the case of Erlang, we just have parallel composition \verb+||+ and the empty system.
 
-Both inputs and outputs of all the operators inside the module \verb+SEM_SYSTEM+ must be of sort
+Both inputs and outputs of all the operators inside the module \verb+SYSTEM+ must be of sort
 \verb+Sys+. The subsort
 relation \verb+Entity < Sys+ must be declared as well, to specify that
 entities of the lower level can be used as systems.
@@ -864,7 +866,7 @@ To this end, the sorts of the lower level (in Erlang, messages and processes) mu
 
 The rewriting rules of the rewriting theory that defines the
 single steps of the reduction semantics must be defined under the module
-\verb+SEM_TRANSITIONS+. We have discussed sample rules in Figures~\ref{fig:rule-send} and~\ref{fig:rule-rec}.
+\verb+TRANSITIONS+. We have discussed sample rules in Figures~\ref{fig:rule-send} and~\ref{fig:rule-rec}.
 
 \subsection{Transformation to the Syntax}
 We describe here how to transform a non-reversible syntax as
