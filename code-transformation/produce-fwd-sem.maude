@@ -2,16 +2,16 @@ fmod RICHTERMS is
 
   protecting META-LEVEL .
 
-  sort TermWithKeys .
-  op _*_ : TermList QidList -> TermWithKeys [ctor prec 81].
+  sort TermWithKey .
+  op _*_ : TermList Qid -> TermWithKey [ctor prec 81].
 
   sort TermIdPlKeys .
-  op _x_x_x_ : GTermList Nat GTermList QidList -> TermIdPlKeys [ctor prec 81] .
+  op _x_x_x_ : GTermList Nat GTermList Qid -> TermIdPlKeys [ctor prec 81] .
 
 endfm
 
-view TermWithKeys from TRIV to RICHTERMS is
-  sort Elt to TermWithKeys .
+view TermWithKey from TRIV to RICHTERMS is
+  sort Elt to TermWithKey .
 endv
 
 view TermIdPlKeys from TRIV to RICHTERMS is
@@ -26,7 +26,7 @@ fmod PRODUCE-FWD-SEM is
   protecting QID .
   protecting META-TERM .
   protecting NAT .
-  inc FOLD{TermWithKeys} .
+  inc FOLD{TermWithKey} .
   inc FOLD{TermIdPlKeys} .
 
   vars K T T' T'' T1 T2 T2' T3 : Term .
@@ -42,8 +42,7 @@ fmod PRODUCE-FWD-SEM is
   var MAS : MembAxSet .
   var EQS : EquationSet .
   var ATT : AttrSet .
-  vars OPNAME FKEY  : Qid .
-  vars KEYS KEYS' OTHERS : QidList .
+  vars OPNAME FKEY KEY KEY'   : Qid .
   var RL : Rule .
   var RLL : RuleList .
   vars RLS RLS' : RuleSet .
@@ -89,11 +88,11 @@ fmod PRODUCE-FWD-SEM is
 
   op #transform-rl : Rule -> Rule .
   eq #transform-rl(rl T1 => T2 [ATT] .)
-     = #call-right-transform( #transform-rl-left-term(T1, nil), T2, ATT) .
+     = #call-right-transform( #transform-rl-left-term(T1, 'nil), T2, ATT) .
 
   op #transform-crl : Rule -> Rule .
   eq #transform-crl(crl T1 => T2 if RLCOND [ATT] .)
-     = #call-right-transform(#transform-rl-left-term(T1, nil), T2, RLCOND, ATT) .
+     = #call-right-transform(#transform-rl-left-term(T1, 'nil), T2, RLCOND, ATT) .
 
   ****  The following equations perform a depth first visit on the subtree of
   ****  the left term of the rule. During such visit each entity is tagged with
@@ -101,15 +100,15 @@ fmod PRODUCE-FWD-SEM is
   ****  is collected and then returned. Keys must be returned so that we can put
   ****  in relations the elements of left side with the ones in the right side.
 
-  op #call-right-transform : TermWithKeys Term AttrSet -> Rule .
-  ceq #call-right-transform(T1 * KEYS, T2, ATT)
+  op #call-right-transform : TermWithKey Term AttrSet -> Rule .
+  ceq #call-right-transform(T1 * KEY, T2, ATT)
      = rl T1 => '_||_[TERMS, '`[_;_`][T1,TERMS']] [ATT] .
-     if TERMS x ID x TERMS' x KEYS := #transform-rl-right-term(T2, 0, KEYS) .
+     if TERMS x ID x TERMS' x KEY := #transform-rl-right-term(T2, 0, KEY) .
 
-  op #call-right-transform : TermWithKeys Term Condition AttrSet  -> Rule .
-  ceq #call-right-transform(T1 * KEYS, T2, RLCOND, ATT)
+  op #call-right-transform : TermWithKey Term Condition AttrSet  -> Rule .
+  ceq #call-right-transform(T1 * KEY, T2, RLCOND, ATT)
      = crl T1 => '_||_[TERMS, '`[_;_`][T1,TERMS']] if RLCOND [ATT] .
-     if TERMS x ID x TERMS' x KEYS := #transform-rl-right-term(T2, 0, KEYS) .
+     if TERMS x ID x TERMS' x KEY := #transform-rl-right-term(T2, 0, KEY) .
 
 	********************************
   *** LEFT TERM TRANSFORMATION ***
@@ -118,28 +117,28 @@ fmod PRODUCE-FWD-SEM is
   *** #transform-rl-left-term checks the form of the term that appears in
   *** the tree of left terms of the rule, two possible scenarios exist.
   *** The first one, when declared-in is true, is when the term under
-  *** analysis is a top-level operator, declared inside the module SEM_SYSTEM.
+  *** analysis is a top-level operator, declared inside the module SYSTEM.
   *** In that case we must proceed recursively on its arguments, in fact the goal
   *** here is to tag each single entity.
   *** In the other scenario, when declared-in is false, we are dealing with an
   *** Entity of the lower level of the syntax, in that case we must tag it with
   ***  a key.
 
-  op f : -> Func{Term, TermWithKeys} .
-  ceq f[T, (TERMS * KEYS)] = (TERMS, TERMS') * KEYS'
-     if TERMS' * KEYS' := #transform-rl-left-term(T, KEYS) .
+  op f : -> Func{Term, TermWithKey} .
+  ceq f[T, (TERMS * KEY)] = (TERMS, TERMS') * KEY'
+     if TERMS' * KEY' := #transform-rl-left-term(T, KEY) .
 
-  op #transform-rl-left-term : Term QidList -> TermWithKeys .
-  ceq #transform-rl-left-term(OPNAME[TERMS], KEYS) = (OPNAME[TERMS']) * KEYS'
-    if #declared-in(upModule('SEM_SYSTEM, false), OPNAME) /\
-       TERMS' * KEYS' := foldl-term(TERMS, (empty * KEYS), f) .
-  ceq #transform-rl-left-term(T, KEYS)
-     =  ('_*_[T,'key_[FKEY]]) * (FKEY KEYS)
-    if FKEY := #freshKey(KEYS) .
+  op #transform-rl-left-term : Term QidList -> TermWithKey .
+  ceq #transform-rl-left-term(OPNAME[TERMS], KEY) = (OPNAME[TERMS']) * KEY'
+    if #declared-in(upModule('SYSTEM, false), OPNAME) /\
+       TERMS' * KEY' := foldl-term(TERMS, (empty * KEY), f) .
+  ceq #transform-rl-left-term(T, KEY)
+     =  ('_*_[T,'key_[FKEY]]) * (FKEY)
+    if FKEY := #freshKey(KEY) .
 
-  op #freshKey : QidList -> Qid .
-  eq #freshKey(nil) = 'L:NatList .
-  eq #freshKey(FKEY OTHERS) = qid( substr(string(FKEY), 0, find(string(FKEY), ":", 0)) + "'" + ":NatList") .
+  op #freshKey : Qid -> Qid .
+  eq #freshKey('nil) = 'L:NatList .
+  eq #freshKey(KEY) = qid( substr(string(KEY), 0, find(string(KEY), ":", 0)) + "'" + ":NatList") .
 
 	*********************************
   *** RIGHT TERM TRANSFORMATION ***
@@ -150,24 +149,19 @@ fmod PRODUCE-FWD-SEM is
   *** generate a new id
 
   op h : -> Func{Term, TermIdPlKeys} .
-  ceq h[T, TERMS x ID x PL x KEYS] = (TERMS,TERMS') x ID' x (PL, PL1) x KEYS
-      if TERMS' x ID' x PL1 x KEYS := #transform-rl-right-term(T, ID + 1, KEYS) .
+  ceq h[T, TERMS x ID x PL x KEY] = (TERMS,TERMS') x ID' x (PL, PL1) x KEY
+      if TERMS' x ID' x PL1 x KEY := #transform-rl-right-term(T, ID + 1, KEY) .
 
-  op #transform-rl-right-term : Term Nat QidList -> TermIdPlKeys .
-  ceq #transform-rl-right-term(OPNAME[TERMS], ID, KEYS)
-    = OPNAME[TERMS'] x ID x OPNAME[PL] x KEYS
-    if #declared-in(upModule('SEM_SYSTEM, false), OPNAME) /\
-       TERMS' x ID' x PL x KEYS := foldl-term(TERMS, (empty x ID x empty x KEYS), h) .
+  op #transform-rl-right-term : Term Nat Qid -> TermIdPlKeys .
+  ceq #transform-rl-right-term(OPNAME[TERMS], ID, KEY)
+    = OPNAME[TERMS'] x ID x OPNAME[PL] x KEY
+    if #declared-in(upModule('SYSTEM, false), OPNAME) /\
+       TERMS' x ID' x PL x KEY := foldl-term(TERMS, (empty x ID x empty x KEY), h) .
 
-  eq #transform-rl-right-term(T, ID, KEYS)
-      = '_*_[T, 'key_['__[upTerm(ID), #add-commas(KEYS)]]]
+  eq #transform-rl-right-term(T, ID, KEY)
+      = '_*_[T, 'key_['__[upTerm(ID), KEY]]]
         x ID
-        x '@:_['key_['__[upTerm(ID), #add-commas(KEYS)]]]
-        x KEYS .
-
-  op #add-commas : QidList -> GTermList .
-  ceq #add-commas(FKEY OTHERS) = FKEY , #add-commas(OTHERS)
-      if OTHERS =/= nil .
-  eq #add-commas(FKEY) = FKEY [owise] .
+        x '@:_['key_['__[upTerm(ID), KEY]]]
+        x KEY .
 
 endfm

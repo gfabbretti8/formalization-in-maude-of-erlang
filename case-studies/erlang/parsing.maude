@@ -287,7 +287,7 @@ fmod PARSING-SYNTAX-DOWN is
 			including 'PARSING-SYNTAX .
       including 'SEM_ENV .
       including 'SEM_PROCESS .
-      including 'SEM_SYSTEM .
+      including 'SYSTEM .
       including 'SEM_MODENV .
 			sorts none .
 			none

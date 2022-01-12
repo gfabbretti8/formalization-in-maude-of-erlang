@@ -50,6 +50,6 @@ mod SEM_COREBIB is
   ceq [receive] :
     < req-receive(PAYLOAD), ENV : ENVSTACK, receive CLSEQ end > =
     < received, ENV' : (ENV : ENVSTACK), begin EXSEQ end >
-    if #entityMatchSuccess(EXSEQ | ENV') := #entityMatch(CLSEQ ; #empty-clauselist | PAYLOAD | ENV ) .
+    if #entityMatchSuccess(EXSEQ | ENV') := #entityMatch(CLSEQ | PAYLOAD | ENV ) .
 
 endm

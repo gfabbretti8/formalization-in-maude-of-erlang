@@ -99,7 +99,7 @@ mod SEM_NORMALISATION is
    ceq [case-succ] :
     < REQLABEL, ENV : ENVSTACK, case GVALUE of CLSEQ end > =
     < tau, ENV' : (ENV : ENVSTACK), begin EXSEQ end >
-     if #entityMatchSuccess(EXSEQ | ENV') := #entityMatch(CLSEQ ; #empty-clauselist | GVALUE | ENV ) .
+     if #entityMatchSuccess(EXSEQ | ENV') := #entityMatch(CLSEQ | GVALUE | ENV ) .
 
    eq [case-fail] :
     < REQLABEL, ENVSTACK, case GVALUE of CLSEQ end > =
