@@ -99,7 +99,7 @@ more a total order, since execution of concurrent actions may overlap.
 To tackle this problem Danos and Krivine in~\cite{DanosK04} propose a
 notion of \emph{causal-consistent reversibility}, which aims at
 establishing a way to undo actions in concurrent systems. Causal
-consistency states that an action can be undone iff all of its
+consistency states that an action can be undone iff all its
 consequences, if any, have been undone beforehand. Notably, this
 definition does not need a (temporal) total order of actions, but
 builds on a notion of causality.
@@ -136,7 +136,7 @@ us consider the following reduction.
 hello, me\rangle \paral\langle p_1, p_2,hello \rangle
 \end{equation}
 On the left we have a process $p_1$ ready to send a
-message ($p_2~\ms{!}~hello$ requires to send atom $hello$ to process $p_2$), when the reduction is executed the process is consumed to produce the message
+message ($p_2~\ms{!}~hello$ requires to send atom $hello$ to process $p_2$). When the reduction is executed the process is consumed to produce the message
 $\langle p_1, p_2,hello \rangle$ and the evolution of the process itself after the send.
 
 In order to define the reversible semantics, we need two ingredients: keys and memories.
@@ -315,7 +315,7 @@ semantics. The set of rules $R$ specifies how to rewrite a
 equations, can be conditional and conditions can be
 memberships, equations, as well as other rewriting rules.
 
-In other words the equational theory defines which terms define the same states
+In other words the equational theory specifies which terms define the same states
 of a system, only using different syntactical elements, while the rewriting rules
 define how the system can evolve and transit from one state to another.
 
