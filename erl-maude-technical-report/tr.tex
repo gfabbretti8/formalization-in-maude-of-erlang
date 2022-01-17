@@ -53,11 +53,20 @@
     \end{tikzpicture}}%
 }
 
+\newcommand{\footremember}[2]{%
+    \footnote{#2}
+    \newcounter{#1}
+    \setcounter{#1}{\value{footnote}}%
+}
+\newcommand{\footrecall}[1]{%
+    \footnotemark[\value{#1}]%
+} 
+
 \begin{document}
 
 \title{Generation of a Reversible Semantics for Erlang in Maude (Technical Report)}
 
-\author{Giovanni Fabbretti, Ivan Lanese, Jean-Bernard Stefani}
+\author{Giovanni Fabbretti\footremember{Gre}{Univ. Grenoble Alpes, INRIA, CNRS, Grenoble INP, France}, Ivan Lanese\footremember{Bol}{Focus Team, Univ. of Bologna/INRIA, Italy}, Jean-Bernard Stefani\footrecall{Gre}}
 \date{}
 
 \maketitle % typeset the header of the contribution 
