@@ -312,7 +312,7 @@ membership of the term to some kind or other equations.
 On the other hand, the rewriting rules are well-suited to define the
 concurrent (non-deterministic) part of the programming language
 semantics. The set of rules $R$ specifies how to rewrite a
-(parametrized) term $t$ to another term $t'$.  Rewriting rules, like
+(parameterized) term $t$ to another term $t'$.  Rewriting rules, like
 equations, can be conditional and conditions can be
 memberships, equations, as well as other rewriting rules.
 
@@ -439,7 +439,7 @@ The format contains rules to: i) allow entities to interact with each other (\te
 exploit a structural congruence (\textsc{Eqv}); iii) allow single entities to execute inside a context (\textsc{Scm-Opn});
 iv) execute two systems in parallel (\textsc{Par}). Notably, while (\textsc{Eqv}) and (\textsc{Par}) are rules that must belong to the semantics, (\textsc{Scm-Act}) and (\textsc{Scm-Opn}) are schemas, and the semantics may contain any number of instances of the schemas. Actually, rule (\textsc{Par}) is an instance of schema (\textsc{Scm-Opn}), highlighting that such an instance is required. As another example, reduction~(\ref{samplerule}) from the Introduction is an instance of schema (\textsc{Scm-Act}).
 Also, notice that a notion of structural congruence on systems is assumed.
-We refer to~\cite{LaneseM20} for more details on the definition of strucural congruence. This is of limited relevance here, since the only structural congruence needed for Erlang is that parallel composition forms a commutative monoid, which translates to the same property in the reversible semantics.
+We refer to~\cite{LaneseM20} for more details on the definition of structural congruence. This is of limited relevance here, since the only structural congruence needed for Erlang is that parallel composition forms a commutative monoid, which translates to the same property in the reversible semantics.
 
 \begin{figure}[t]
   {\footnotesize
@@ -651,7 +651,7 @@ some side condition (e.g., binding a variable to its value), or
 perform some intermediate operation (e.g., selecting an inner
 expression to evaluate) and then use recursively other equations (with the clause $\langle
     l'',\theta'',~e'' \rangle := \langle l',\theta',e'\rangle$) to
-reach a canonic form.
+reach a canonical form.
 
 \begin{figure}[t]
   \centering
