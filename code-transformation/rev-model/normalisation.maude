@@ -37,12 +37,12 @@ mod SEM_NORMALISATION is
     if ENV[VAR] =/= undefined .
 
     eq [match] :
-     < REQLABEL, ENVSTACK, GVALUE = GVALUE > =
-     < tau, ENVSTACK, GVALUE > .
+     < REQLABEL, ENV : ENVSTACK, GVALUE = GVALUE > =
+     < tau, ENV : ENVSTACK, GVALUE > .
 
    ceq [match] :
-     < REQLABEL, ENVSTACK, GVALUE = GVALUE' > =
-     < crashed, ENVSTACK, #crashed >
+     < REQLABEL, ENV : ENVSTACK, GVALUE = GVALUE' > =
+     < crashed, ENV : ENVSTACK, #crashed >
      if GVALUE =/= GVALUE' .
 
    ceq [match] :

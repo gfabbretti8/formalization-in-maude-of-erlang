@@ -1,0 +1,351 @@
+----------------------------------------------------------------------------------------------------
+---
+--- PRINT-SYNTAX-ERROR
+---
+--- Some functions to print out the position at which a syntax error is reported by
+--- the metaParse function. This code is taken from the Full-Mode implementation.
+---
+----------------------------------------------------------------------------------------------------
+
+fmod PRINT-SYNTAX-ERROR is
+	protecting META-LEVEL .
+	protecting INT .
+
+	var  QIL : QidList .
+	var  Q : Qid .
+	var  N : Nat .
+	vars RP RP' : ResultPair .
+	var  RP? : [ResultPair?] .
+
+	op printN : Nat QidList -> QidList .  *** first N qid's in a qidList
+	eq printN(N, nil) = nil .
+	eq printN(0, QIL) = nil .
+	eq printN(s N, Q QIL) = Q printN(N, QIL) .
+
+	op removeFront : Nat QidList -> QidList .  *** removes first N qid's
+	eq removeFront(N, nil) = nil .
+	eq removeFront(0, QIL) = QIL .
+	eq removeFront(s N, Q QIL) = removeFront(N, QIL) .
+
+	op printSyntaxError : [ResultPair?] QidList -> QidList .
+	eq printSyntaxError(noParse(N), QIL)
+		= '\r 'Parse 'error 'in '\o '\s printN(N + 1, QIL) '\r '<---*HERE* '\o .
+	eq printSyntaxError(ambiguity(RP, RP'), QIL)
+		= '\r 'Ambiguous 'parsing 'for '\o '\s QIL '\o .
+	eq printSyntaxError(RP?, QIL) = QIL [owise] .
+endfm
+
+----------------------------------------------------------------------------------------------------
+---
+--- SYNTAX-HELPER
+---
+----------------------------------------------------------------------------------------------------
+
+fmod SYNTAX-HELPER is
+	protecting RAT .
+	protecting FLOAT .
+	protecting INT .
+	protecting STRING .
+	protecting CONVERSION .
+	protecting QID .
+	protecting META-LEVEL .
+
+	*** core-erlang atoms
+	op syntaxCheckAtom1 : Term -> Bool .
+	op syntaxCheckAtom2 : Term -> Bool .
+	op syntaxCheckAtom2 : String -> Bool .
+	op getAtom : Term -> String .
+
+	*** core-erlang variable names
+	op syntaxCheckVar : Term -> Bool .
+	op getVar : Term -> String .
+
+	*** core-erlang characters
+	op syntaxCheckChar : Term -> Bool .
+	op getChar : Term -> Char .
+
+	*** core-erlang strings
+	op syntaxCheckString : Term -> Bool .
+	op getString : Term -> String .
+
+	*** core-erlang integers
+	op syntaxCheckInt : Term -> Bool .
+	op getInt : Term -> Int .
+
+	*** core-erlang floats
+	op syntaxCheckFloat : Term -> Bool .
+	op getFloat : Term -> Float .
+
+	sort CharSet .
+	subsort Char < CharSet .
+	op _,_ : CharSet CharSet -> CharSet [ctor comm assoc] .
+	op intCharSet : -> CharSet .
+	op signCharSet : -> CharSet .
+	op stringCharSet : -> CharSet .
+	op characterSet : String CharSet -> Bool .
+
+	op downQid : Qid -> Qid .
+
+	var STR : String .
+	var T : Term .
+	var QID : Qid .
+	var EndPos : Int .
+	var CHR CHR1 CHR2 : Char .
+	var Set : CharSet .
+
+	eq intCharSet = "0","1","2","3","4","5","6","7","8","9" .
+	eq signCharSet = "-", "+" .
+
+	eq characterSet("", Set) = true .
+	eq characterSet(CHR, CHR1) = if (CHR == CHR1) then true else false fi .
+	eq characterSet(CHR, (CHR1, Set)) = if (CHR == CHR1) then true else characterSet(CHR, Set) fi .
+	eq characterSet(STR, Set) =
+		if characterSet(substr(STR, 0, 1), Set) then characterSet(substr(STR, 1, length(STR) + (-1)), Set) else false fi .
+
+	ceq downQid( QID ) = qid(substr(STR, 1, length(STR)))
+		if STR := string(QID) /\ substr(STR, 0, 1) == "'" .
+
+	*** core-erlang atoms
+	ceq syntaxCheckAtom1('token[T]) = (substr(STR, 0, 1) == "'") and (substr(STR, EndPos, 1) == "'")
+		if STR := string(downQid(getName(T))) /\ EndPos := length(STR) + (-1) .
+	ceq syntaxCheckAtom2('token[T])
+      = ((ascii(CHR) >= 97) and (ascii(CHR) <= 122)) and syntaxCheckAtom2(substr(STR, 1, length(STR)))
+    if STR := string(downQid(getName(T))) /\
+       CHR := substr(STR, 0, 1) .
+  ceq syntaxCheckAtom2(STR)
+      = ((ascii(CHR) >= 97) and (ascii(CHR) <= 122)) and syntaxCheckAtom2(substr(STR, 1, length(STR)))
+    if length(STR) >= 1 /\ CHR := substr(STR, 0, 1) .
+  eq syntaxCheckAtom2("") = true .
+
+	ceq getAtom('token[T]) = substr(STR, 1, EndPos)
+	  	if STR := string(downQid(getName(T))) /\ EndPos := length(STR) + (-2) /\
+                (syntaxCheckAtom1('token[T]) or syntaxCheckAtom2('token[T])) .
+
+	*** core-erlang variable names
+	ceq syntaxCheckVar('token[T]) = ((ascii(CHR) >= 65) and (ascii(CHR) <= 90)) or (ascii(CHR) == 95)
+	  	if CHR := substr(string(downQid(getName(T))), 0, 1) .
+	ceq getVar('token[T]) = string(downQid(getName(T)))
+	  	if syntaxCheckVar('token[T]) .
+
+	*** core-erlang characters
+	ceq syntaxCheckChar('token[T]) = (substr(STR, 0, 1) == "'") and (substr(STR, 2, 1) == "'")
+	  	if STR := string(downQid(getName(T))) /\ (length(STR) == 2) .
+	ceq getChar('token[T]) = substr(STR, 1, 1)
+	  	if STR := string(downQid(getName(T))) /\ syntaxCheckAtom1('token[T]) .
+
+	*** core-erlang strings
+	ceq syntaxCheckString('token[T]) = (substr(STR, 0, 1) == "\"") and (substr(STR, EndPos, 1) == "\"")
+		if STR := string(downQid(getName(T))) /\ EndPos := length(STR) + (-1) .
+	ceq getString('token[T]) = string(downQid(getName(T)))
+		if syntaxCheckString('token[T]) .
+
+	*** core-erlang integers
+	ceq syntaxCheckInt('token[T]) = (characterSet(substr(STR, 0, 1), signCharSet) and characterSet(substr(STR, 1, length(STR) + (-1)), intCharSet))
+	                                 or (characterSet(substr(STR,0,length(STR)), intCharSet))
+		if STR := string(downQid(getName(T))) .
+	ceq getInt('token[T]) = rat(string(downQid(getName(T))),10)
+		if syntaxCheckInt('token[T]) .
+
+	*** core-erlang floats
+	*** - not implemented -
+
+	*** core-erlang token lists
+	*** - not implemented -
+endfm
+
+fmod COMMON-SYNTAX-DOWN is
+	protecting SYNTAX .
+	protecting QID .
+	protecting META-TERM .
+	protecting META-LEVEL .
+	protecting STRING .
+	protecting INT .
+	protecting CONVERSION .
+
+	op GRAMMAR : -> FModule .
+
+  op #downProgram : Term -> Program [memo] .
+  op #downAtom : Term -> Atom [memo] .
+  op #downVar : Term -> Atom [memo] .
+	op #downErlInt : Term -> ErlInt [memo] .
+
+	vars T T1 T2 T3 T4 : Term .
+  vars TERMS TERMS' : TermList .
+	var SUB : Substitution .
+  var FDEF : FunDef .
+  var FDEFSEQ : FunDefSeq .
+  var EX : Exp .
+  var EXSEQ : ExpSeq .
+
+  eq #downProgram(T) = #downFunDefSeq(T) .
+
+  *** LIST
+
+  op #downList : Term -> List [memo] .
+  eq #downList('`[`].Nil) = [] .
+  eq #downList('`[_`][T1]) = [#downPattern(T1)] .
+  eq #downList('`[_|_`][T1,T2]) = [ #downPattern(T1) | #downPattern(T2)] .
+
+  *** EXPSEQ
+  op #downExpSeq : Term -> ExpSeq .
+  op #downExpSeq : TermList -> ExpSeq .
+  eq #downExpSeq('_`,_[TERMS]) = #downExpSeq(TERMS) .
+  ceq #downExpSeq((T1, TERMS')) = #downExp(T1), #downExpSeq(TERMS')
+     if TERMS' =/= empty .
+  eq #downExpSeq('nil.ExpSeq) = nil .
+  eq #downExpSeq(T1) = #downExp(T1) .
+
+  *** EXP
+  op #downExp : Term -> Exp [memo] .
+  eq #downExp('#crashed.Exp) = #crashed .
+  eq #downExp('#bottom.Exp) = #bottom .
+  eq #downExp('begin_end[T1]) = begin #downExpSeq(T1) end .
+  eq #downExp('`[`].Nil) = #downList('`[`].Nil) .
+	eq #downExp('`[_`][T1]) = #downList('`[_`][T1]) .
+	eq #downExp('`[_|_`][T1,T2]) = #downList('`[_|_`][T1,T2]) .
+  eq #downExp('_*_[T1,T2]) = #downMult('_*_[T1,T2]) .
+  eq #downExp('_-_[T1,T2]) = #downMinus('_-_[T1,T2]) .
+  eq #downExp('case_of_end[T1,T2]) = #downCase('case_of_end[T1,T2]) .
+  eq #downExp('_=_[T1, T2]) = #downMatch('_=_[T1, T2]).
+  eq #downExp('_`(`)[T]) = #downFunCall('_`(`)[T]) .
+  eq #downExp('_`(_`)[T1,T2]) = #downFunCall('_`(_`)[T1,T2]) .
+  eq #downExp('_:_`(_`)[T1,T2,T3]) = #downFunCall('_:_`(_`)[T1,T2,T3]) .
+  eq #downExp('_!_[T1,T2]) =  #downSend('_!_[T1,T2]) .
+  eq #downExp('receive_end[T]) = #downReceive('receive_end[T]) .
+
+
+  *** PATTERN
+  op #downPattern : Term -> Pattern [memo] .
+  eq #downPattern('`[_|_`][T1, T2]) = #downList('`[_|_`][T1, T2]) .
+  eq #downPattern(T) = #downExp(T) .
+
+  *** MATCH
+  op #downMatch : Term -> Match .
+  eq #downMatch('_=_[T1, T2]) = (#downPattern(T1) = #downExp(T2)) .
+
+  *** CASE
+  op #downCase : Term -> Case [memo] .
+  eq #downCase('case_of_end[T1,T2]) = case #downExp(T1) of #downClauseSeq(T2) end .
+
+  *** MULT
+  op #downMult : Term -> Mult [memo] .
+  eq #downMult('_*_[T1,T2]) = #downExp(T1) * #downExp(T2) .
+
+  *** MINUS
+  op #downMinus : Term -> Minus [memo] .
+  eq #downMinus('_-_[T1,T2]) = #downExp(T1) - #downExp(T2) .
+
+  *** CLAUSE
+  op #downClause : Term -> Clause [memo] .
+  eq #downClause('_->_[T1,T2]) = #downExp(T1) -> #downExpSeq(T2) .
+
+  *** CLAUSESEQ
+  op #downClauseSeq : Term -> ClauseSeq [memo] .
+  ceq #downClauseSeq(T1) = #downClause(T2) ; #downClauseSeq(T3)
+     if SUB := metaMatch(GRAMMAR, '_;_['CL:Clause, 'CLSEQ:ClauseSeq], T1, nil, 0)
+     /\ 'CL:Clause <- T2 ; 'CLSEQ:ClauseSeq <- T3 := SUB .
+  eq #downClauseSeq(T1) = #downClause(T1) [owise] .
+
+  *** FUN
+  op #downFunDef : Term -> FunDef [memo] .
+  eq #downFunDef('fun_`(`)->_.[T1,T2]) = fun #downExp(T1)()-> #downExpSeq(T2) . .
+  eq #downFunDef('fun_`(_`)->_.[T1,T2,T3]) = fun #downExp(T1)(#downExpSeq(T2))-> #downExpSeq(T3) . .
+
+  *** FUNDEFSEQ
+  op #downFunDefSeq : Term -> FunDefSeq [memo] .
+  eq #downFunDefSeq('__[T1, T2]) = #downFunDef(T1) #downFunDefSeq(T2) .
+  eq #downFunDefSeq(T) = #downFunDef(T) [owise] .
+
+  *** FUNCALL
+  op #downFunCall : Term -> FunCall [memo] .
+  eq #downFunCall('_`(`)[T]) = #downExp(T)() .
+  eq #downFunCall('_`(_`)[T1, T2]) = _`(_`)(#downExp(T1),#downExp(T2)) .
+  eq #downFunCall('_:_`(_`)[T1,T2,T3]) = #downExp(T1) : #downExp(T2) (#downExpSeq(T3)) .
+
+  *** SEND
+  op #downSend : Term -> Send [memo] .
+  eq #downSend('_!_[T1,T2]) = #downExp(T1) ! #downExp(T2) .
+
+  *** RECEIVE
+  op #downReceive : Term -> Receive [memo] .
+  eq #downReceive('receive_end[T]) = receive #downClauseSeq(T) end .
+
+endfm
+
+fmod PARSING-SYNTAX-DOWN is
+  protecting META-UP-DOWN .
+  protecting SYNTAX-HELPER .
+	including COMMON-SYNTAX-DOWN .
+
+	op #downErlString : Term -> Exp [memo]  .
+	op #downErlChar : Term -> ErlInt [memo] .
+
+	eq GRAMMAR =
+		(mod 'GRAMMAR is
+			including 'QID-LIST .
+			including 'COMMAND-GRAMMAR .
+			including 'PARSING-SYNTAX .
+      including 'SEM_ENV .
+      including 'SEM_PROCESS .
+      including 'SYSTEM .
+      including 'SEM_MODENV .
+			sorts none .
+			none
+			op 'token : 'Qid -> 'Token
+				[ctor special(
+					(id-hook('Bubble, '1 '1)
+					 op-hook('qidSymbol, '<Qids>, nil, 'Qid)
+					 id-hook('Exclude, 'case 'of 'end '; '-> '`[ '`| '`] '< '> '`(`) '`. '`( '`) '`= '`- '`* )))
+				format ('b 'o)] .
+			none
+			none
+			none
+		endm) .
+
+	var T : Term .
+
+  eq #downAtom('token[T]) = atom(substr(string(getName(T)), 1, length(string(getName(T))) + (-1))) .
+	eq #downVar('token[T]) = var(substr(string(getName(T)), 1, length(string(getName(T))))) .
+	eq #downErlInt('token[T]) = int(rat(substr(string(getName(T)), 1, length(string(getName(T)))), 10)) .
+
+	ceq #downExp('token[T]) = #downErlInt('token[T])
+		if syntaxCheckInt('token[T]) .
+	ceq #downExp('token[T]) = #downAtom('token[T])
+    if syntaxCheckAtom1('token[T]) or syntaxCheckAtom2('token[T]) .
+	ceq #downExp('token[T]) = #downVar('token[T])
+		if syntaxCheckVar('token[T]) .
+
+endfm
+
+fmod MAUDE-SYNTAX-DOWN is
+	protecting META-UP-DOWN .
+	including COMMON-SYNTAX-DOWN .
+
+	eq GRAMMAR =
+		(mod 'GRAMMAR is
+			including 'QID-LIST .
+			including 'SYNTAX .
+			sorts none .
+			none
+			none
+			none
+			none
+			none
+		endm) .
+
+	var T : Term .
+
+	eq #downAtom('atom[T]) = atom(#downString(T)) .
+	eq #downVar('var[T]) = var(#downString(T)) .
+	eq #downErlInt('int[T]) = int(#downInt(T)) .
+
+	eq #downExp('atom[T]) = atom(#downString(T)) .
+	eq #downExp('var[T]) = var(#downString(T)) .
+	eq #downExp('int[T]) = int(#downInt(T)) .
+endfm
+
+
+fmod MAUDE-SYNTAX-UPDOWN is
+	protecting MAUDE-SYNTAX-UP .
+	protecting MAUDE-SYNTAX-DOWN .
+endfm

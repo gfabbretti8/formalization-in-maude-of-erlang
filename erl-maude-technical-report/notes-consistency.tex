@@ -14,6 +14,7 @@
 \usepackage{underscore}           % Only needed if you use pdflatex.
 \usepackage{microtype}%if unwanted, comment out or use option "draft"
 \usepackage{amssymb}
+\usepackage{cleveref}
 \setcounter{tocdepth}{3}
 \usepackage{graphicx}
 \usepackage{listings}
@@ -54,13 +55,13 @@
   \begin{tikzpicture}
     \centering \matrix (m) [matrix of math nodes,row sep=3em,column
     sep=4em,minimum width=2em] {
-      \text{S} & \text{R-S} \\
-      \text{I} & \text{R-I} \\}; \path[-stealth] (m-1-1) edge node [left]
-    {$inst(S)$} (m-2-1) edge node [below] {$\mathcal{B}_t$} (m-1-2)
+      \text{Sch} & \text{R-Sch} \\
+      \text{Ins} & \text{R-Ins} \\}; \path[-stealth] (m-1-1) edge node [left]
+    {inst} (m-2-1) edge node [below] {this paper} (m-1-2)
     (m-2-1.east|-m-2-2) edge node [below] {\cite{LaneseM20}} node [] {} (m-2-2)
-    (m-1-2) edge node [right] {$inst(R-S)$} (m-2-2);
+    (m-1-2) edge node [right] {inst} (m-2-2);
   \end{tikzpicture}
-  \caption{ Relation occurring between schemas and instances. }
+  \caption{ Schema of the proof of correctness. }
   \label{fig:square}
 \end{figure}
 
@@ -157,6 +158,29 @@ be tagged with a unique concrete key, if in the schema two (or more) entities
 would be tagged with the same meta-key then it would be impossible to
 instantiate them to different values.
 
+In order to simplify the proof of the correctness of the transformation instead
+of the function $tag$ we will use relation $\rightsquigarrow_k$ to abstract the
+transformation of terms. Relation $\rightsquigarrow_k$ is the least relation that
+satisfies the following rules.
+
+\[
+  \begin{array}{ll}
+    \displaystyle
+    \frac{\ms{lw}(e)~~k\text{ is fresh}}
+    { e \rightsquigarrow_k e * k }
+    &
+      \displaystyle
+      \frac{t_1 \rightsquigarrow_k t'_1~\ldots~t_n\rightsquigarrow_k t'_n}
+      { op[t_1,\ldots,t_n] \rightsquigarrow_k op[t'_1,\ldots,t'_n] }
+  \end{array}
+\]
+
+Relation $\rightsquigarrow_k$ faithfully describes the behavior of both $tag\_right$
+and $tag\_left$ as the rule on the left corresponds to the base case, where a
+fresh key is attached to an entity of the lower level and the rule on the right
+corresponds to the recursive call on the terms used by operator $op$. The
+predicate $\ms{lw}$ makes sure that $e$ belongs to the lower level of the semantics.
+
 Once a non-reversible schema has been tagged we need to produce the memory, for
 that we rely on the function $mem$, that given a rule returns the rule together
 with the appropriate memory.
@@ -181,100 +205,201 @@ with the appropriate memory.
   \end{array}
 \]
 
-The predicate $ukeys$ checks if a reversible schema is correct in the sense of
-each entity being tagged with a unique meta-key.
-\[
-  \begin{array}{l}
-    \begin{array}{l}
-      ukeys(t\rightarrow t') ::=\\
-      \hspace{2ex} \ms{let}(b,keys)=ukeys(t, \{\})~\ms{in}\\
-      \hspace{2ex} \ms{let}(b',\_)=ukeys(t', keys)~\ms{in}\\
-      \hspace{2ex} b \wedge b'
-    \end{array}\\[6ex]
+To abstract function $ctx$ we rely on the least relation that satisfies
+$\rightsquigarrow_h$.
 
-    \begin{array}{l}
-      ukeys(t, keys) ::=\\
-      \hspace{2ex}\ms{match}~t~\ms{with}\\
-      \hspace{4ex}| e*k \rightarrow (not(k\in keys), \{k\}\cup keys)\\
-      \hspace{4ex}| op(tlist) \rightarrow \\
-      \hspace{6ex} \ms{let}~f=\ms{fun}(x,( b, keys'))\rightarrow~\ms{let}(b',
-      keys'') = ukeys(x,keys')~\ms{in}\\
-      \hspace{8ex} (b\wedge b', keys')~\ms{end}~\ms{in}\\
-      \hspace{6ex} \ms{foldl}~tlist~(true, keys)~f
-    \end{array}
+\[
+  \begin{array}{ll}
+    \displaystyle
+    \frac{}
+    { e * k \rightsquigarrow_h \bullet * k }
+    &
+      \displaystyle
+      \frac{t_1 \rightsquigarrow_h t'_1~\ldots~t_n\rightsquigarrow_h t'_n}
+      { op[t_1,\ldots,t_n] \rightsquigarrow_h op[t'_1,\ldots,t'_n] }
   \end{array}
 \]
 
-Finally, $eqtctx$ compares a term $t$ and a context $C$ and returns true when $C$ is the
-right context for $t$, i.e., when all the entities in $t$ have been replaced by a
-hole $\bullet$ in $C$.
+Now we can define the transformation of a non-reversible rule $t\rightarrow t'$
+to (one of) its reversible counterparts $t_r \rightsquigarrow t'_r|\mu$ in terms of
+$\rightsquigarrow$.
+
 \[
-  \begin{array}{l}      
-    eqtctx(t,C) ::=\\
-    \hspace{2ex}\ms{match}~t,C~\ms{with}\\
-    \hspace{4ex}| e*k, \bullet *k \rightarrow true\\
-    \hspace{4ex}| op(tlsist), op(tlist') \rightarrow \\
-    \hspace{6ex}\ms{let}~f=\ms{fun}(b,(t_1,t_2))\rightarrow b \wedge eqtctx(t_1,t_2)~\ms{end}~\ms{in}\\
-    \hspace{6ex}\ms{foldl}~\ms{zip}(tlist,tlist')~true~f\\
-    \hspace{4ex}| \_, \_ \rightarrow false
-  \end{array}
+  \frac{t\rightsquigarrow_k t_r~~~~t'\rightsquigarrow_k t'_r~~~~t'_r\rightsquigarrow_h ctx}{
+    t\rightarrow t'~\ms{if}~C \rightsquigarrow t_r \rightarrow t'_r|[ctx; t_r]~\ms{if}~C 
+  }
 \]
 
-Now, to prove the correctness of the transformation of a non-reversible schema
-to a reversible one we need to prove that the $tag$ function correctly tags each
-entity with a unique meta-key and that the function $mem$ correctly produces the memory.
+Now, for the transformation to be correct two ingredients are needed: i) that
+each entity is tagged with a unique meta-key and ii) that the context produced
+is correct in the sense that each entity of the right-hand side reversible term
+has been replaced by a hole.
 
-We begin by proving that the $tag$ function attach unique meta-keys to
-each entity.
-\begin{lemma}
-  \[
-    \forall t \rightarrow t'.~ ukeys(tag(t\rightarrow t'))
-  \]
+\begin{lemma}[Unicity of keys]\label{lemma:keys}
+  Relation $\rightsquigarrow_k$ tags each entity of a term $t$ with a unique key.
 \end{lemma}
 \begin{proof}
-  We proceed by induction on $t$.\\
-  \begin{case}[$t=e,t'=e'$]
-    easy.
-  \end{case}
-  \begin{case}[$t=e,t'=op(tlist)$]
-    It is easy to see that $t$ will be tagged with a unique meta-key. About $t'$
-    the $tag$ function will call itself recursively on each element, each time
-    that an entity will be encountered the list of meta-keys used to tag the
-    left-hand side will be used to tag the entity and a counter will be attached
-    to it, making sure that the key is fresh. 
-  \end{case}
-  \begin{case}[$t=op(tlist), t'=e$]
-    Here function tag will call itself recursively on each element of
-    $tlist$, each time that an entity will be encountered the function
-    will take the last meta-key used, add an $'$ to it and use it to tag the
-    entity. So each entity is tagged with a fresh key. Finally $t'$ is tagged
-    using the list of all the meta-keys used so far concatenated with a fresh counter.
-  \end{case}
-  \begin{case}[$t=op(tlist), t'=op'(tlist')$]
-    Same reasoning as case 3 for $t$ and same reasoning as case 2 for $t'$. 
-  \end{case}
+  We proceed by induction on the structure of $t$.\\
+  Case $t = e$.\\
+  The case of single entity is easy as the entity is left
+  untouched and tagged with a fresh key.\\
+  Case $t = op[t_1,\ldots,t_n]$.\\
+  By inductive hypothesis we know that entities inside each $t'_i$ have been already tagged with
+  fresh keys, where $t_i\rightsquigarrow_k t'_i$ for $1 \leq i \leq n$, so we can
+  conclude that $op[t'_1,\ldots,t'_n]$ is tagged with unique keys.
 \end{proof}
 
-Finally, we need to prove that $mem$ produces the right memory for a generic
-right-hand side of a rule.
-
-\begin{lemma}
-  $
-  \forall t.~eqctx(t, ctx(t))
-  $
+\begin{lemma}[Correctness of Context]\label{lemma:ctx}
+  Relation $\rightsquigarrow_h$, given a term $t$, produces the correct context,
+  that is the same system where all the entities have been replaced by a hole $\bullet$.
 \end{lemma}
 \begin{proof}
-  We proceed by induction on $t$.
-  \begin{case}[$t=e$]
-    easy.
-  \end{case}
-  \begin{case}[$t=op(tlist)$]
-    We proceed by induction on $tlist$. The base-case single element is taken
-    care by the inductive hypothesis on $t$, while the inductive case is taken
-    care by the inductive hypothesis on $tlist$ and on $t$.
-  \end{case}
+  We proceed by induction on the structure of $t$.\\
+  Case $t = e$.\\
+  The case of single entity is easy as the entity is replaced with a hole and
+  the key left untouched.\\
+  Case $t = op[t_1,\ldots,t_n]$.\\
+  By inductive hypothesis we know that each $t'_i$ has been already transformed
+  and entities have been replaced by holes, where $t_i\rightsquigarrow_k t'_i$ for $1 \leq i \leq n$, so we can
+  conclude that $op[t'_1,\ldots,t'_n]$ is the correct context.
 \end{proof}
 
-By Lemma 1,2 we can conclude that the transformation is correct.
+By \cref{lemma:keys,lemma:ctx} we can conclude that $\rightsquigarrow$ is
+a correct transformation. 
+
+\section{From Schemas to Ground Rules}
+
+The last part to show is that our schemas can be instantiated to the format
+expected by the general approach. To achieve so we rely on an instantiation
+relation that replaces the variables present in the schemas with concrete values.
+
+Before showing the instantiation we recall that in Maude a rule has the generic
+following shape:
+\[t \rightarrow t'~\ms{if}~C\]
+and that the variables used in the rule are not exclusively only the variables
+introduced in $t$ but that new variables can be introduced in $C$ as well.
+
+We define the instantiation of a schema to a ground rule in terms of the least
+relation that satisfies the set of rules depicted in Fig.~\ref{fig:inst}.
+
+\begin{figure}
+  \centering
+  $
+  \begin{array}{c}
+  \begin{array}{ll}
+      \displaystyle
+      \frac{replace(r,v,c_v),\mathcal{I}\rightarrow_I r'}
+      {r, \{(v,c_v)\}\cup\mathcal{I} \rightarrow_I r'}
+    &
+      \displaystyle
+      \frac{var(lhs(r))=\emptyset}
+      {r,\emptyset \rightarrow_I r}
+  \end{array}\\[5ex]
+
+  \begin{array}{c}
+    \displaystyle
+    \frac{r,\mathcal{I}\rightarrow_I r'~~~E\vdash r'=t\rightarrow t'~\ms{if}~C}
+    {r, \mathcal{I},E \rightsquigarrow t\rightarrow t'}
+  \end{array}
+  \end{array}
+  $
+  \caption{Instantiation relation}
+  \label{fig:inst}
+\end{figure}
+
+Relation $\rightarrow_I$ is the relation that replaces variable inside a rule,
+when all the variables have been replaced the bottom case is reached. Relation
+$\rightarrow$ relies on relation $\rightarrow_I$ to get a version of rule $r$
+where all the vars of the rule have been substituted with concrete values,
+except for the ones declared in the conditional branch.
+
+The set $\mathcal{I}$ is assumed to be built as follow:
+\[\mathcal{I}=\{(v,c_v)|v\in var(lhs(r)), sort(c_v)= sort(v)\}\]
+
+Here, $var$ returns the set of variables used inside a term, $lhs$ returns
+the left-hand side term of a rule and $sort$ the sort of the variable fed as
+input.
+We also assume that each rule is equipped with a conditional branch, where in
+the case of unconditional rules it is the clause $true=true$.
+
+Finally, when all the
+variables have been replaced pervasively in the
+whole rule the rule is brought to a canonical form, by relying on the
+equations of the rewriting logic ($E\vdash r = t\rightarrow t'~\ms{if}~C$).
+
+Let us make this more concrete with an example.
+\begin{example}
+  Let us consider the meta-rule \verb+tau+ and the equation about matching.
+\begin{Verbatim}
+  crl [sys-tau] :
+      < P | exp: EXSEQ, env-stack: ENV, ASET >  =>
+      < P | exp: EXSEQ', env-stack: ENV', ASET >
+      if < tau, ENV', EXSEQ' > :=
+         < req-gen, ENV, EXSEQ > .
+
+  eq [match] :
+   < REQLABEL, ENVSTACK, GVALUE = GVALUE > =
+   < tau, ENVSTACK, GVALUE > .
+
+\end{Verbatim}
+
+  Then let us consider the following $\mathcal{I}$:
+  \[\{(\verb+EXSEQ+,\verb+true = true+),(\verb+P+,\verb+2+), (\verb+ENV+, \verb+{}+)\}\]
+\end{example}
+
+For the sake of simplicity we will ignore the components of a process inside
+\verb+ASET+ as they are not relevant for this example (\verb+ASET+ currently
+only contains the definitions of the functions that the process is allowed to
+invoke).
+
+Now, after substituting the variables with their current values we obtain a rule
+with the following shape.
+
+\begin{Verbatim}
+  crl [sys-tau] :
+      < 2 | exp: true = true, env-stack: {}, _ >  =>
+      < 2 | exp: EXSEQ', env-stack: ENV', _ >
+      if < tau, ENV', EXSEQ' > :=
+         < req-gen, {}, true = true > .
+\end{Verbatim}
+
+Then, the only equation that can be applied is equation \verb+match+ depicted
+above and after its application the rule will have the following shape.
+
+\begin{Verbatim}
+  crl [sys-tau] :
+      < 2 | exp: true = true, env-stack: {}, _ >  =>
+      < 2 | exp: true, env-stack: {}, _ >
+      if < tau, {}, true > :=
+         < req-gen, {}, true = true > .
+\end{Verbatim}
+
+Finally, since we have instantiated all the variables with ground values and
+verified the conditional branch with the equational theory we can drop it and
+obtain a concrete rule that fits the format required by the general approach.
+
+\begin{Verbatim}
+      < 2 | exp: true = true, env-stack: {}, _ >  =>
+      < 2 | exp: true, env-stack: {}, _ >
+\end{Verbatim}
+
+\subsection{Remark About Keys}
+
+This subsection contains a remark about the handling of keys in schemas and in
+the ground rules. In the general methods keys are picked up fresh to tag each
+ground entity and there are no other constraints on the choice of keys. In our
+approach, since we need an operational way to apply the rules, we need to
+specify concretely in which way we pick up the meta-keys. The method adopted
+consists of using a set of meta-keys while tagging the left-hand side of a rule
+and concatenating the first meta-key used on the left-hand side with a fresh
+counter for the entities on the right.
+
+The technique used to tag the right-hand side of the rule, since it concatenates
+a ground value with a meta-key, prevents us to instantiate the meta-keys on the
+left to arbitrary values as their prefix has been already chosen. In other
+words, the set of ground rules is a subset of the entirety of the rules accepted
+by the general method. Nonetheless, this is not a limit as all the possible
+transitions of a system can still be expressed only there is an order on the way
+keys are picked. So, up to keys permutation the derived semantics is ``complete''.
 
 \end{document}
