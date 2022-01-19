@@ -312,7 +312,7 @@ membership of the term to some kind or other equations.
 On the other hand, the rewriting rules are well-suited to define the
 concurrent (non-deterministic) part of the programming language
 semantics. The set of rules $R$ specifies how to rewrite a
-(parametrized) term $t$ to another term $t'$.  Rewriting rules, like
+(parameterized) term $t$ to another term $t'$.  Rewriting rules, like
 equations, can be conditional and conditions can be
 memberships, equations, as well as other rewriting rules.
 
@@ -439,7 +439,7 @@ The format contains rules to: i) allow entities to interact with each other (\te
 exploit a structural congruence (\textsc{Eqv}); iii) allow single entities to execute inside a context (\textsc{Scm-Opn});
 iv) execute two systems in parallel (\textsc{Par}). Notably, while (\textsc{Eqv}) and (\textsc{Par}) are rules that must belong to the semantics, (\textsc{Scm-Act}) and (\textsc{Scm-Opn}) are schemas, and the semantics may contain any number of instances of the schemas. Actually, rule (\textsc{Par}) is an instance of schema (\textsc{Scm-Opn}), highlighting that such an instance is required. As another example, reduction~(\ref{samplerule}) from the Introduction is an instance of schema (\textsc{Scm-Act}).
 Also, notice that a notion of structural congruence on systems is assumed.
-We refer to~\cite{LaneseM20} for more details on the definition of strucural congruence. This is of limited relevance here, since the only structural congruence needed for Erlang is that parallel composition forms a commutative monoid, which translates to the same property in the reversible semantics.
+We refer to~\cite{LaneseM20} for more details on the definition of structural congruence. This is of limited relevance here, since the only structural congruence needed for Erlang is that parallel composition forms a commutative monoid, which translates to the same property in the reversible semantics.
 
 \begin{figure}[t]
   {\footnotesize
@@ -651,7 +651,7 @@ some side condition (e.g., binding a variable to its value), or
 perform some intermediate operation (e.g., selecting an inner
 expression to evaluate) and then use recursively other equations (with the clause $\langle
     l'',\theta'',~e'' \rangle := \langle l',\theta',e'\rangle$) to
-reach a canonic form.
+reach a canonical form.
 
 \begin{figure}[t]
   \centering
@@ -682,7 +682,7 @@ Let us now focus on rewriting rules, which have the following general shape:
 \[
   \begin{array}{l}
     \ms{crl}:~[rule-name]\\
-    ~~~~\langle p, \theta, e, me \rangle \paral E => \langle p,\theta', e', me \rangle \paral op(l', E)\\
+    ~~~~\langle p, \theta, e, me \rangle \paral E => \langle p,\theta', e', me \rangle \paral op(l', \langle p, \theta, e, me \rangle, E)\\
     ~~~~\ms{if}~\langle l', \theta', e'\rangle := \langle l,\theta,e\rangle
   \end{array}
 \]
@@ -693,7 +693,7 @@ may be received.  Rewriting rules are always conditional, as we always
 rely on the expression semantics to understand which action the
 selected process is ready to perform. Finally, we use $op$ to apply
 side effects to $E$, determined by the label $l'$ produced by the
-expression level. Examples \ref{ex:send} and~\ref{ex:rec} below show
+expression level and by the information on the process. Examples \ref{ex:send} and~\ref{ex:rec} below show
 some sample rewriting rules.
 
 \begin{figure}[t]
@@ -766,7 +766,7 @@ some sample rewriting rules.
 %% Avoiding production of illegal expressions
 One of the difficulties of formalizing Erlang lies in the manipulation of
 expressions. In fact, a naive management could produce unwanted results or illegal
-expression.
+expressions.
 
 For example, consider the function invocation
 \begin{equation}\label{funcall}
@@ -798,7 +798,7 @@ Simply replacing the function call with its body would produce
 \]
 which is illegal and would be refused by an Erlang compiler.
 
-The solution that we adopted to solve both the problems consists of wrapping the produced sequence of
+The solution that we adopted to solve both the problems consists in wrapping the produced sequence of
 expressions with the construct \verb+begin_end+, which turns a sequence of expressions into a single expression. For instance, in~(\ref{funcall}) the produced expression
 would be 
 \[
@@ -807,7 +807,7 @@ would be
 and in this case $X$ is correctly bound to the result of $Z-M$. This solution indeed
 produces the desired effect also in a real Erlang environment.
 
-In statement \ref{eq:case} the produced expression is:
+In statement (\ref{eq:case}) the produced expression is:
 \[
   \ms{case}~\ms{begin}~Z = N*N, Z-M~\ms{end}~\ms{of} \ldots
 \]
@@ -836,8 +836,8 @@ We decided to define the generation of the reversible semantics in Maude,
 for two main reasons. First, Maude is well-suited to define program transformations
 thanks to its META-LEVEL module, which contains facilities to meta-represent a
 module and to manipulate it. Second, since we defined Erlang's semantics in
-Maude, we do not need to define a parser for it as it is already loaded and can
-be easily meta-represented by taking advantage of Maude's facilities.
+Maude, we do not need to define a parser for it as it can
+be easily loaded and meta-represented by taking advantage of Maude's facilities.
 
 \subsection{Format of the Non-Reversible Semantics}
 As in~\cite{LaneseM20}, the input semantics must follow a given format
@@ -861,8 +861,7 @@ mod SYSTEM is
 ...
 endm
 \end{Verbatim}
-  \label{fig:sem-system}
-  \caption{Extract of the system module for Erlang.}
+  \caption{Extract of the system module for Erlang.}\label{fig:sem-system}
 \end{figure}
 
 The module defines the operators of the system level, as discussed in Section~\ref{sec:gener-appr-derive-rev-sem}. In the case of Erlang, we just have parallel composition \verb+||+ and the empty system.
@@ -892,7 +891,7 @@ operators can deal with entities with key.
 To define memories, first we declare a new sort \verb+Placeholder+,
 together with an operator \verb+@+ to create a \verb+Placeholder+ from a key.
 Then, memories are added by defining the sort \verb+Memory+ and by defining an
-operator that builds a memory by combining the interacting entities with keys with the final configuration, where the
+operator that builds a memory by combining the interacting entities with key with the final configuration, where the
 entities have been replaced by their placeholders. E.g., the memory created by the reversible version of the reduction in Section~\ref{sec:maude} is:
 
 \begin{verbatim}
@@ -903,12 +902,12 @@ entities have been replaced by their placeholders. E.g., the memory created by t
 % A bit Technical, perhaps not needed?
 The final transformation concerning the system module updates the
 equations to translate entities between their representation and their
-meta-representation so to work on entities with keys.
+meta-representation so to work on entities with key.
 
 \subsection{Generating the Reversible Semantics}
 The transformation to be performed over the rewriting rules is the one
 described in Section~\ref{sec:methodology}, rephrased in Maude
-notation. Thus, rules must be extended to deal with entities with keys,
+notation. Thus, rules must be extended to deal with entities with key,
 and each time a forward step is taken the resulting entities must
 be tagged with fresh keys and the appropriate memory must be created.
 
@@ -928,7 +927,7 @@ required memory.
 Fig.~\ref{fig:revsend} recalls rule \verb_send_ and shows the
 corresponding reversible rule. In the latter, on the left-hand side,
 the process is initially tagged with a key \verb_key(L)_, then the new
-entities on the right side are tagged with fresh keys \verb_key(0 L)_
+entities on the right-hand side are tagged with fresh keys \verb_key(0 L)_
 and \verb_key(1 L)_, built from \verb_key(L)_. Moreover, the rule also
 produces a memory binding the old and the new states.
 
@@ -985,11 +984,11 @@ rl [label sys-send]:
 
 The last step to conclude this work is to prove the correctness of the
 generated reversible semantics. This requires to close the gap between
-the format of the rules expected by the general method and the actual
+the format of the rules expected by the general method from~\cite{LaneseM20} and the actual
 format of the rules provided in input. In fact, the schema of the
 general method allows for an arbitrary number of rules, potentially
 infinitely many, describing the system evolution. Obviously, to
-efficiently describe a system we cannot produce infinitely many rules.
+efficiently describe a system, we cannot exploit infinitely many rules.
 Thus, in the formalization of the semantics we resorted to meta-rules,
 and we used the expression level semantics so to select only a subset
 of the possible instances.
@@ -1004,7 +1003,7 @@ Let us consider the following processes:
 \]
 
 The three processes above are all ready to perform the same action, even though
-they have a different configuration, nonetheless thanks to the expression level
+they have a different shape, nonetheless thanks to the expression level
 semantics we are able to formalize their behavior in one meta-rule send.
 
 Finally, what is required is a (set of) correctness theorem(s) to
@@ -1096,14 +1095,14 @@ Concretely, defining an executable semantics of a language poses also
 some challenges that do not rise for arbitrary semantics. For
 instance, the semantics in~\cite{Gonzalez-AbrilV21} resorts to the
 existence of suitable contexts to identify the redex inside an
-expression, while we needed to explicitly give an inductive definition
+expression, while we need to explicitly give an inductive definition
 to find the redex.
 
 We also implemented a program able to transform a non-reversible
 semantics into a reversible one, providing an implementation of the
 general method described in~\cite{LaneseM20}. Again, ensuring that the
 method can be actually executed poses some challenges.
-E.g.~\cite{LaneseM20}, just declares that
+E.g.,~\cite{LaneseM20} just declares that
 keys are generated fresh, while we had to provide a concrete and
 distributed algorithm to generate keys ensuring their freshness.
 
@@ -1112,7 +1111,7 @@ work. First, one could investigate ways to optimize the implementation
 of the semantics, so to be able to simulate more computationally
 expensive Erlang computations. For instance, right now the top-level
 environment also includes the bindings from the lower levels, and this
-increase the needed memory.  Second, one could support further
+increases the needed memory.  Second, one could support further
 primitives to widen the set of executable programs. In doing so it is
 important to make sure that the causal-dependencies captured by the
 producer-consumer model used in~\cite{LaneseM20} are appropriate - for
