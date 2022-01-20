@@ -29,7 +29,7 @@ fmod PRODUCE-FWD-SEM is
   inc FOLD{TermWithKey} .
   inc FOLD{TermIdPlKeys} .
 
-  vars K T T' T'' T1 T2 T2' T3 : Term .
+  vars K T T' T'' T1 T2 T2' T3 RT1 : Term .
   vars TERMS PL PL1 TERMS' TERMS'' : TermList .
   vars M M' : Module .
   var SUB : Substitution .
@@ -41,8 +41,8 @@ fmod PRODUCE-FWD-SEM is
   var OPDS : OpDeclSet .
   var MAS : MembAxSet .
   var EQS : EquationSet .
-  var ATT : AttrSet .
-  vars OPNAME FKEY KEY KEY'   : Qid .
+  var ASET : AttrSet .
+  vars OPNAME FKEY KEY KEY' NAME : Qid .
   var RL : Rule .
   var RLL : RuleList .
   vars RLS RLS' : RuleSet .
@@ -81,34 +81,26 @@ fmod PRODUCE-FWD-SEM is
   *** is that in a conditional rule we must also consider the if clause.
 
   op #transform-rl-crl : Rule -> Rule .
-  eq #transform-rl-crl(rl T1 => T2 [ATT] .)
-     = #transform-rl(rl T1 => T2 [ATT] .) .
-  eq #transform-rl-crl(crl T1 => T2 if RLCOND [ATT] .)
-     = #transform-crl(crl T1 => T2 if RLCOND [ATT] .) .
+  eq #transform-rl-crl(rl T1 => T2 [ASET] .)
+     = #transform-rl(rl T1 => T2 [#updateLabel(ASET)] .) .
+  eq #transform-rl-crl(crl T1 => T2 if RLCOND [ASET] .)
+     = #transform-crl(crl T1 => T2 if RLCOND [#updateLabel(ASET)] .) .
 
   op #transform-rl : Rule -> Rule .
-  eq #transform-rl(rl T1 => T2 [ATT] .)
-     = #call-right-transform( #transform-rl-left-term(T1, 'nil), T2, ATT) .
+  ceq #transform-rl(rl T1 => T2 [ASET] .)
+     = rl RT1 => '_||_[TERMS, '`[_;_`][RT1,TERMS']] [ASET] .
+     if RT1 * KEY := #transform-rl-left-term(T1, 'nil) /\
+        TERMS x ID x TERMS' x KEY := #transform-rl-right-term(T2, 0, KEY) .
 
   op #transform-crl : Rule -> Rule .
-  eq #transform-crl(crl T1 => T2 if RLCOND [ATT] .)
-     = #call-right-transform(#transform-rl-left-term(T1, 'nil), T2, RLCOND, ATT) .
+  ceq #transform-crl(crl T1 => T2 if RLCOND [ASET] .)
+     = crl RT1 => '_||_[TERMS, '`[_;_`][RT1,TERMS']] if RLCOND [ASET] .
+     if RT1 * KEY := #transform-rl-left-term(T1, 'nil) /\
+        TERMS x ID x TERMS' x KEY := #transform-rl-right-term(T2, 0, KEY) .
 
-  ****  The following equations perform a depth first visit on the subtree of
-  ****  the left term of the rule. During such visit each entity is tagged with
-  ****  a key (actually a variable that represents it) and each key used
-  ****  is collected and then returned. Keys must be returned so that we can put
-  ****  in relations the elements of left side with the ones in the right side.
-
-  op #call-right-transform : TermWithKey Term AttrSet -> Rule .
-  ceq #call-right-transform(T1 * KEY, T2, ATT)
-     = rl T1 => '_||_[TERMS, '`[_;_`][T1,TERMS']] [ATT] .
-     if TERMS x ID x TERMS' x KEY := #transform-rl-right-term(T2, 0, KEY) .
-
-  op #call-right-transform : TermWithKey Term Condition AttrSet  -> Rule .
-  ceq #call-right-transform(T1 * KEY, T2, RLCOND, ATT)
-     = crl T1 => '_||_[TERMS, '`[_;_`][T1,TERMS']] if RLCOND [ATT] .
-     if TERMS x ID x TERMS' x KEY := #transform-rl-right-term(T2, 0, KEY) .
+  *** The following function updates the label of a rule by adding the prefix 'fwd' to it
+  op #updateLabel : AttrSet -> AttrSet .
+  eq #updateLabel(label(NAME) ASET) = label( qid("fwd-" + string(NAME)) ) ASET .
 
 	********************************
   *** LEFT TERM TRANSFORMATION ***
@@ -128,7 +120,7 @@ fmod PRODUCE-FWD-SEM is
   ceq f[T, (TERMS * KEY)] = (TERMS, TERMS') * KEY'
      if TERMS' * KEY' := #transform-rl-left-term(T, KEY) .
 
-  op #transform-rl-left-term : Term QidList -> TermWithKey .
+  op #transform-rl-left-term : Term Qid -> TermWithKey .
   ceq #transform-rl-left-term(OPNAME[TERMS], KEY) = (OPNAME[TERMS']) * KEY'
     if #declared-in(upModule('SYSTEM, false), OPNAME) /\
        TERMS' * KEY' := foldl-term(TERMS, (empty * KEY), f) .

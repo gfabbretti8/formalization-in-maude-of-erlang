@@ -320,11 +320,11 @@ Here, $var$ returns the set of variables used inside a term, $lhs$ returns
 the left-hand side term of a rule and $sort$ the sort of the variable fed as
 input.
 We also assume that each rule is equipped with a conditional branch, where in
-the case of unconditional rules it is the clause $true=true$.
+the case of unconditional rules - like the backward rules - we assume them to be
+equipped with a dummy condition, like $true = true$.
 
 Finally, when all the
-variables have been replaced pervasively in the
-whole rule the rule is brought to a canonical form, by relying on the
+variables, introduced in the left-hand side term, have been replaced everywhere the rule is brought to a canonical form, by relying on the
 equations of the rewriting logic ($E\vdash r = t\rightarrow t'~\ms{if}~C$).
 
 Let us make this more concrete with an example.
@@ -388,8 +388,9 @@ obtain a concrete rule that fits the format required by the general approach.
 This subsection contains a remark about the handling of keys in schemas and in
 the ground rules. In the general methods keys are picked up fresh to tag each
 ground entity and there are no other constraints on the choice of keys. In our
-approach, since we need an operational way to apply the rules, we need to
-specify concretely in which way we pick up the meta-keys. The method adopted
+approach, since we need an operational way to apply the schemas to concrete
+system instances, we need to
+specify concretely in which way we pick the meta-keys. The method adopted
 consists of using a set of meta-keys while tagging the left-hand side of a rule
 and concatenating the first meta-key used on the left-hand side with a fresh
 counter for the entities on the right.
@@ -397,9 +398,9 @@ counter for the entities on the right.
 The technique used to tag the right-hand side of the rule, since it concatenates
 a ground value with a meta-key, prevents us to instantiate the meta-keys on the
 left to arbitrary values as their prefix has been already chosen. In other
-words, the set of ground rules is a subset of the entirety of the rules accepted
+words, the set of ground rules is a subset of the entirety of the rules produced
 by the general method. Nonetheless, this is not a limit as all the possible
-transitions of a system can still be expressed only there is an order on the way
-keys are picked. So, up to keys permutation the derived semantics is ``complete''.
+transitions of a system can still be expressed, only there is an order on the way
+keys are picked. So, up to keys permutation, the derived semantics is ``complete''.
 
 \end{document}

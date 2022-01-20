@@ -15,7 +15,8 @@ fmod PRODUCE-BWD-SEM is
   var RLL : RuleList .
   vars RLS RLS' : RuleSet .
   var T1 T2 : Term .
-  var ATT : AttrSet .
+  var ASET : AttrSet .
+  var NAME : Qid .
   vars RLCOND : Condition .
 
   op #produce-bwd-sem : Module -> Module .
@@ -23,7 +24,7 @@ fmod PRODUCE-BWD-SEM is
   var M : Module .
 
   eq #produce-bwd-sem(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm) =
-    mod 'AN-PENS is
+    mod 'BWD_TRANSITIONS is
      IL
      sorts SS .
      SSDS
@@ -45,17 +46,21 @@ fmod PRODUCE-BWD-SEM is
 *** and then proceeds to the appropriate transformation. The only difference
 *** is that in a conditional rule we must also consider the if clause.
   op #transform-fwd-rl-crl : Rule -> Rule .
-  eq #transform-fwd-rl-crl(rl T1 => T2 [ATT] .)
-     = #transform-fwd-rl(rl T1 => T2 [ATT] .) .
-  eq #transform-fwd-rl-crl(crl T1 => T2 if RLCOND [ATT] .)
-     = #transform-fwd-crl(crl T1 => T2 if RLCOND [ATT] .) .
+  eq #transform-fwd-rl-crl(rl T1 => T2 [ASET] .)
+     = #transform-fwd-rl(rl T1 => T2 [#updateLabelBwd(ASET)] .) .
+  eq #transform-fwd-rl-crl(crl T1 => T2 if RLCOND [ASET] .)
+     = #transform-fwd-crl(crl T1 => T2 if RLCOND [#updateLabelBwd(ASET)] .) .
 
   op #transform-fwd-rl : Rule -> Rule .
-  eq #transform-fwd-rl(rl T1 => T2 [ATT] .)
-     = rl T2 => T1 [ATT] . .
+  eq #transform-fwd-rl(rl T1 => T2 [ASET] .)
+     = rl T2 => T1 [ASET] . .
 
   op #transform-fwd-crl : Rule -> Rule .
-  eq #transform-fwd-crl(crl T1 => T2 if RLCOND [ATT] .)
-     = rl T2 => T1 [ATT] . .
+  eq #transform-fwd-crl(crl T1 => T2 if RLCOND [ASET] .)
+     = rl T2 => T1 [ASET] . .
+
+  *** The following function updates the label of a rule by adding the prefix 'fwd' to it
+  op #updateLabelBwd : AttrSet -> AttrSet .
+  eq #updateLabelBwd(label(NAME) ASET) = label( qid("bwd" + substr(string(NAME), 3, length(string(NAME))))) ASET .
 
 endfm

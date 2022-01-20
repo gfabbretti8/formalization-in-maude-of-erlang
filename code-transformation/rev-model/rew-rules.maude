@@ -1,90 +1,26 @@
 
-
 	          
 
 
 mod TRANSITIONS is
   protecting SEM_ENTITY_WITH_KEY .
   including BOOL .
-  protecting SYNTAX .
-  protecting SEM_LABEL .
   protecting SYSTEM .
-  protecting SEM_MATCH_ENTITY .
-  protecting SEM_NORMALISATION .
-  protecting SEM_PROCESS .
-  protecting HELP-SYNTAX .
-  op #setup-first-proc : Sys FunName FunDefSeq GroundValues -> Sys .
-  ceq #setup-first-proc(SYS:Sys,ENTRYPOINT:FunName,MOD:FunDefSeq,ARGS:Args)
-    = pidGen(0) || < pid(0)| exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack,
-    mod-env: ME:ModEnv >
-    if ME:ModEnv := #extract-functions(MOD:FunDefSeq)/\ EXSEQ:NeExpSeq :=
-    #get-function(ENTRYPOINT:FunName,ME:ModEnv)/\ ENV:EnvStack := #init-env(
-    #get-formal-args(ENTRYPOINT:FunName,ME:ModEnv),ARGS:Args) .
-  crl < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack >
-    * key L:NatList
-    => < P:Pid | exp: #crashed,ASET:AttributeSet,env-stack: ENV':EnvStack > *
-    key(0 L:NatList) || [< P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,
-    env-stack: ENV:EnvStack > * key L:NatList ; @: key(0 L:NatList)]
-    if < crashed,ENV':EnvStack,EXSEQ':NeExpSeq > := < req-gen,ENV:EnvStack,
-    EXSEQ:NeExpSeq > [label sys-crash] .
-  crl < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack >
-    * key L:NatList
-    => < P:Pid | exp: EXSEQ':NeExpSeq,ASET:AttributeSet,env-stack:
-    ENV':EnvStack > * key(0 L:NatList) || [< P:Pid | ASET:AttributeSet,exp:
-    EXSEQ:NeExpSeq,env-stack: ENV:EnvStack > * key L:NatList ; @: key(0
-    L:NatList)]
-    if < tau,ENV':EnvStack,EXSEQ':NeExpSeq > := < req-gen,ENV:EnvStack,
-    EXSEQ:NeExpSeq > [label sys-tau] .
-  crl < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack >
-    * key L:NatList
-    => < P:Pid | exp: EXSEQ':NeExpSeq,ASET:AttributeSet,env-stack:
-    ENV':EnvStack > * key(0 L:NatList) || [< P:Pid | ASET:AttributeSet,exp:
-    EXSEQ:NeExpSeq,env-stack: ENV:EnvStack > * key L:NatList ; @: key(0
-    L:NatList)]
-    if < tau,ENV':EnvStack,EXSEQ':NeExpSeq > := < self(P:Pid),ENV:EnvStack,
-    EXSEQ:NeExpSeq > [label sys-self] .
-  crl < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack >
-    * key L:NatList
-    => (< sender: P:Pid,receiver: DEST:Pid,payload: GVALUE:GroundValues > *
-    key(1 L:NatList) || < P:Pid | exp: EXSEQ':NeExpSeq,ASET:AttributeSet,
-    env-stack: ENV':EnvStack > * key(2 L:NatList)) || [< P:Pid |
-    ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack > * key
-    L:NatList ; @: key(1 L:NatList) || @: key(2 L:NatList)]
-    if < DEST:Pid ! GVALUE:GroundValues,ENV':EnvStack,EXSEQ':NeExpSeq > := <
-    req-gen,ENV:EnvStack,EXSEQ:NeExpSeq > [label sys-send] .
-  crl < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack,
-    mod-env: ME:ModEnv > * key L:NatList
-    => < P:Pid | exp: EXSEQ':NeExpSeq,env-stack: ENV':EnvStack,
-    ASET:AttributeSet,mod-env: ME:ModEnv > * key(0 L:NatList) || [< P:Pid |
-    ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack,mod-env:
-    ME:ModEnv > * key L:NatList ; @: key(0 L:NatList)]
-    if < tau,ENV':EnvStack,EXSEQ':NeExpSeq > := < funcall(ME:ModEnv),
-    ENV:EnvStack,EXSEQ:NeExpSeq > [label sys-funcall] .
-  crl < sender: SENDER:Pid,receiver: P:Pid,payload: GVALUE:GroundValues > * key
-    L:NatList || < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack:
-    ENV:EnvStack > * key L':NatList
-    => < P:Pid | exp: EXSEQ':NeExpSeq,ASET:AttributeSet,env-stack:
-    ENV':EnvStack > * key(0 L':NatList) || [< sender: SENDER:Pid,receiver:
-    P:Pid,payload: GVALUE:GroundValues > * key L:NatList || < P:Pid |
-    ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack > * key
-    L':NatList ; @: key(0 L':NatList)]
-    if < received,ENV':EnvStack,EXSEQ':NeExpSeq > := < req-receive(
-    GVALUE:GroundValues),ENV:EnvStack,EXSEQ:NeExpSeq > [label sys-receive] .
-  crl pidGen(INT:Int)* key L:NatList || < P:Pid | ASET:AttributeSet,exp:
-    EXSEQ:NeExpSeq,env-stack: ENV:EnvStack,mod-env: ME:ModEnv > * key
-    L':NatList
-    => ((pidGen(INT:Int + 1)* key(2 L':NatList) || < pid(INT:Int + 1)| exp:
-    EXSEQ'':NeExpSeq,env-stack: ENV'':EnvStack,mod-env: ME:ModEnv > * key(3
-    L':NatList)) || < P:Pid | exp: EXSEQ':NeExpSeq,env-stack: ENV':EnvStack,
-    ASET:AttributeSet,mod-env: ME:ModEnv > * key(2 L':NatList)) || [pidGen(
-    INT:Int)* key L:NatList || < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,
-    env-stack: ENV:EnvStack,mod-env: ME:ModEnv > * key L':NatList ;(@: key(2
-    L':NatList) || @: key(3 L':NatList)) || @: key(2 L':NatList)]
-    if < spawn(FUNNAME:FunName,ARGS:Args),ENV':EnvStack,EXSEQ':NeExpSeq > := <
-    req-spawn(pid(INT:Int + 1)),ENV:EnvStack,EXSEQ:NeExpSeq > /\
-    EXSEQ'':NeExpSeq := #get-function(FUNNAME:FunName,ME:ModEnv)/\ ARGS':Args
-    := #map-args(ARGS:Args,ENV':EnvStack)/\ ENV'':EnvStack := #init-env(
-    #get-formal-args(FUNNAME:FunName,ME:ModEnv),#flatten-list(ARGS':Args)) [
-    label sys-spawn] .
+  rl M1:SumProc + tau . P1:Proc * key L:NatList
+    => (P1:Proc * key(0 L:NatList))||( [M1:SumProc + tau . P1:Proc * key
+    L:NatList ; @: key(0 L:NatList)]) [label fwd-R-TAU] .
+  rl (M1:SumProc + a:Chan < b:Chan > . P1:Proc * key L:NatList)||(M2:SumProc +
+    ! a:Chan(x:Qid). P2:Proc * key L':NatList)
+    => ((P1:Proc * key(1 L':NatList))||(! a:Chan(x:Qid). P2:Proc * key(3
+    L':NatList))||([x:Qid := b:Chan]P2:Proc * key(4 L':NatList)))||( [(
+    M1:SumProc + a:Chan < b:Chan > . P1:Proc * key L:NatList)||(M2:SumProc + !
+    a:Chan(x:Qid). P2:Proc * key L':NatList);(@: key(1 L':NatList))||(@: key(3
+    L':NatList))||(@: key(4 L':NatList))]) [label fwd-R-REP] .
+  rl (M1:SumProc + a:Chan < b:Chan > . P1:Proc * key L:NatList)||(M2:SumProc +
+    a:Chan(x:Qid). P2:Proc * key L':NatList)
+    => ((P1:Proc * key(1 L':NatList))||([x:Qid := b:Chan]P2:Proc * key(2
+    L':NatList)))||( [(M1:SumProc + a:Chan < b:Chan > . P1:Proc * key
+    L:NatList)||(M2:SumProc + a:Chan(x:Qid). P2:Proc * key L':NatList);(@: key(
+    1 L':NatList))||(@: key(2 L':NatList))]) [label fwd-R-COM] .
 endm
 
