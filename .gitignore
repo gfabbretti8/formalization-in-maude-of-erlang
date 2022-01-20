@@ -11,9 +11,9 @@
 *.toc
 *.aux
 erl-maude-technical-report/*.pdf
-code-transformation/erlang-rev-model/*
-code-transformation/erlang-fwd-model/*
-erl-maude-technical-report/auto*
+code-transformation/erlang-rev-model
+code-transformation/erlang-fwd-model
+erl-maude-technical-report/auto
 
 
 
