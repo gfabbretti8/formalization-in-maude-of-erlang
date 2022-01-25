@@ -1,6 +1,2 @@
 load framework.maude
 load tests/meViolation.erl
-(pprint-sys)
-
-
-

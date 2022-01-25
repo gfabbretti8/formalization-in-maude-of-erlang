@@ -1,14 +1,123 @@
+***(
+
+	SYSTEM.MAUDE
+
+	This module defines the system level transitions. This is the rewriting theory
+	that operates upon the equivalence classes that are defined by the underlying
+	equational theory (given in the functional modules SEM_EQUATIONS and its submodules).
+
+	In contrast to the oriented equations and equational attributes that constitute
+	the MEL theory, the rewriting rules do not have to terminate or to be Church Rosser.
+
+	They represent the observable actions that the system can do. In our approach, we try
+	to move as many local evaluation steps as possible into the equational theory. This
+	reduces the search space significantly (for example, interleaving is not necessary
+	if completely autonomous steps are taken within different processes).
+	The rewriting rules that are specified here represent evaluation steps that may not
+	be included in the equational theory as they imply side effects onto other processes.
+
+	The transition rules of the "system"-level are collected in the SEM_TRANSITION
+	module.
+
+	The functional module that constitutes the equational theory includes the different
+	sets of oriented equations and is called SEM_EQUATIONS.
+
+	The whole theory, consisting of the rewriting rules and the equational theory
+	is then given by the module THEORY.
+
+***)
+
 mod TRANSITIONS is
-  protecting SYSTEM .
+	protecting SYNTAX .
+	protecting SEM_LABEL .
+	protecting SYSTEM .
+  protecting SEM_MATCH_ENTITY .
+  protecting SEM_NORMALISATION .
+  protecting SEM_PROCESS .
+  protecting SEM_COREBIB .
+  protecting HELP-SYNTAX .
 
-  vars P1 P1' P2 : Proc .
-  vars M1 M2 : SumProc .
-  var x : Qid .
-  vars a b : Chan .
+	var EX : Exp .
+  var EXSEQ EXSEQ' EXSEQ'' : NeExpSeq .
+  var ARGS ARGS' : Args .
+	var P : Pid .
+	vars INT INT1 : Int .
+	var ME : ModEnv .
+	vars GVALUE : GroundValues .
+  var A : Atom .
+	var EL : Label .
+  var CLSEQ : ClauseSeq .
+  var MSG : Message .
+  vars ASET ASET' : AttributeSet .
+  var SYS : Sys .
+  vars ENV ENV' ENV'' : EnvStack .
+  var LABEL LABEL' : Label .
+  var FUNNAME : FunName .
+  vars DEST SENDER : Pid .
 
-  *** Reduction rules without alpha equivalence
-  rl [R-COM] : a < b > . P1 + M1 || a(x) . P2 + M2 => P1 || [x := b] P2 .
-  rl [R-REP] : a < b > . P1 + M1 || ! a(x) . P2 + M2 => P1 || [x := b] P2 || ! a(x) . P2 .
-  rl [R-TAU] : tau . P1 + M1 => P1 .
+	*******************************
+  ******** SYSTEM RULES  ********
+	*******************************
 
+  crl [sys-receive] :
+      < P | exp: EXSEQ, env-stack: ENV, ASET > ||
+      < sender: SENDER, receiver: P, payload: GVALUE > =>
+      < P | exp: EXSEQ', env-stack: ENV', ASET >
+      if < received, ENV', EXSEQ' > :=
+         < req-receive(GVALUE), ENV, EXSEQ > .
+
+  crl [sys-spawn] :
+      < P | exp: EXSEQ, env-stack: ENV, mod-env: ME, ASET > || pidGen(INT) =>
+      < P | exp: EXSEQ', env-stack: ENV', mod-env: ME, ASET > ||
+      < pid(INT + 1) | exp: EXSEQ'', env-stack: ENV'', mod-env: ME > ||
+       pidGen(INT + 1)
+   		if < spawn(FUNNAME,ARGS), ENV', EXSEQ' > :=
+         < req-spawn(pid(INT + 1)), ENV, EXSEQ > /\
+         EXSEQ'' := #get-function(FUNNAME, ME) /\
+         ARGS' := #map-args(ARGS, ENV') /\
+         ENV'' := #init-env(#get-formal-args(FUNNAME, ME), #flatten-list(ARGS')) .
+
+  crl [sys-self] :
+      < P | exp: EXSEQ, env-stack: ENV, ASET > =>
+      < P | exp: EXSEQ', env-stack: ENV', ASET >
+      if < tau, ENV', EXSEQ' > :=
+         < self(P), ENV, EXSEQ > .
+
+  crl [sys-send] :
+      < P | exp: EXSEQ, env-stack: ENV, ASET > =>
+      < P | exp: EXSEQ', env-stack: ENV', ASET > ||
+      < sender: P, receiver: DEST, payload: GVALUE >
+      if < DEST ! GVALUE, ENV', EXSEQ' > :=
+         < req-gen, ENV, EXSEQ > .
+
+  crl [sys-tau] :
+      < P | exp: EXSEQ, env-stack: ENV, ASET >  =>
+      < P | exp: EXSEQ', env-stack: ENV', ASET >
+      if < tau, ENV', EXSEQ' > :=
+         < req-gen, ENV, EXSEQ > .
+
+  crl [sys-funcall] :
+      < P | exp: EXSEQ, env-stack: ENV, mod-env: ME, ASET >  =>
+      < P | exp: EXSEQ', env-stack: ENV', mod-env: ME, ASET >
+      if < tau, ENV', EXSEQ' > :=
+         < funcall(ME), ENV, EXSEQ > .
+
+  crl [sys-crash] :
+      < P | exp: EXSEQ, env-stack: ENV, ASET >  =>
+      < P | exp: #crashed, env-stack: ENV', ASET >
+      if < crashed, ENV', EXSEQ' > :=
+         < req-gen, ENV, EXSEQ > .
+
+endm
+
+mod SEM_EQUATIONS is
+	protecting SYNTAX .
+	protecting SEM_NORMALISATION .
+  protecting SEM_COREBIB .
+endm
+
+mod THEORY is
+	protecting SYNTAX .
+	protecting SEM_EQUATIONS .
+  protecting TRANSITIONS .
 endm

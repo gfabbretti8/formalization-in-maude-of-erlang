@@ -1,5 +1,4 @@
 fmod SYNTAX-COMMON is
-
   sort Program .
   subsort FunDefSeq < Program .
 
@@ -127,7 +126,6 @@ fmod PARSING-SYNTAX is
 	subsort Token < NeTokenList .
 	op _,_ : NeTokenList NeTokenList -> NeTokenList [ctor assoc id: nil prec 65  format (o m! o o)] .
 
-
 endfm
 
 ------------------------------------------------------------------------------------------
@@ -175,7 +173,6 @@ fmod MAUDE-SYNTAX-UP is
   eq #up(#crashed) = '#crashed.ExpSeq .
   eq #up(#bottom) = '#bottom.ExpSeq .
   eq #up(begin EXSEQ end) = 'begin_end[#up(EXSEQ)] .
-
 
   op #up : FunDef -> Term [memo] .
   eq #up(fun FNAME ()-> EXSEQ .) = 'fun_`(`)->_[#up(FNAME), #up(EXSEQ)] .

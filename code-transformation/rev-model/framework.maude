@@ -1,6 +1,35 @@
-load cinni .
-load entity .
-load entity-with-key .
-load system .
-load rew-rules .
+***(
+
+     FRAMEWORK.MAUDE
+
+     This file just loads the different files that contain all the
+     modules. In order to satisfy all the dependencies between the modules,
+     the order has to be preserved.
+
+***)
+
+load updown.maude .
+load syntax.maude .
+load help-syntax.maude .
+load parsing.maude .
+load entity.maude .
+load entity-with-key.maude .
+ load context.maude .
+load pid.maude .
+load result.maude .
+load store.maude .
+load modenv.maude .
+load label.maude .
+load message.maude .
+load control.maude .
+load matching.maude .
+load normalisation.maude .
+load process.maude .
+load system.maude .
+load corebib.maude .
+load rew-rules.maude .
+load print.maude .
+load loop.maude .
+
+loop init .
 

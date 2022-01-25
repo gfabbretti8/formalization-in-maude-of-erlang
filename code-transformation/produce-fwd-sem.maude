@@ -142,18 +142,18 @@ fmod PRODUCE-FWD-SEM is
 
   op h : -> Func{Term, TermIdPlKeys} .
   ceq h[T, TERMS x ID x PL x KEY] = (TERMS,TERMS') x ID' x (PL, PL1) x KEY
-      if TERMS' x ID' x PL1 x KEY := #transform-rl-right-term(T, ID + 1, KEY) .
+      if TERMS' x ID' x PL1 x KEY := #transform-rl-right-term(T, ID , KEY) .
 
   op #transform-rl-right-term : Term Nat Qid -> TermIdPlKeys .
   ceq #transform-rl-right-term(OPNAME[TERMS], ID, KEY)
     = OPNAME[TERMS'] x ID x OPNAME[PL] x KEY
     if #declared-in(upModule('SYSTEM, false), OPNAME) /\
-       TERMS' x ID' x PL x KEY := foldl-term(TERMS, (empty x ID x empty x KEY), h) .
+       TERMS' x ID' x PL x KEY := foldl-term(TERMS, (empty x ID + 1 x empty x KEY), h) .
 
   eq #transform-rl-right-term(T, ID, KEY)
-      = '_*_[T, 'key_['__[upTerm(ID), KEY]]]
-        x ID
-        x '@:_['key_['__[upTerm(ID), KEY]]]
+      = '_*_[T, 'key_['__[upTerm(ID + 1), KEY]]]
+        x ID + 1
+        x '@:_['key_['__[upTerm(ID + 1), KEY]]]
         x KEY .
 
 endfm

@@ -5,15 +5,6 @@
 	In this module we define the LOOP-MODE interface for user interaction on the
 	command line of the Maude interpreter.
 
-	In the functional module COMMAND-GRAMMAR, we specify a set of commands that can
-	be used from within the Maude command line to control the actions of the system:
-		* loading a Core-Erlang source file
-		* specifying a statement and computing the states
-		* starting the model checker
-
-	To output the states that are computed, we define the STATESPACE-OUTPUT functional
-	module. It calculates all the states and outputs them correspondingly.
-
 	The ERLANG-LOOP module finally implements the interface to Maude's input/output
 	subsystem and defines rewriting rules that implement the commands.
 	Note: The model checker uses the equational theory and the rewriting theory of
@@ -28,16 +19,16 @@ fmod COMMAND-GRAMMAR is
 	sort Command .
 
 	*** The add-module directive includes the function definitions from
-	*** the Core-Erlang module that is given as an argument.
-	*** Note: Use the (Core-Erlang) output of the Erlang compiler; the "maudify"
-	***       tool automatically clears up the syntax. Additionally one has to
-	***       put brackets around the function definitions within the Core-Erlang
-	***	  source-code.
+	*** the Erlang module that is given as an argument.
+
 	op add-module : Program Atom Args -> Command [ctor] .
 
   op fwd-step : -> Command [ctor] .
 
+  op interactive-step : Int Qid -> Command [ctor] .
+
   op pprint-sys : -> Command [ctor] .
+
 endfm
 
 mod FORWARD-EXPLORATION is
@@ -82,7 +73,6 @@ mod ERLANG-LOOP is
 	subsort Term < ParseResult .
 	op #no-parse : -> ParseResult .
 
-
   op init : -> System .
 	eq init = [nil, < idle, #no-parse, #empty-system >, nil] .
 
@@ -90,16 +80,18 @@ mod ERLANG-LOOP is
 	op <_,_,_> : Phase ParseResult Sys -> State [frozen] .
 
 	vars QIL QIL' : QidList .
-	vars T T1 T2 T3 : Term .
+	vars T T1 T2 T3 RULE : Term .
 	var Result : ResultPair? .
-  var SYS : Sys .
+  var ResultTriple : Result4Tuple? .
+  var SYS SYS' : Sys .
+  var PID : Int .
 
 	crl [in] : [QIL, < idle, #no-parse, SYS >, QIL']
 		=> if Result :: ResultPair
 		   then
-			[nil, < parsed, getTerm(Result), SYS >, 'command 'parsed 'complete]
+  			[nil, < parsed, getTerm(Result), SYS >, 'command 'parsed 'complete]
 		   else
-			[nil, < error, #no-parse, SYS >, printSyntaxError(Result, QIL)]
+   			[nil, < error, #no-parse, SYS >, printSyntaxError(Result, QIL)]
 		   fi
 	    if QIL =/= nil /\
 	       Result := metaParse(GRAMMAR, QIL, 'Command) .
@@ -107,13 +99,20 @@ mod ERLANG-LOOP is
 	rl [add-module] : [nil, < parsed, 'add-module[T1,T2,T3], SYS >, QIL']
 		=> [nil, < idle, #no-parse, #setup-first-proc(SYS, #downExp(T2), #downFunDefSeq(T1), #downExpSeq(T3)) >, QIL' 'module 'included '.] .
 
-  crl [fwd-step] : [nil, < parsed, 'fwd-step.Command, SYS >, QIL' ]
-     => [nil, < idle, 'pprint-sys.Command, (#computeFwdSteps(SYS)) >, QIL' ]
-     if SYS =/= #computeFwdSteps(SYS) .
-
-  rl [pprint-sys] : [nil, < idle, 'pprint-sys.Command, SYS >, QIL' ] =>
-   [nil, <  parsed, 'fwd-step.Command, SYS >, QIL' #pretty-print-sys(SYS) ] .
+  crl [interactive-step] : [nil, < parsed, 'interactive-step[T1, RULE], SYS >, QIL' ]
+     => if ResultTriple :: Result4Tuple
+        then
+         [nil, < idle, #no-parse, #downSystem(getTerm(ResultTriple)) >, 'rule RULE 'executed]
+        else
+         [nil, < idle, #no-parse, SYS >, 'cannot 'apply downTerm(RULE, 'error)]
+        fi
+     if ResultTriple := metaXapply(['TRANSITIONS], #up(SYS), downTerm(RULE, 'error), 'P:Pid <- 'pid[T1], 0, unbounded, 0) [print ResultTriple] .
 
   rl [pprint-sys] : [nil, < parsed, 'pprint-sys.Command, SYS >, QIL' ] =>
-   [nil, <  parsed, 'fwd-step.Command, SYS >, QIL' ] .
+   [nil, <  parsed, 'fwd-step.Command, SYS >, QIL' #pretty-print-sys(SYS) ] .
+
+  crl [fwd-step] : [nil, < parsed, 'fwd-step.Command, SYS >, QIL' ]
+     => [nil, < parsed, 'pprint-sys.Command, (#computeFwdSteps(SYS)) >, QIL' ]
+     if SYS =/= #computeFwdSteps(SYS) .
+
 endm

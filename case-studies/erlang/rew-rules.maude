@@ -34,6 +34,7 @@ mod TRANSITIONS is
   protecting SEM_MATCH_ENTITY .
   protecting SEM_NORMALISATION .
   protecting SEM_PROCESS .
+  protecting SEM_COREBIB .
   protecting HELP-SYNTAX .
 
 	var EX : Exp .
@@ -50,22 +51,9 @@ mod TRANSITIONS is
   vars ASET ASET' : AttributeSet .
   var SYS : Sys .
   vars ENV ENV' ENV'' : EnvStack .
-  var ENTRYPOINT : FunName .
-  var MOD : FunDefSeq .
   var LABEL LABEL' : Label .
   var FUNNAME : FunName .
   vars DEST SENDER : Pid .
-
-	*******************************
-  ******** INIT FUNCTION ********
-	*******************************
-
-  op #setup-first-proc : Sys FunName FunDefSeq GroundValues -> Sys .
-  ceq #setup-first-proc(SYS, ENTRYPOINT, MOD, ARGS)
-      = < pid(0) | exp: EXSEQ, mod-env: ME, env-stack: ENV > || pidGen(0)
-      if ME := #extract-functions(MOD) /\
-         EXSEQ := #get-function(ENTRYPOINT, ME) /\
-         ENV := #init-env(#get-formal-args(ENTRYPOINT, ME), ARGS) .
 
 	*******************************
   ******** SYSTEM RULES  ********

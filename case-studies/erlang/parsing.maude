@@ -325,6 +325,7 @@ fmod MAUDE-SYNTAX-DOWN is
 		(mod 'GRAMMAR is
 			including 'QID-LIST .
 			including 'SYNTAX .
+      including 'SYSTEM .
 			sorts none .
 			none
 			none

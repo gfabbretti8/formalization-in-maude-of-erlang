@@ -8,9 +8,9 @@ cp -r ../case-studies/$1 rev-model
 cp -r ../case-studies/$1 fwd-model
 cp ./key-modules/* ./rev-model/
 
-gsed -i '/^load entity ./a load entity-with-key .' ./rev-model/framework.maude
+gsed -i '/^load entity.maude ./a load entity-with-key.maude .\n load context.maude .' ./rev-model/framework.maude
 
-rm rev-model/system.maude ./rev-model/rew-rules.maude
+rm rev-model/system.maude
 
 #Producing the reversible syntax
 echo "Producing the reversible syntax."
@@ -25,6 +25,11 @@ echo "Producing the forward reversible rules."
 echo "$(maude -no-banner -no-advise -no-ansi-color -no-mixfix -no-tecla transform-std-op-sem.maude )" >> rev-model/rew-rules.maude
 
 maude -no-banner -no-advise transform-std-op-sem.maude
+
+truncate -s -5 ./rev-model/rew-rules.maude
+
+#Producing the backward reversible rules
+echo "$(maude -no-banner -no-advise -no-ansi-color -no-mixfix -no-tecla transform-fwd-op-sem.maude )" >> rev-model/rew-rules.maude
 
 truncate -s -5 ./rev-model/rew-rules.maude
 

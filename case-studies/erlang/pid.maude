@@ -26,9 +26,6 @@ mod SEM_PID is
 	vars INT INT1 INT2 : Int .
 	var T : Term .
 
-  op #existsPid : Pid PidGen -> Bool .
-  eq #existsPid(pid(INT1), pidGen(INT2)) = INT1 <= INT2 .
-
   *** METAREPRESENTATION PART ***
 	*******************************
 

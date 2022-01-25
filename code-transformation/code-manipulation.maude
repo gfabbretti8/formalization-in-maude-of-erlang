@@ -28,10 +28,12 @@ fmod CODE-MANIPULATION is
  eq #transform-mod(mod 'SYSTEM is IL sorts SS . SSDS OPDS MAS EQS RLS endm, Q)
     = #transform-syntax-mod(mod 'SYSTEM is IL sorts SS . SSDS OPDS MAS EQS RLS endm) .
 
- eq #transform-mod(mod 'TRANSITIONS is IL sorts SS . SSDS OPDS MAS EQS RLS endm, ''FWD.Qid)
-    = #produce-fwd-sem(mod 'TRANSITIONS is IL sorts SS . SSDS OPDS MAS EQS RLS endm) .
+ eq #transform-mod(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm, ''FWD.Qid)
+    = #produce-fwd-sem(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm) .
 
- eq #transform-mod(mod 'TRANSITIONS is IL sorts SS . SSDS OPDS MAS EQS RLS endm, ''BWD.Qid)
-    = #produce-bwd-sem(mod 'TRANSITIONS is IL sorts SS . SSDS OPDS MAS EQS RLS endm) .
+ eq #transform-mod(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm, ''BWD.Qid)
+    = #produce-bwd-sem(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm) .
+
+
 
 endfm

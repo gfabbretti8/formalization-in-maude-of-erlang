@@ -1,9 +1,13 @@
 (add-module(
 
 fun testsend() ->
-  1 ! arrivederci ,
-  1 ! ciao ,
-  erlang : spawn ( testreceive ) .
+  erlang : spawn ( testreceive, [] ),
+  erlang : spawn ( anothersend, [] ),
+  1 ! arrivederci .
+
+
+fun anothersend() ->
+  1 ! ciao .
 
 fun testreceive() ->
     receive
@@ -12,4 +16,4 @@ fun testreceive() ->
       arrivederci -> tuttobene
     end .
 
-, testsend))
+, testsend, empty))

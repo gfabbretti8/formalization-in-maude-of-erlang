@@ -1,21 +1,37 @@
-
-
 mod SEM_ENTITY_WITH_KEY is
 
   protecting META-LEVEL .
-  including SEM_ENTITY .
+  protecting SEM_ENTITY .
   protecting NAT .
 
   sort Key .
   sort EntityWithKey .
+  subsort EntityWithKey < Entity .
 
   var COUNTER : Nat .
   var LIST : NatList .
+  var E : Entity .
+  var K : Key .
+  var T1 T2 : Term .
+
+	*******************************
+  *** METAREPRESENTATION PART ***
+	*******************************
 
   op key_ : NatList -> Key [ctor prec 10] .
 
-  op _*_ : Entity Key -> EntityWithKey [ctor prec 80] .
+  op #downKey : Term -> Key [memo] .
+  eq #downKey('key_[T1]) = key downTerm(T1, none) .
 
-  op #downEntityWithKey : Term -> EntityWithKey [memo] .
+  op #up : Key -> Term [memo] .
+  eq #up(key LIST ) = 'key_[upTerm(LIST)] .
+
+  op _*_ : Entity Key -> Entity [ctor prec 80] .
+
+  eq #up(E * K) = '_*_[#up(E), #up(K)] .
+
+  op #downEntityWithKey : Term -> Entity [memo] .
+  eq #downEntity('_*_[T1, T2]) = #downEntityWithKey('_*_[T1, T2]) .
+  eq #downEntityWithKey('_*_[T1, T2]) = #downEntity(T1) * #downKey(T2) .
 
 endm

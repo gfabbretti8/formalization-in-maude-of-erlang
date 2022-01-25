@@ -2,6 +2,7 @@
 load ./fwd-model/framework.maude
 
 load ./rev-model/entity-with-key.maude
+load ./rev-model/context.maude
 load ./rev-model/system.maude
 
 load framework.maude
@@ -14,4 +15,5 @@ set show loop stats off .
 set print attribute off .
 
 (show module CODE-MANIPULATION[TRANSITIONS, 'FWD] .)
+
 quit

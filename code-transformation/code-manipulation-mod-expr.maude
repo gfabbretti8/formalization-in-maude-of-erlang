@@ -87,23 +87,6 @@
     eq parseModExp('CODE-MANIPULATION`[_`,_`][T, T'])
       = CODE-MANIPULATION[parseModExp(T), T'] .
 
-    eq solveUps('upModule['CODE-MANIPULATION`[_`,_`][T, T']], DB)
-      = solveUpsModExp('upModule['CODE-MANIPULATION`[_`,_`][T, T']], DB) .
-
-    eq solveUps('upTerm['CODE-MANIPULATION`[_`,_`][T,T'], 'bubble[T'']], DB)
-      = solveUpsModExp('upTerm['CODE-MANIPULATION`[_`,_`][T,T'], 'bubble[T'']], DB) .
-
-    eq labelInModExp(X, CODE-MANIPULATION[ME, Q]) = false .
-
-    eq header2Qid(CODE-MANIPULATION[ME, Q])
-      = qid("CODE-MANIPULATION[" + string(header2Qid(ME)) + "]") .
-
-    eq header2QidList(CODE-MANIPULATION[ME, Q])
-      = ('CODE-MANIPULATION '`[ header2QidList(ME) '`]) .
-
-    eq prepModExp(CODE-MANIPULATION[ME, Q], VEPS)
-      = CODE-MANIPULATION[prepModExp(ME, VEPS), Q] .
-
     eq setUpModExpDeps(CODE-MANIPULATION[ME, Q],
          db(< ME ; DT ; U ; U' ; M ; VDS ; MNS ; VES > MIS,
             MNS', VIS, VES', MNS'', MNS3, MNS4, QIL))
@@ -200,67 +183,3 @@ endm
 loop init .
 
 trace exclude FULL-MAUDE .
-
----(
----(
-  $ maude.linux full-maude.maude deadlock-free-mod-expr.maude
-             \||||||||||||||||||/
-           --- Welcome to Maude ---
-             /||||||||||||||||||\
-        Maude 2.4 built: Sep 24 2008 13:12:22
-        Copyright 1997-2008 SRI International
-           Thu Oct 30 18:21:36 2008
-
-        Full Maude 2.4. September 24th 2008
-
-
-    CODE-MANIPULATION mod. expr. available Oct. 28th 2008
----)
-  load model-checker.maude
-  load bakery.maude
-
-  select FULL-MAUDE .
-  loop init .
-
----(
-  rewrites: 184 in 0ms cpu (2ms real) (~ rewrites/second)
-	CODE-MANIPULATION mod. expr. available Oct. 28th 2008
----)
-
-  (mod DF-BAKERY is
-     protecting CODE-MANIPULATION[BAKERY, BState] .
-   endm)
-
----(
-  rewrites: 3788 in 20ms cpu (32ms real) (189400 rewrites/second)
-  Introduced module DF-BAKERY
----)
-
-  (show rls DF-BAKERY .)
-
----(
-rewrites: 259 in 30ms cpu (33ms real) (8633 rewrites/second)
-
-  crl {V:BState}
-    => {V:BState}
-    if enabled(V:BState)=/= true = true .
-  rl < P:Mode,0,wait,Y:Nat >
-    => < P:Mode,0,crit,Y:Nat > [label p2_wait] .
-  rl < P:Mode,X:Nat,crit,Y:Nat >
-    => < P:Mode,X:Nat,sleep,0 > [label p2_crit] .
-  rl < P:Mode,X:Nat,sleep,Y:Nat >
-    => < P:Mode,X:Nat,wait,s X:Nat > [label p2_sleep] .
-  rl < crit,X:Nat,Q:Mode,Y:Nat >
-    => < sleep,0,Q:Mode,Y:Nat > [label p1_crit] .
-  rl < sleep,X:Nat,Q:Mode,Y:Nat >
-    => < wait,s Y:Nat,Q:Mode,Y:Nat > [label p1_sleep] .
-  rl < wait,X:Nat,Q:Mode,0 >
-    => < crit,X:Nat,Q:Mode,0 > [label p1_wait] .
-  crl < P:Mode,X:Nat,wait,Y:Nat >
-    => < P:Mode,X:Nat,crit,Y:Nat >
-    if Y:Nat < X:Nat = true [label p2_wait] .
-  crl < wait,X:Nat,Q:Mode,Y:Nat >
-    => < crit,X:Nat,Q:Mode,Y:Nat >
-    if not Y:Nat < X:Nat = true [label p1_wait] .
----)
----)

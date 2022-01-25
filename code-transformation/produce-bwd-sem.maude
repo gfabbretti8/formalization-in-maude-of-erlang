@@ -24,14 +24,14 @@ fmod PRODUCE-BWD-SEM is
   var M : Module .
 
   eq #produce-bwd-sem(mod H is IL sorts SS . SSDS OPDS MAS EQS RLS endm) =
-    mod 'BWD_TRANSITIONS is
+    mod H is
      IL
      sorts SS .
      SSDS
      OPDS
      MAS
      EQS
-     #transform-fwd-rls( #set-to-list(RLS))
+     (RLS #transform-fwd-rls( #set-to-list(RLS)))
     endm .
 
 *** We iterate on the rules available and we transform each one of them.

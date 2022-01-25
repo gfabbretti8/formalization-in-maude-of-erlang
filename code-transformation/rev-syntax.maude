@@ -1,6 +1,7 @@
 load ./fwd-model/framework.maude
 
 load ./rev-model/entity-with-key.maude
+load ./rev-model/context.maude
 
 load framework.maude
 
@@ -11,5 +12,5 @@ set show command off .
 set show advisories off .
 set show loop stats off .
 
-(show module CODE-MANIPULATION[SYSTEM, 'X] .)
+(show module CODE-MANIPULATION[SYSTEM, '] .)
 quit

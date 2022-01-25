@@ -46,109 +46,41 @@ fmod SYNTAX-TRANSFORM is
      #updateSubsortDeclSet(SSDS)
      #updateOperatorDeclSet(OPDS)
      MAS
-     #transform-eqs( #set-to-list(EQS))
+     #updateEquations(EQS)
      RLS
     endm .
 
   op #updateImportList : ImportList -> ImportList .
-  op #updateImportList : Import ImportList -> ImportList .
-  eq #updateImportList(IL)
-     = (protecting 'SEM_ENTITY_WITH_KEY .) IL .
+  eq #updateImportList((protecting 'SEM_ENTITY .) IL)
+     = (protecting 'SEM_ENTITY_WITH_KEY .) (protecting 'CONTEXT .) IL .
+  eq #updateImportList(I IL) = I #updateImportList(IL) .
 
   op #updateOperatorDeclSet : OpDeclSet -> OpDeclSet .
   eq #updateOperatorDeclSet(OPDS)
-     = (op '@:_ : 'Key -> 'PlaceHolder [ctor prec(10) ] .
-        op '`[_;_`] : ('Sys 'PlaceHolder) -> 'Memory
+     = (op '`[_;_`] : ('Sys 'Sys) -> 'Memory
          [ctor frozen(1 2) prec(40) format('sg! 'o 'g! 'o 'g! 'o) ] .
+        op '#downMemory : 'Term -> 'Memory [memo] .
         OPDS) .
 
   op #addSort : SortSet -> SortSet .
   eq #addSort(SS)
-     = SS ; 'Memory ; 'PlaceHolder .
+     = SS ; 'Memory .
 
   op #updateSubsortDeclSet : SubsortDeclSet -> SubsortDeclSet .
   eq #updateSubsortDeclSet(SSDS)
      = (subsort 'EntityWithKey < 'Sys .
         subsort 'Memory < 'Sys .
-        subsort 'PlaceHolder < 'Sys . SSDS) .
+        subsort 'Memory < 'Entity .
+        subsort 'SContext < 'Sys . SSDS) .
 
-  op #transform-eqs : EquationList -> EquationSet .
-  ceq #transform-eqs(EQ, EQL)
-     = #transform-eq-ceq(EQ) #transform-eqs(EQL)
-     if EQL =/= #empty-list .
-  eq #transform-eqs(EQ)
-     = #transform-eq-ceq(EQ) [owise] .
-
-*** The following function analyses the kind of equation (if conditional or not)
-*** and then proceeds to the appropriate transformation. The only difference
-*** is that in a conditional equation we must also consider the if clause.
-  op #transform-eq-ceq : Equation -> Equation .
-  eq #transform-eq-ceq(eq T1 = T2 [ATT] .)
-     = #transform-eq(eq T1 = T2 [ATT] .) .
-  eq #transform-eq-ceq(ceq T1 = T2 if EQCOND [ATT] .)
-     = #transform-ceq(ceq T1 = T2 if EQCOND [ATT] .) .
-
-  op #transform-eq : Equation -> Equation .
-  eq #transform-eq(eq T1 = T2 [ATT] .)
-     = eq #transform-eq-term( T1 ) = #transform-eq-term( T2 ) [ATT] . .
-
-  op #transform-ceq : Equation -> Equation .
-  eq #transform-ceq(ceq T1 = T2 if EQCOND [ATT] .)
-     = ceq #transform-eq-term( T1 ) = #transform-eq-term( T2 ) if #transform-eqconds(EQCOND) [ATT] . .
-
-  op #transform-op : Term -> Term .
-  eq #transform-op( OPNAME[TERMS] )
-     = #transform-op-name(OPNAME)[ #transform-terms(TERMS) ] .
-
-  op #transform-op-name : Qid -> Qid .
-  ceq #transform-op-name( OPNAME )
-    = '#downEntityWithKey
-    if OPNAME == '#downEntity .
-  eq #transform-op-name( OPNAME )
-    = OPNAME .
-
-*** The transform-eqconds set of equations below parse a
-*** conjuctions of `EqConditions` updating eventual use of
-*** the variable with sort `Entity` to a variable with sort `EntityWithKey`
-  op #transform-eqconds : EqCondition -> EqCondition .
-  ceq #transform-eqconds(EQCOND' /\ EQCOND'')
-     = #transform-eqconds(EQCOND') /\ #transform-eqconds(EQCOND'')
-    if EQCOND' =/= nil /\ EQCOND'' =/= nil .
-  eq #transform-eqconds(nil) = nil .
-  eq #transform-eqconds(T1 = T2)
-     = #transform-eq-term(T1) = #transform-eq-term(T2) .
-  eq #transform-eqconds(T1 : T2)
-     = #transform-eq-term(T1) = T2 .
-  eq #transform-eqconds(T1 := T2)
-     = #transform-eq-term(T1) := #transform-eq-term(T2) .
-  eq #transform-eqconds(T1 => T2)
-     = #transform-eq-term(T1) => #transform-eq-term(T2) .
-
-*** The transform-terms set of equations below parse a list of terms
-***  and transform each term.
-  op #transform-terms : TermList -> TermList .
-  ceq #transform-terms(TERMS)
-     = #transform-eq-term(T1), #transform-terms(TERMS')
-    if T1, TERMS' := TERMS /\ TERMS' =/= empty .
-  eq #transform-terms(T1)
-     = #transform-eq-term(T1) [owise] .
-
-*** The transform-term set of equations below parse a single term and, if
-*** the term is a variable and its sort is `Entity`, updates
-***  it to `EntityWithKey`.
-  op #transform-eq-term : Term -> Term .
-  eq #transform-eq-term(OPNAME[TERMS])
-     = #transform-op(OPNAME[TERMS]) .
-  eq #transform-eq-term('E:Entity)
-     = 'E:EntityWithKey .
-  eq #transform-eq-term(CONST)
-     = #conc(#transform-eq-term(getName(CONST)), #conc('., getType(CONST))) .
-  ceq #transform-eq-term(VAR)
-     = #conc(getName(VAR), ':EntityWithKey)
-     if getType(VAR) = 'Entity .
-  eq #transform-eq-term(VAR)
-     = VAR [owise] .
-  eq #transform-eq-term(QID)
-     = QID .
+  op #updateEquations : EquationSet -> EquationSet .
+  eq #updateEquations(EQS) =
+     (eq '#up['`[_;_`]['SYS:Sys, 'CTX:Sys]] =
+     '_`[_`][''`[_;_`].Sort, '_`,_['#up['SYS:Sys], '#up['CTX:Sys]]] [none] .)
+     (eq '#downEntity['_`[_`][''`[_;_`].Sort, '_`,_['T1:Term, 'T2:Term]]] =
+     '#downMemory['_`[_`][''`[_;_`].Sort, '_`,_['T1:Term, 'T2:Term]]] [none] .)
+     (eq '#downMemory['_`[_`][''`[_;_`].Sort, '_`,_['T1:Term, 'T2:Term]]] = '`[_;_`]['#downSystem['T1:Term], '#downSystem['T2:Term]] [none] .)
+     ( eq '#downSystem['_`[_`][''_*_.Sort, '_`,_['T1:Term, 'T2:Term]]] = '#downEntityWithKey['_`[_`][''_*_.Sort, '_`,_['T1:Term, 'T2:Term]]] [none] .)
+     EQS .
 
 endfm
