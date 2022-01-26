@@ -1,28 +1,156 @@
-  /Users/gfabbret/Developer/erlang/erlang-maude/case-studies/erlang:
-  total used in directory 312 available 377.5 GiB
-  drwxr-xr-x@ 30 gfabbret  staff    960 Jan 26 13:03 .
-  drwxr-xr-x@  6 gfabbret  staff    192 Nov 11 11:59 ..
-  -rw-r--r--@  1 gfabbret  staff  35147 May 18  2021 LICENSE
-  -rw-r--r--@  1 gfabbret  staff    366 Jun 16  2021 README.md
-  -rw-r--r--@  1 gfabbret  staff   1512 Jan 26 12:11 corebib.maude
-  -rw-r--r--@  1 gfabbret  staff     48 Jan 25 15:56 debug.maude
-  -rw-r--r--@  1 gfabbret  staff    368 Jan 24 10:13 entity.maude
-  drwxr-xr-x@  6 gfabbret  staff    192 May 18  2021 erlang
-  -rw-r--r--@  1 gfabbret  staff    642 Jan 25 16:14 framework.maude
-  -rw-r--r--@  1 gfabbret  staff    376 Oct 27 15:34 help-syntax.maude
-  -rw-r--r--@  1 gfabbret  staff   2775 Jan 26 13:03 label.maude
-  -rw-r--r--@  1 gfabbret  staff   3955 Jan 25 16:23 loop.maude
-  -rw-r--r--   1 gfabbret  staff   4694 Jan 12 10:41 matching.maude
-  -rw-r--r--@  1 gfabbret  staff   1597 Sep 24 11:13 message.maude
-  -rw-r--r--@  1 gfabbret  staff   3729 Oct 27 15:34 modenv.maude
-  -rw-r--r--@  1 gfabbret  staff   4608 Jan 18 17:26 normalisation.maude
-  -rw-r--r--   1 gfabbret  staff  11523 Jan 25 14:28 parsing.maude
-  -rw-r--r--@  1 gfabbret  staff   1243 Jan 26 12:10 pid.maude
-  -rw-r--r--@  1 gfabbret  staff   1671 Jan 11 17:52 print.maude
-  -rw-r--r--@  1 gfabbret  staff   1979 Jan 11 14:34 process.maude
-  -rw-r--r--   1 gfabbret  staff   4032 Jan 26 12:09 rew-rules.maude
-  -rw-r--r--@  1 gfabbret  staff   2946 Jan 26 13:23  environment.maude
-  -rw-r--r--@  1 gfabbret  staff   6187 Jan 25 15:56 syntax.maude
-  -rw-r--r--@  1 gfabbret  staff   1574 Jan 25 16:13 system.maude
-  drwxr-xr-x@ 11 gfabbret  staff    352 Jan 25 15:58 tests
-  -rw-r--r--@  1 gfabbret  staff   2303 May 27  2021 updown.maude
+mod SEM_NORMALISATION is
+	protecting SYNTAX .
+  protecting HELP-SYNTAX .
+  protecting SEM_MATCH_ENTITY .
+  protecting SEM_MODENV .
+  protecting SEM_LABEL .
+
+  var FUNNAME : Atom .
+  var REQLABEL : RequestLabel .
+  vars LABEL LABEL' : StopLabel .
+  vars ENV ENV' : Env .
+  var EXPSEQ : NeExpSeq .
+  var GVALUE GVALUE' : GroundValues .
+  vars T1 T2 T3 T4 T5 T6 : Term .
+  var VAR : Var .
+  vars EXSEQ EXSEQ' : NeExpSeq .
+  var EX EX' EX'' EX1 EX2 EX1' : Exp .
+  var CLSEQ : ClauseSeq .
+  var ME : ModEnv .
+  var PAT : Pattern .
+  var INT INT' RES : Int .
+  var ARGS : Args .
+  var ENVSTACK ENVSTACK' : EnvStack .
+
+
+  sort ExpConf .
+  op <_,_,_> : Label Env ExpSeq -> ExpConf [ctor frozen] .
+
+   ceq [var] :
+    < REQLABEL, ENV : ENVSTACK, VAR > =
+    < crashed, ENV : ENVSTACK, VAR >
+    if ENV[VAR] == undefined .
+
+   ceq [var] :
+    < REQLABEL, ENV : ENVSTACK, VAR > =
+    < tau, ENV : ENVSTACK, ENV[VAR] >
+    if ENV[VAR] =/= undefined .
+
+    eq [match] :
+     < REQLABEL, ENVSTACK, GVALUE = GVALUE > =
+     < tau, ENVSTACK, GVALUE > .
+
+   ceq [match] :
+     < REQLABEL, ENVSTACK, GVALUE = GVALUE' > =
+     < crashed, ENVSTACK, #crashed >
+     if GVALUE =/= GVALUE' .
+
+   ceq [match] :
+    < REQLABEL, ENV : ENVSTACK, VAR = GVALUE > =
+    < tau, ENV' : ENVSTACK, GVALUE >
+    if ENV[VAR] == undefined /\
+       ENV' := insert(VAR, GVALUE, ENV) .
+
+   ceq [match] :
+    < REQLABEL, ENV : ENVSTACK, VAR = GVALUE > =
+    < crashed, ENV : ENVSTACK, #crashed >
+    if ENV[VAR] =/= undefined .
+
+   ceq [match] :
+    < REQLABEL, ENVSTACK, VAR = EX > =
+    < LABEL, ENVSTACK', VAR = EX' >
+    if < LABEL, ENVSTACK', EX' > :=
+       < REQLABEL, ENVSTACK, EX > .
+
+   ceq [minus] :
+    < REQLABEL, ENVSTACK, int(INT) - int(INT') > =
+    < tau, ENVSTACK, int(RES) >
+    if RES := downTerm(getTerm(metaReduce(upModule('INT, false), '_-_[upTerm(INT), upTerm(INT')])), INT) .
+
+   ceq [minus] :
+    < REQLABEL, ENVSTACK, int(INT) - EX > =
+    < LABEL, ENVSTACK', int(INT) - EX' >
+    if < LABEL, ENVSTACK', EX' > :=
+       < REQLABEL, ENVSTACK, EX > .
+
+   ceq [minus] :
+    < REQLABEL, ENVSTACK, EX1 - EX2 > =
+    < LABEL, ENVSTACK', EX1' - EX2 >
+    if < LABEL, ENVSTACK', EX1' > :=
+       < REQLABEL, ENVSTACK, EX1 > .
+
+   ceq [mult] :
+    < REQLABEL, ENVSTACK, int(INT) * int(INT') > =
+    < tau, ENVSTACK, int(RES) >
+    if RES := downTerm(getTerm(metaReduce(upModule('INT, false), '_*_[upTerm(INT), upTerm(INT')])), INT) .
+
+   ceq [mult] :
+    < REQLABEL, ENVSTACK, int(INT) * EX > =
+    < LABEL, ENVSTACK', int(INT) * EX' >
+    if < LABEL, ENVSTACK', EX' > :=
+       < REQLABEL, ENVSTACK, EX > .
+
+   ceq [mult] :
+    < REQLABEL, ENVSTACK, EX1 * EX2 > =
+    < LABEL, ENVSTACK', EX1' * EX2 >
+    if < LABEL, ENVSTACK', EX1' > :=
+       < REQLABEL, ENVSTACK, EX1 > .
+
+   ceq [case-succ] :
+    < REQLABEL, ENV : ENVSTACK, case GVALUE of CLSEQ end > =
+    < tau, ENV' : (ENV : ENVSTACK), begin EXSEQ end >
+     if #entityMatchSuccess(EXSEQ | ENV') := #entityMatch(CLSEQ | GVALUE | ENV ) .
+
+   eq [case-fail] :
+    < REQLABEL, ENVSTACK, case GVALUE of CLSEQ end > =
+    < crashed, ENVSTACK, #crashed > [owise] .
+
+   ceq [case] :
+    < REQLABEL, ENVSTACK, case EX of CLSEQ end > =
+    < LABEL, ENVSTACK', case EX' of CLSEQ end >
+    if < LABEL, ENVSTACK', EX' > :=
+       < REQLABEL, ENVSTACK, EX > .
+
+   ceq [funcall] :
+    < funcall(ME), ENV : ENVSTACK, FUNNAME() > =
+    < tau, ENV : (ENV : ENVSTACK), begin EXSEQ end >
+    if EXSEQ := #get-function(FUNNAME, ME) .
+
+   ceq [funcall] :
+    < funcall(ME), ENV : ENVSTACK, FUNNAME(ARGS) > =
+    < tau, ENV' : (ENV : ENVSTACK), begin EXSEQ end >
+    if ENV' := #init-env(#get-formal-args(FUNNAME, ME),#map-args(ARGS,ENV)) /\
+        EXSEQ := #get-function(FUNNAME, ME) .
+
+   ceq [funcall] :
+    < REQLABEL, ENVSTACK, FUNNAME(EXSEQ) > =
+    < LABEL, ENVSTACK', FUNNAME(EXSEQ') >
+    if < LABEL, ENVSTACK', EXSEQ' > :=
+       < REQLABEL, ENVSTACK, EXSEQ > .
+
+   eq [begin] :
+    < REQLABEL, ENV : (ENV' : ENVSTACK), begin begin EXSEQ end end > =
+    < tau, ENV : ENVSTACK, begin EXSEQ end > .
+
+   eq [begin] :
+    < REQLABEL, ENV : ENVSTACK, begin GVALUE end > =
+    < tau, ENVSTACK, GVALUE > .
+
+   ceq [begin] :
+    < REQLABEL, ENVSTACK, begin EXSEQ end > =
+    < LABEL, ENVSTACK', begin EXSEQ' end >
+    if < LABEL, ENVSTACK', EXSEQ' > :=
+       < REQLABEL, ENVSTACK, EXSEQ > .
+
+   ceq [seq] :
+    < REQLABEL, ENVSTACK, EX, EXSEQ > =
+    < LABEL, ENVSTACK', EX', EXSEQ >
+    if < LABEL, ENVSTACK', EX' > :=
+       < REQLABEL, ENVSTACK, EX > /\
+       not(EX :: GroundValues ).
+
+   eq [seq] :
+    < REQLABEL, ENVSTACK, GVALUE, EXPSEQ > =
+    < tau, ENVSTACK, EXPSEQ > .
+
+endm
