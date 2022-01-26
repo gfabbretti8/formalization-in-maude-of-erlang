@@ -46,7 +46,7 @@ fmod SYNTAX-TRANSFORM is
      #updateSubsortDeclSet(SSDS)
      #updateOperatorDeclSet(OPDS)
      MAS
-     #updateEquations(EQS)
+     EQS
      RLS
     endm .
 
@@ -72,15 +72,5 @@ fmod SYNTAX-TRANSFORM is
         subsort 'Memory < 'Sys .
         subsort 'Memory < 'Entity .
         subsort 'SContext < 'Sys . SSDS) .
-
-  op #updateEquations : EquationSet -> EquationSet .
-  eq #updateEquations(EQS) =
-     (eq '#up['`[_;_`]['SYS:Sys, 'CTX:Sys]] =
-     '_`[_`][''`[_;_`].Sort, '_`,_['#up['SYS:Sys], '#up['CTX:Sys]]] [none] .)
-     (eq '#downEntity['_`[_`][''`[_;_`].Sort, '_`,_['T1:Term, 'T2:Term]]] =
-     '#downMemory['_`[_`][''`[_;_`].Sort, '_`,_['T1:Term, 'T2:Term]]] [none] .)
-     (eq '#downMemory['_`[_`][''`[_;_`].Sort, '_`,_['T1:Term, 'T2:Term]]] = '`[_;_`]['#downSystem['T1:Term], '#downSystem['T2:Term]] [none] .)
-     ( eq '#downSystem['_`[_`][''_*_.Sort, '_`,_['T1:Term, 'T2:Term]]] = '#downEntityWithKey['_`[_`][''_*_.Sort, '_`,_['T1:Term, 'T2:Term]]] [none] .)
-     EQS .
 
 endfm
