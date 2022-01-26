@@ -90,7 +90,7 @@ fmod SYNTAX-HELPER is
 	var T : Term .
 	var QID : Qid .
 	var EndPos : Int .
-	var CHR CHR1 CHR2 : Char .
+	var CHR CHR1 : Char .
 	var Set : CharSet .
 
 	eq intCharSet = "0","1","2","3","4","5","6","7","8","9" .
@@ -169,13 +169,10 @@ fmod COMMON-SYNTAX-DOWN is
   op #downVar : Term -> Atom [memo] .
 	op #downErlInt : Term -> ErlInt [memo] .
 
-	vars T T1 T2 T3 T4 : Term .
+	vars T T1 T2 T3 : Term .
   vars TERMS TERMS' : TermList .
 	var SUB : Substitution .
-  var FDEF : FunDef .
-  var FDEFSEQ : FunDefSeq .
   var EX : Exp .
-  var EXSEQ : ExpSeq .
 
   eq #downProgram(T) = #downFunDefSeq(T) .
 
@@ -212,7 +209,6 @@ fmod COMMON-SYNTAX-DOWN is
   eq #downExp('_:_`(_`)[T1,T2,T3]) = #downFunCall('_:_`(_`)[T1,T2,T3]) .
   eq #downExp('_!_[T1,T2]) =  #downSend('_!_[T1,T2]) .
   eq #downExp('receive_end[T]) = #downReceive('receive_end[T]) .
-
 
   *** PATTERN
   op #downPattern : Term -> Pattern [memo] .

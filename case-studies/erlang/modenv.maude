@@ -35,18 +35,15 @@ fmod SEM_MODENV is
 	op _,_ : ModEnv ModEnv -> ModEnv [ctor assoc comm prec 71 id: #empty-modenv] .
 
 	var FUNBODY : NeExpSeq .
-	var MN : Atom .
   var FDEF : FunDef .
 	var FDLIST : FunDefSeq .
 	var FD : FunDef .
 	var FNAME FNAME1 FNAME2 : Atom .
-	var FARITY : ErlInt .
 	var FN : FunName .
 	var MAP : ModEnv .
   var EX : Exp .
   var ARGS : Args .
   var PAT : Pattern .
-  var TAIL : Pattern .
 
 	op #extract-functions : FunDefSeq -> ModEnv .
 
@@ -64,13 +61,11 @@ fmod SEM_MODENV is
   eq #get-function(FNAME1, FNAME2 ==> FUNBODY, MAP)
      = #get-function(FNAME1, MAP) [owise] .
 
-
   op #get-formal-args : Atom ModEnv -> NeExpSeq .
   eq #get-formal-args(FNAME, FNAME ==> FUNBODY, MAP) = #empty .
   eq #get-formal-args(FNAME, FNAME[ARGS]==> FUNBODY, MAP) = ARGS .
   eq #get-formal-args(FNAME1, FNAME2 ==> FUNBODY, MAP)
      = #get-function(FNAME1, MAP) .
-
 
 	*******************************
   *** METAREPRESENTATION PART ***

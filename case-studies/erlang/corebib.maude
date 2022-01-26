@@ -7,7 +7,6 @@ mod SEM_COREBIB is
   protecting SEM_LABEL .
   protecting SEM_NORMALISATION .
 
-
   var ARGS : GroundValues .
   var ENVSTACK ENVSTACK' : EnvStack .
   var ME : ModEnv .
@@ -18,7 +17,7 @@ mod SEM_COREBIB is
   vars EX1 EX2 EX1' EX EX' : Exp .
   var PID : ErlInt .
   var PAT : Pattern .
-  var ENV ENV' : Env .
+  vars ENV ENV' : Env .
   var PAYLOAD : GroundValues .
   var CLSEQ : ClauseSeq .
   var EXSEQ : NeExpSeq .

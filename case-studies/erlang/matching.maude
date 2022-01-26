@@ -20,10 +20,10 @@
 	again matched against the remaining messages. The recursion terminates
 	when the first match is found or every message of the entity has failed
 	to match any clause.
-	As the clauses may contain guards (additional conditions that control 
+	As the clauses may contain guards (additional conditions that control
 	if the clause may be evaluated in case of a matching pattern), we need the
 	equational theory to evaluate the guard expressions. Note however,
-	that according to the Core-Erlang semantics, there must not occur any 
+	that according to the Core-Erlang semantics, there must not occur any
 	system level transitions during the evaluation of a guard (i.e. no send
 	or receive statements, etc). Therefore the equational theory suffices
 	and we never have to switch to the rewriting rules of the system level.

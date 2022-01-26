@@ -42,7 +42,7 @@ fmod SEM_ENV is
   eq #map-arg(VAR, ENV) = ENV[VAR] .
   eq #map-arg(GVALUE, ENV) = GVALUE .
 
-  sort EnvStack .
+  sorts Stack EnvStack .
   subsort Env < EnvStack .
 
   op _:_ : EnvStack EnvStack -> EnvStack [ctor id: empty-stack] .
@@ -53,7 +53,7 @@ fmod SEM_ENV is
 	*******************************
 
   vars ENV-STACK ENV-STACK' : EnvStack .
-  vars ENTRY ENTRY' : Entry .
+  var ENTRY : Entry .
   var PATT : Pattern .
   var GVALUE : GroundValues .
   vars T1 T2 : Term .
@@ -90,5 +90,6 @@ fmod SEM_ENV is
   eq #downEnvStack('_|->_[T1,T2]) = #downEnv('_|->_[T1,T2]) .
   eq #downEnvStack('empty.Env) = #downEnv('empty.Env) .
   eq #downEnvStack('empty-stack.EnvStack) = empty-stack .
+
 endfm
 

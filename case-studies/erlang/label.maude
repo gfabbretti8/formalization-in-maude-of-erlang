@@ -38,8 +38,6 @@ mod SEM_LABEL is
   subsort StopLabel < Label .
   subsort RequestLabel < Label .
 
-  var ARGS : Args .
-
   op req-gen : -> RequestLabel [ctor] .
 
 	*** An expression label "tau" is an "unobservable" action.

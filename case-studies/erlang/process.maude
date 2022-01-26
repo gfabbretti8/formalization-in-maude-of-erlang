@@ -1,12 +1,12 @@
 mod SEM_PROCESS is
   protecting MAUDE-SYNTAX-UPDOWN .
 	protecting SEM_LABEL .
-	protecting SEM_RESULT .
+
   protecting SEM_ENV .
 	protecting SYNTAX .
   protecting SEM_MODENV .
   protecting SEM_ENTITY .
-  protecting SEM_CONTROL .
+
   protecting SEM_NORMALISATION .
   protecting QID .
 
@@ -24,7 +24,6 @@ mod SEM_PROCESS is
   op env-stack:_ : EnvStack -> EnvAtt [ctor gather (&)] .
   op mod-env:_ : ModEnv -> ModEnvAtt [ctor gather (&)] .
 
-
   *******************************
   *** METAREPRESENTATION PART ***
 	*******************************
@@ -37,13 +36,11 @@ mod SEM_PROCESS is
   var EXSEQ : NeExpSeq .
 	vars T1 T2 T3 : Term .
   var P : Pid .
-  var MSG : Atom .
   var ME : ModEnv .
   var A : Attribute .
   var ASET : AttributeSet .
   var SUB : Substitution .
   var ENVSTACK : EnvStack .
-
 
 	eq #up(< P | ASET >) = '<_|_>[#up(P),#up(ASET)] .
 
@@ -53,7 +50,6 @@ mod SEM_PROCESS is
   eq #up(exp: EXSEQ) = 'exp:_[#up(EXSEQ)] .
   eq #up(env-stack: ENVSTACK) = 'env-stack:_[#up(ENVSTACK)] .
   eq #up(mod-env: ME) = 'mod-env:_[#up(ME)] .
-
 
   eq #downEntity('<_|_>[T1,T2]) = < #downPid(T1) | #downAttributeSet(T2) > .
   ceq #downAttributeSet(T1) = #downAttribute(T2), #downAttributeSet(T3)
@@ -65,6 +61,5 @@ mod SEM_PROCESS is
   eq #downAttribute('exp:_[T1]) = exp: #downExpSeq(T1) .
   eq #downAttribute('env-stack:_[T1]) = env-stack: #downEnvStack(T1) .
   eq #downAttribute('mod-env:_[T1]) = mod-env: #downModEnv(T1) .
-
 
 endm

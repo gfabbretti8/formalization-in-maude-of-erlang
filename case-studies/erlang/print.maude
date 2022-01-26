@@ -11,12 +11,10 @@ mod PRETTY_PRINT is
 
   var SYS : Sys .
   var SUB : Substitution .
-  var LABEL : Label .
-  var RES : SysResult .
   var EX : Exp .
   var EXSEQ : ExpSeq .
   var ME : ModEnv .
-  var P P' : Pid .
+  vars P P' : Pid .
   var ENT : Entity .
   var MSG : GroundValues .
   var T1 T2 : Term .
