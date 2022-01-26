@@ -22,7 +22,6 @@
 fmod SEM_MODENV is
 	protecting SYNTAX .
 	protecting SYNTAX-COMMON .
-	protecting MAUDE-SYNTAX-UPDOWN .
 
 	sort ModEnvMap .
 	op _==>_ : FunName NeExpSeq -> ModEnvMap [ctor prec 70] .
@@ -67,33 +66,4 @@ fmod SEM_MODENV is
   eq #get-formal-args(FNAME1, FNAME2 ==> FUNBODY, MAP)
      = #get-function(FNAME1, MAP) .
 
-	*******************************
-  *** METAREPRESENTATION PART ***
-	*******************************
-
-	op #up : ModEnv -> Term [memo] .
-	op #up : ModEnvMap -> Term [memo] .
-
-	op #downModEnv : Term -> ModEnv [memo] .
- 	op #downModEnvMap : Term -> ModEnv [memo] .
-
-	var EXSEQ : NeExpSeq .
-	vars T T1 T2 T3 : Term .
-	var SUB : Substitution .
-  var ME : ModEnv .
-
-	*** Meta-representing the module environment:
-	eq #up(#empty-modenv) = '#empty-modenv.ModEnv .
-	eq #up(FNAME ==> EXSEQ) = '_==>_[#up(FNAME), #up(EXSEQ)] .
-	eq #up(FNAME[ARGS] ==> EXSEQ) = '_`[_`]==>_[#up(FNAME), #up(ARGS), #up(EXSEQ)] .
-	eq #up(FNAME ==> EXSEQ, ME) = '_`,_[#up(FNAME ==> EXSEQ), #up(ME)] .
-	eq #up(FNAME[ARGS] ==> EXSEQ, ME) = '_`,_[#up(FNAME[ARGS] ==> EXSEQ), #up(ME)] .
-
-	*** Lowering the meta-representation level of module environments:
-	eq #downModEnvMap('_==>_[T1,T2]) = #downExp(T1) ==> #downExpSeq(T2) .
-	eq #downModEnvMap('_`[_`]==>_[T1,T2,T3]) = #downExp(T1)[#downExpSeq(T2)] ==> #downExpSeq(T3) .
-	eq #downModEnv('#empty-modenv.ModEnv) = #empty-modenv .
-	ceq #downModEnv(T) = #downModEnvMap(T1),  #downModEnv(T2)
-		if SUB := metaMatch(GRAMMAR, '_`,_['MAP:ModEnvMap, 'ME:ModEnv], T, nil, 0)
-		/\ 'MAP:ModEnvMap <- T1 ; 'ME:ModEnv <- T2 := SUB .
 endfm

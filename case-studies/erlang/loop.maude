@@ -40,7 +40,7 @@ mod FORWARD-EXPLORATION is
   var RES : ResultPair .
   var SYS : Sys .
 
-  eq #computeFwdSteps(SYS) = #downSystem(getTerm(metaRewrite(['THEORY], #up(SYS), 1))) .
+  eq #computeFwdSteps(SYS) = downTerm(getTerm(metaRewrite(['THEORY], upTerm(SYS), 1)), #empty-system) .
 
 endm
 
@@ -50,7 +50,6 @@ mod ERLANG-LOOP is
 	including LOOP-MODE .
 	protecting PARSING-SYNTAX-DOWN .
 	protecting PRINT-SYNTAX-ERROR .
-	protecting MAUDE-SYNTAX-UP .
   protecting SYSTEM .
   protecting FORWARD-EXPLORATION .
   protecting PRETTY_PRINT .
@@ -102,11 +101,11 @@ mod ERLANG-LOOP is
   crl [interactive-step] : [nil, < parsed, 'interactive-step[T1, RULE], SYS >, QIL' ]
      => if ResultTriple :: Result4Tuple
         then
-         [nil, < idle, #no-parse, #downSystem(getTerm(ResultTriple)) >, 'rule RULE 'executed]
+         [nil, < idle, #no-parse, downTerm(getTerm(ResultTriple),#empty-system) >, 'rule RULE 'executed]
         else
          [nil, < idle, #no-parse, SYS >, 'cannot 'apply downTerm(RULE, 'error)]
         fi
-     if ResultTriple := metaXapply(['TRANSITIONS], #up(SYS), downTerm(RULE, 'error), 'P:Pid <- 'pid[T1], 0, unbounded, 0) [print ResultTriple] .
+     if ResultTriple := metaXapply(['TRANSITIONS], upTerm(SYS), downTerm(RULE, 'error), 'P:Pid <- 'pid[T1], 0, unbounded, 0) [print ResultTriple] .
 
   rl [pprint-sys] : [nil, < parsed, 'pprint-sys.Command, SYS >, QIL' ] =>
    [nil, <  parsed, 'fwd-step.Command, SYS >, QIL' #pretty-print-sys(SYS) ] .

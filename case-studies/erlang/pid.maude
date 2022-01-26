@@ -13,7 +13,6 @@
 
 mod SEM_PID is
 	protecting INT .
-	protecting MAUDE-SYNTAX-UPDOWN .
   protecting SEM_ENTITY .
 
 	sort PidGen Pid .
@@ -22,25 +21,5 @@ mod SEM_PID is
   op pidGen : Int -> PidGen [ctor] .
 
 	op #empty-pid : -> PidGen [ctor] .
-
-	var INT : Int .
-	var T : Term .
-
-	*******************************
-  *** METAREPRESENTATION PART ***
-	*******************************
-
-	op #up : Pid -> Term [memo] .
-	op #up : PidGen -> Term [memo] .
-	*** Meta-representing pids
-	eq #up(pid(INT)) = 'pid[#up(INT)] .
-  eq #up(pidGen(INT)) = 'pidGen[#up(INT)] .
-
-	op #downPid : Term -> Pid [memo] .
-  op #downPidGen : Term -> PidGen [memo] .
-	*** Lowering the meta-representation level of pids
-	eq #downPid('pid[T]) = pid(#downInt(T)) .
-  eq #downEntity('pidGen[T]) = #downPidGen('pidGen[T]).
-  eq #downPidGen('pidGen[T]) = pidGen(#downInt(T)) .
 
 endm

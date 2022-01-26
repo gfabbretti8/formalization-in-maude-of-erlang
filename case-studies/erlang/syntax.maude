@@ -74,7 +74,7 @@ fmod SYNTAX-COMMON is
   subsort Atom < FunName .
   subsort FunDef < FunDefSeq .
   subsort FunCall < Exp .
-
+  op nil : -> FunDef .
   sort Args .
   subsort Args < Exp .
   subsort Pattern GroundValues < Args .
@@ -125,97 +125,5 @@ fmod PARSING-SYNTAX is
 	sort NeTokenList .
 	subsort Token < NeTokenList .
 	op _,_ : NeTokenList NeTokenList -> NeTokenList [ctor assoc id: nil prec 65  format (o m! o o)] .
-
-endfm
-
-------------------------------------------------------------------------------------------
-
---- INTERNAL-SYNTAX
-
-------------------------------------------------------------------------------------------
-
-fmod MAUDE-SYNTAX-UP is
-	protecting SYNTAX .
-	protecting META-LEVEL .
-	protecting META-UP-DOWN .
-
-	*******************************
-  *** METAREPRESENTATION PART ***
-	*******************************
-
-	var STR : String .
-	var INT : Int .
-	var CHR : Char .
-
-	op #up : Atom -> Term [memo] .
-	op #up : Var -> Term [memo] .
-	op #up : ErlInt -> Term [memo] .
-
-	eq #up(var(STR)) = 'var[#up(STR)] .
-	eq #up(atom(STR)) = 'atom[#up(STR)] .
-	eq #up(int(INT)) = 'int[#up(INT)] .
-	eq #up([]) = '`[`].Nil .
-
-	var ATOM : Atom .
-  var FNAME : FunName .
-  var PAT ARGS : Pattern .
-	vars EX EX1 EX2 EX3 : Exp .
-  var EXSEQ EXSEQ' : ExpSeq .
-  vars CLS CLS1 CLS2 : ClauseSeq .
-
-	op #up : ExpSeq -> Term [memo] .
-
-	ceq #up(EXSEQ, EXSEQ') = '_`,_[#up(EXSEQ), #up(EXSEQ')]
-     if EXSEQ =/= nil /\ EXSEQ' =/= nil .
-
-  op #up : Exp -> Term [memo] .
-
-  eq #up(#crashed) = '#crashed.ExpSeq .
-  eq #up(#bottom) = '#bottom.ExpSeq .
-  eq #up(begin EXSEQ end) = 'begin_end[#up(EXSEQ)] .
-
-  op #up : FunDef -> Term [memo] .
-  eq #up(fun FNAME ()-> EXSEQ .) = 'fun_`(`)->_[#up(FNAME), #up(EXSEQ)] .
-  eq #up(fun FNAME (ARGS)-> EXSEQ .) = 'fun_`(_`)->_[#up(FNAME), #up(ARGS), #up(EXSEQ)] .
-
-  op #up : Mult -> Term [memo] .
-  eq #up(EX1 * EX2) = '_*_[#up(EX1), #up(EX2)] .
-
-  op #up : Minus -> Term [memo] .
-  eq #up(EX1 - EX2) = '_-_[#up(EX1), #up(EX2)] .
-
-  op #up : Case -> Term [memo] .
-  eq #up(case EX of CLS end) = 'case_of_end[#up(EX),#up(CLS)] .
-
-  op #up : List -> Term [memo] .
-  eq #up([EX]) = '`[_`][#up(EX)] .
-  eq #up([EX1 | EX2]) = '`[_|_`][#up(EX1), #up(EX2)] .
-
-  op #up : Pattern -> Term [memo] .
-
-  op #up : Clause -> Term [memo] .
-  eq #up(EX -> EXSEQ) = '_->_[#up(EX), #up(EXSEQ)] .
-
-  op #up : ClauseSeq -> Term [memo] .
-  eq #up(CLS1 ; CLS2) = '_;_[#up(CLS1), #up(CLS2)] .
-
-	*** all the terms with outermost operator symbol _,_ __ or _=_
-
-  vars FUNDEFSEQ1 FUNDEFSEQ2 : FunDefSeq .
-
-  op #up : FunDefSeq -> Term [memo] .
-  eq #up(FUNDEFSEQ1 FUNDEFSEQ2) = '_`,_[#up(FUNDEFSEQ1), #up(FUNDEFSEQ2)] .
-
-  op #up : Match -> Term [memo] .
-  eq #up(PAT = EX) = '_=_[#up(PAT), #up(EX)] .
-
-  op #up : FunCall -> Term [memo] .
-  eq #up(EX()) = '_`(`)[#up(EX)] .
-  eq #up(_`(_`)(EX, EXSEQ)) = '_`(_`)[#up(EX), #up(EXSEQ)] .
-  eq #up(EX1 : EX2 (EXSEQ)) = '_:_`(_`)[#up(EX1), #up(EX2), #up(EXSEQ)] .
-
-  op #up : Send -> Term [memo] .
-  eq #up(EX1 ! EX2) = '_!_[#up(EX1), #up(EX2)] .
-  eq #up(receive CLS end) = 'receive_end[#up(CLS)] .
 
 endfm

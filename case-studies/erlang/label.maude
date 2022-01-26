@@ -25,7 +25,6 @@
 mod SEM_LABEL is
 	protecting SYNTAX .
 	protecting SEM_PID .
-	protecting MAUDE-SYNTAX-UPDOWN .
   protecting SEM_MODENV .
 
 	*** We distinguish between two types of expression level labels.
@@ -64,7 +63,6 @@ mod SEM_LABEL is
   op req-spawn(_) : Pid -> RequestLabel [ctor] .
 
   op crashed : -> StopLabel [ctor] .
-
 
 endm
 

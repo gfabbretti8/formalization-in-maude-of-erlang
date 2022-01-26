@@ -9,7 +9,6 @@ mod HELP-SYNTAX is
   eq #head(EX, EXSEQ) = EX, EXSEQ .
   eq #head(EX) = EX .
 
-
   op #flatten-list : List -> ExpSeq .
   eq #flatten-list([]) = [] .
   eq #flatten-list([EX]) = EX .

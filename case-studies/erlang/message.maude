@@ -1,6 +1,7 @@
 mod SEM_MESSAGE is
   protecting SEM_PID .
   protecting SEM_ENTITY .
+  protecting SYNTAX .
   inc CONFIGURATION .
 
   sort Message .
@@ -13,39 +14,4 @@ mod SEM_MESSAGE is
 
   subsort Message < Entity .
 
-  *******************************
-  *** METAREPRESENTATION PART ***
-	*******************************
-
-  op #up : Message -> Term [memo] .
-  op #downMessage1 : Term -> Message [memo] .
-
-  vars P P' : Pid .
-  var MSG : Message .
-  var PAYLOAD : GroundValues .
-  vars T1 T2 T3 : Term .
-  var A : Attribute .
-  var ASET : AttributeSet .
-	var SUB : Substitution .
-
-  eq #up(< ASET >) = '<_>[#up(ASET)] .
-  ceq #up(A, ASET) = '_`,_[#up(A), #up(ASET)]
-    if A =/= (none).AttributeSet /\ ASET =/= (none).AttributeSet .
-
-  eq #up(sender: P) = 'sender:_[#up(P)] .
-  eq #up(receiver: P) = 'receiver:_[#up(P)] .
-  eq #up(payload: PAYLOAD) = 'payload:_[#up(PAYLOAD)] .
-
-  eq #downEntity('<_>[T1]) = < #downAttributeSet(T1) > .
-
-  ceq #downAttributeSet(T1) = #downAttribute(T2), #downAttributeSet(T3)
-      if SUB := metaMatch(GRAMMAR, '_`,_['A:Attribute, 'ASET:AttributeSet], T1, nil, 0)
-     /\ 'A:Attribute <- T2 ; 'ASET:AttributeSet <- T3 := SUB .
-
-  eq #downAttributeSet(T1) = #downAttribute(T1) [owise] .
-
-  eq #downAttribute('sender:_[T1]) = sender: #downPid(T1) .
-  eq #downAttribute('receiver:_[T1]) = receiver: #downPid(T1) .
-  eq #downAttribute('payload:_[T1]) = payload: #downExp(T1) .
-  eq #downAttribute('none.AttributeSet) = none .
 endm

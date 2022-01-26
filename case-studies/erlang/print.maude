@@ -6,44 +6,37 @@ mod PRETTY_PRINT is
 	protecting META-LEVEL .
 
   op #pretty-print-sys : Sys -> Qid .
-  op #pretty-print-sys1 : Sys -> Qid .
   op #pretty-print-ent : Sys -> Qid .
 
-  var SYS : Sys .
-  var SUB : Substitution .
+  var S : Sys .
+  var E : Entity .
   var EX : Exp .
   var EXSEQ : ExpSeq .
   var ME : ModEnv .
   vars P P' : Pid .
-  var ENT : Entity .
   var MSG : GroundValues .
-  var T1 T2 : Term .
   var PIDGEN : PidGen .
   var ASET : AttributeSet .
   var ENV : EnvStack .
 
-  ceq #pretty-print-sys(SYS) =
-     '===================================================== '\n
-     #pretty-print-ent(#downEntity(T1)) '\n #pretty-print-sys1(#downSystem(T2))
-     if SUB := metaMatch(GRAMMAR, '_||_['ENT:Entity, 'SYS:Sys], #up(SYS), nil, 0)
-     /\ 'ENT:Entity <- T1 ; 'SYS:Sys <- T2 := SUB [print] .
+  ceq #pretty-print-sys(E || S) =
+     #pretty-print-ent(E) '\n
+     #pretty-print-sys(S) '\n
+     if E =/= #empty-system /\ S =/= #empty-system .
 
-  ceq #pretty-print-sys1(SYS) =
-     #pretty-print-ent(#downEntity(T1)) '\n #pretty-print-sys1(#downSystem(T2))
-     if SUB := metaMatch(GRAMMAR, '_||_['ENT:Entity, 'SYS:Sys], #up(SYS), nil, 0)
-     /\ 'ENT:Entity <- T1 ; 'SYS:Sys <- T2 := SUB [print] .
+  eq #pretty-print-sys(E) = #pretty-print-ent(E) [owise] .
 
-  eq #pretty-print-sys1(#empty-system) = ' .
+  eq #pretty-print-sys(#empty-system) = ' .
 
   eq #pretty-print-ent(< P | exp: EXSEQ, env-stack: ENV, ASET > ) =
-      '< metaPrettyPrint(['SEM_PROCESS], #up(P)) '|
-         metaPrettyPrint(['SEM_PROCESS], #up(EXSEQ)) '|
-         metaPrettyPrint(['SEM_PROCESS], #up(ENV)) '> .
+      '< metaPrettyPrint(['SEM_PROCESS], upTerm(P)) '|
+         metaPrettyPrint(['SEM_PROCESS], upTerm(EXSEQ)) '|
+         metaPrettyPrint(['SEM_PROCESS], upTerm(ENV)) '> .
 
   eq #pretty-print-ent(< sender: P, receiver: P', payload: MSG > ) =
-      '< metaPrettyPrint(['SEM_MESSAGE], #up(P)) '|
-         metaPrettyPrint(['SEM_MESSAGE], #up(P')) '|
-         metaPrettyPrint(['SEM_MESSAGE], #up(MSG)) '> .
+      '< metaPrettyPrint(['SEM_MESSAGE], upTerm(P)) '|
+         metaPrettyPrint(['SEM_MESSAGE], upTerm(P')) '|
+         metaPrettyPrint(['SEM_MESSAGE], upTerm(MSG)) '> .
 
   eq #pretty-print-ent(PIDGEN) = ' .
 endm

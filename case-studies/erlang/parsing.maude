@@ -340,9 +340,3 @@ fmod MAUDE-SYNTAX-DOWN is
 	eq #downExp('var[T]) = var(#downString(T)) .
 	eq #downExp('int[T]) = int(#downInt(T)) .
 endfm
-
-
-fmod MAUDE-SYNTAX-UPDOWN is
-	protecting MAUDE-SYNTAX-UP .
-	protecting MAUDE-SYNTAX-DOWN .
-endfm
