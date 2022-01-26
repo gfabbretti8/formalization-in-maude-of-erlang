@@ -1,4 +1,4 @@
-amod SEM_COREBIB is
+mod SEM_COREBIB is
 	protecting NAT .
 	protecting STRING .
 	protecting SYSTEM .
