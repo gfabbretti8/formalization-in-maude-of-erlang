@@ -15,12 +15,6 @@ fmod META-UP-DOWN is
 	protecting INT .
 	protecting BOOL .
 
-	op #up : Int -> Term [memo] .
-	op #up : String -> Term [memo] .
-	op #up : Bool -> Term [memo] .
-	op #up : Char -> Term [memo] .
-	op #up : Float -> Term [memo] .
-
 	op #downInt : Term -> Int [memo] .
 	op #downString : Term -> String [memo] .
 	op #downBool : Term -> Bool [memo] .
@@ -32,15 +26,6 @@ fmod META-UP-DOWN is
 	var CHR : Char .
 	var QID : Qid .
 	var T : Term .
-
-	*** Metarepresentation of maude strings and integers
-	eq #up(0) = '0.Zero .
-	ceq #up(INT) = qid("s_^" + string(INT, 10)) ['0.Zero] if INT > 0 .
-	ceq #up(INT) = qid("-_")[#up(-_(INT))] if INT < 0 .
-     	ceq #up(STR) = qid("\"" + STR + "\".String") if length(STR) =/= 1 .
-	ceq #up(CHR) = qid("\"" + CHR + "\".Char") if length(CHR) = 1 .
-	eq #up(true) = 'true.Bool .
-	eq #up(false) = 'false.Bool .
 
 	*** Lowering the representation level
 	eq #downInt('-_[T]) = -_(#downInt(T)) .

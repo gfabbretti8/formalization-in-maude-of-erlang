@@ -28,11 +28,13 @@ maude -no-banner -no-advise transform-std-op-sem.maude
 
 truncate -s -5 ./rev-model/rew-rules.maude
 
+echo "Producing the backward reversible rules."
+#Producing the forward reversible rules
+maude -no-banner -no-advise -no-mixfix -no-tecla -no-wrap transform-fwd-op-sem.maude
+
 #Producing the backward reversible rules
 echo "$(maude -no-banner -no-advise -no-ansi-color -no-mixfix -no-tecla transform-fwd-op-sem.maude )" >> rev-model/rew-rules.maude
 
 truncate -s -5 ./rev-model/rew-rules.maude
 
-echo "Producing the backward reversible rules."
-#Producing the forward reversible rules
-maude -no-banner -no-advise -no-mixfix -no-tecla -no-wrap transform-fwd-op-sem.maude
+

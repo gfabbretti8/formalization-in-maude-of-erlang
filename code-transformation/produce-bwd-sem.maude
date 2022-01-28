@@ -34,7 +34,7 @@ fmod PRODUCE-BWD-SEM is
      (RLS #transform-fwd-rls( #set-to-list(RLS)))
     endm .
 
-*** We iterate on the rules available and we transform each one of them.
+  *** We iterate on the rules available and we transform each one of them.
 
   op #transform-fwd-rls : RuleList -> RuleSet .
   ceq #transform-fwd-rls(RL, RLL)
@@ -42,24 +42,17 @@ fmod PRODUCE-BWD-SEM is
      if RLL =/= #empty-list .
   eq #transform-fwd-rls(RL) = #transform-fwd-rl-crl(RL) [owise] .
 
-*** The following function analyses the kind of rule (if conditional or not)
-*** and then proceeds to the appropriate transformation. The only difference
-*** is that in a conditional rule we must also consider the if clause.
+  *** The following function analyses the kind of rule (if conditional or not)
+  *** and then proceeds to the appropriate transformation. The only difference
+  *** is that in a conditional rule we must also consider the if clause.
+
   op #transform-fwd-rl-crl : Rule -> Rule .
   eq #transform-fwd-rl-crl(rl T1 => T2 [ASET] .)
-     = #transform-fwd-rl(rl T1 => T2 [#updateLabelBwd(ASET)] .) .
+     = rl T2 => T1 [#updateLabelBwd(ASET)] . .
   eq #transform-fwd-rl-crl(crl T1 => T2 if RLCOND [ASET] .)
-     = #transform-fwd-crl(crl T1 => T2 if RLCOND [#updateLabelBwd(ASET)] .) .
+     = rl T2 => T1 [#updateLabelBwd(ASET)] . .
 
-  op #transform-fwd-rl : Rule -> Rule .
-  eq #transform-fwd-rl(rl T1 => T2 [ASET] .)
-     = rl T2 => T1 [ASET] . .
-
-  op #transform-fwd-crl : Rule -> Rule .
-  eq #transform-fwd-crl(crl T1 => T2 if RLCOND [ASET] .)
-     = rl T2 => T1 [ASET] . .
-
-  *** The following function updates the label of a rule by adding the prefix 'fwd' to it
+  *** The following function updates the label of a rule by adding the prefix 'bwd' to it
   op #updateLabelBwd : AttrSet -> AttrSet .
   eq #updateLabelBwd(label(NAME) ASET) = label( qid("bwd" + substr(string(NAME), 3, length(string(NAME))))) ASET .
 

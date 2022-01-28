@@ -6,15 +6,6 @@ mod CONTEXT is
   sort SContext .
   subsort SContext < Entity .
 
-  var L : NatList .
-  var T : Term .
-
   op @:_ : Key -> SContext [prec 10 ctor] .
-
-  eq #up(@: key L) = '@:_[#up(key L)] .
-
-  op #downSContext : Term ->  SContext .
-  eq #downEntity('@:_[T]) = #downSContext('@:_[T]) .
-  eq #downSContext('@:_[T]) = @: #downKey(T) .
 
 endm
