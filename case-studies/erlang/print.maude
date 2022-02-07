@@ -30,8 +30,7 @@ mod PRETTY_PRINT is
 
   eq #pretty-print-ent(< P | exp: EXSEQ, env-stack: ENV, ASET > ) =
       '< metaPrettyPrint(['SEM_PROCESS], upTerm(P)) '|
-         metaPrettyPrint(['SEM_PROCESS], upTerm(EXSEQ)) '|
-         metaPrettyPrint(['SEM_PROCESS], upTerm(ENV)) '> .
+         metaPrettyPrint(['SEM_PROCESS], upTerm(EXSEQ))  '> .
 
   eq #pretty-print-ent(< sender: P, receiver: P', payload: MSG > ) =
       '< metaPrettyPrint(['SEM_MESSAGE], upTerm(P)) '|

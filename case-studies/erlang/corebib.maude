@@ -13,7 +13,7 @@ mod SEM_COREBIB is
   var FUNNAME : FunName .
   var INT : Int .
   var REQLABEL : RequestLabel .
-  var LABEL : Label .
+  var LABEL : StopLabel .
   vars EX1 EX2 EX1' EX EX' : Exp .
   var PID : ErlInt .
   var PAT : Pattern .
@@ -23,12 +23,12 @@ mod SEM_COREBIB is
   var EXSEQ : NeExpSeq .
 
   eq [spawn] :
-    < req-spawn(pid(INT)), ENVSTACK, atom("erlang") : atom("spawn")(FUNNAME, ARGS)> =
+    < req-spawn(pid(INT)), ENVSTACK, atom("erlang") : atom("spawn") ((FUNNAME, ARGS)) > =
     < spawn(FUNNAME,ARGS), ENVSTACK, int(INT) > .
 
   eq [send] :
-    < REQLABEL, ENV : ENVSTACK, int(INT) ! PAT > =
-    < pid(INT) ! #map-args(PAT, ENV), ENV : ENVSTACK, #map-args(PAT, ENV) > .
+    < REQLABEL, ENV : ENVSTACK, int(INT) ! PAYLOAD > =
+    < pid(INT) ! PAYLOAD, ENV : ENVSTACK, PAYLOAD > .
 
   eq [self] :
     < self(pid(INT)), ENVSTACK, atom("self")() > =

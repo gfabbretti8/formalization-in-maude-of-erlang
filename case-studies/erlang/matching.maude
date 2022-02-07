@@ -55,11 +55,23 @@ mod SEM_MATCH is
 	vars PAT PAT1 PAT2 : Pattern .
   var ENV : Env .
   var VAR : Var .
+  var PATTERNLIST GVALUELIST : NeExpSeq .
+
+  *** A pattern may be a sequence of pattern. Therefore we match them
+  *** against a sequence of constants, by pairwise matching the elements.
+	ceq #match((PAT, PATTERNLIST) , (GVALUE, GVALUELIST), ENV)
+     = #match(PAT, GVALUE, ENV), #match(PATTERNLIST, GVALUELIST, ENV)
+     if PATTERNLIST =/= nil /\ GVALUELIST =/= nil .
 
 	*** A pattern may be a list. Therefore we match a list of patterns
 	*** against a list of constants by pairwise matching the list elements.
 	eq #match([PAT1 | PAT2], [GVALUE1 | GVALUE2], ENV)
      = #match(PAT1, GVALUE1, ENV), #match(PAT2, GVALUE2, ENV) .
+
+	*** A pattern may be a tuple. Therefore we match a tuple of patterns
+	*** against a tuple of constants by pairwise matching the list elements.
+	eq #match({PATTERNLIST}, {GVALUELIST}, ENV)
+     = #match(PATTERNLIST, GVALUELIST, ENV) .
 
   *** A var can be undefined, that means that it is fresh and we must bind it to
   *** the new value and then we return the updated env.

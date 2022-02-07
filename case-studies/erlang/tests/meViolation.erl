@@ -1,12 +1,12 @@
 (add-module(
 
-       fun main() ->
-           MePid = erlang : spawn ( memanager , [] ) ,
+       main() ->
+           MePid = erlang : spawn( memanager , [] ),
            XPid = erlang : spawn(varmanager, [0]),
            erlang : spawn(incrementer, [MePid | XPid]),
-           erlang : spawn(incrementer, [MePid | XPid]) .
+           erlang : spawn(incrementer, [MePid | XPid]).
 
-      fun memanager() ->
+       memanager() ->
            receive
              [request | Pid] -> Pid ! answer
            end,
@@ -14,14 +14,14 @@
              release -> memanager()
            end .
 
-      fun varmanager(Val) ->
+       varmanager(Val) ->
            receive
              [write | NewVal] -> varmanager(NewVal);
              [read | Pid] -> Pid ! Val,
                              varmanager(Val)
            end .
 
-      fun incrementer(MePid, XPid) ->
+       incrementer(MePid, XPid) ->
            S = self(),
            MePid ! [request | S],
            receive

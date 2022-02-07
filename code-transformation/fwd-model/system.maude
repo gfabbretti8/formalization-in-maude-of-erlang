@@ -1,7 +1,6 @@
 mod SYSTEM is
 
   protecting META-LEVEL .
-	protecting MAUDE-SYNTAX-UPDOWN .
 	protecting SEM_ENTITY .
   protecting SEM_MESSAGE .
   protecting SEM_PID .
@@ -13,12 +12,6 @@ mod SYSTEM is
 
 	op #empty-system : -> Sys [ctor] .
 	op _||_ : Sys Sys -> Sys [ctor assoc comm id: #empty-system prec 90 format(d sm! o d) ] .
-
-	*******************************
-  *** METAREPRESENTATION PART ***
-	*******************************
-
-	op #downSystem : Term -> Sys [memo] .
 
   var E : Entity .
   var SYS : Sys .
@@ -32,14 +25,6 @@ mod SYSTEM is
   var EXSEQ : NeExpSeq .
   var ENV : EnvStack .
 
-	eq #up(#empty-system) = '#empty-system.Sys .
-	ceq #up(E || SYS) = '_||_[#up(E), #up(SYS)]
-     if SYS =/= #empty-system .
-
-	eq #downSystem('#empty-system.Sys) = #empty-system .
-	ceq #downSystem(T) = #downEntity(T1) || #downSystem(T2)
-  if SUB := metaMatch(GRAMMAR, '_||_['E:Entity, 'SYS:Sys], T, nil, 0)
-		/\ 'E:Entity <- T1 ; 'SYS:Sys <- T2 := SUB .
 
   *******************************
   ******** INIT FUNCTION ********

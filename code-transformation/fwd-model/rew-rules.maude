@@ -38,20 +38,17 @@ mod TRANSITIONS is
   protecting HELP-SYNTAX .
 
 	var EX : Exp .
-  var EXSEQ EXSEQ' EXSEQ'' : NeExpSeq .
-  var ARGS ARGS' : Args .
+  vars EXSEQ EXSEQ' EXSEQ'' : NeExpSeq .
+  vars ARGS ARGS' : Args .
 	var P : Pid .
-	vars INT INT1 : Int .
+	var INT : Int .
 	var ME : ModEnv .
-	vars GVALUE : GroundValues .
+	var GVALUE : GroundValues .
   var A : Atom .
-	var EL : Label .
-  var CLSEQ : ClauseSeq .
-  var MSG : Message .
-  vars ASET ASET' : AttributeSet .
+	vars EL LABEL : Label .
+  var ASET : AttributeSet .
   var SYS : Sys .
   vars ENV ENV' ENV'' : EnvStack .
-  var LABEL LABEL' : Label .
   var FUNNAME : FunName .
   vars DEST SENDER : Pid .
 

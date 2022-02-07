@@ -48,9 +48,9 @@ fmod SEM_MODENV is
 
 	eq #extract-functions(FDEF FDLIST)
      = #extract-functions(FDEF), #extract-functions(FDLIST) .
-	eq #extract-functions(fun FNAME ()-> FUNBODY .)
+	eq #extract-functions(FNAME ()-> FUNBODY .)
 		= FNAME ==> FUNBODY .
-	eq #extract-functions(fun FNAME (ARGS) -> FUNBODY .)
+	eq #extract-functions(FNAME (ARGS) -> FUNBODY .)
 		= FNAME[ARGS] ==> FUNBODY .
 
 	op #get-function : Atom ModEnv -> NeExpSeq .

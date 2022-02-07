@@ -3,16 +3,29 @@ mod HELP-SYNTAX is
   protecting SYNTAX .
 
   var EX : Exp .
-  var EXSEQ : NeExpSeq .
+  var NEEXSEQ : NeExpSeq .
 
   op #head : ExpSeq -> ExpSeq .
-  eq #head(EX, EXSEQ) = EX, EXSEQ .
+  eq #head(EX, NEEXSEQ) = EX, NEEXSEQ .
   eq #head(EX) = EX .
 
   op #flatten-list : List -> ExpSeq .
   eq #flatten-list([]) = [] .
   eq #flatten-list([EX]) = EX .
-  eq #flatten-list([EX | EXSEQ]) = EX, #flatten-list(EXSEQ) .
+  eq #flatten-list([EX | NEEXSEQ]) = EX, #flatten-list(NEEXSEQ) .
   eq #flatten-list(EX) = EX .
 
+  var GVALUE EXSEQ : ExpSeq .
+  op _*_*_ : GroundValues Exp ExpSeq -> TripleExp .
+
+  sort TripleExp .
+
+  op #getExp : ExpSeq -> TripleExp .
+  op #getExp1(_|_) : ExpSeq ExpSeq -> TripleExp .
+
+  eq #getExp(EXSEQ) = #getExp1(nil | EXSEQ) .
+
+  ceq #getExp1(GVALUE | EX, EXSEQ) = #getExp1(GVALUE, EX | EXSEQ)
+     if EX :: GroundValues .
+  eq #getExp1(GVALUE | EX, EXSEQ) = GVALUE * EX * EXSEQ .
 endm
