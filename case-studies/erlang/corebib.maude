@@ -24,15 +24,15 @@ mod SEM_COREBIB is
 
   eq [spawn] :
     < req-spawn(pid(INT)), ENVSTACK, atom("erlang") : atom("spawn") ((FUNNAME, ARGS)) > =
-    < spawn(FUNNAME,ARGS), ENVSTACK, int(INT) > .
+    < spawn(FUNNAME,ARGS), ENVSTACK, eint(INT) > .
 
   eq [send] :
-    < REQLABEL, ENV : ENVSTACK, int(INT) ! PAYLOAD > =
+    < REQLABEL, ENV : ENVSTACK, eint(INT) ! PAYLOAD > =
     < pid(INT) ! PAYLOAD, ENV : ENVSTACK, PAYLOAD > .
 
   eq [self] :
     < self(pid(INT)), ENVSTACK, atom("self")() > =
-    < tau, ENVSTACK, int(INT) > .
+    < tau, ENVSTACK, eint(INT) > .
 
   ceq [send] :
     < REQLABEL, ENVSTACK, PID ! EX > =

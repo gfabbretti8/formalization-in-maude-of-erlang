@@ -19,6 +19,8 @@ mod SEM_NORMALISATION is
   var CLSEQ : ClauseSeq .
   var ME : ModEnv .
   var PAT : Pattern .
+  var BINOP BINOP' : BinOp .
+  var OP : Qid .
   var INT INT' RES : Int .
   var BOOL : Bool .
   var ARGS : Args .
@@ -57,65 +59,23 @@ mod SEM_NORMALISATION is
     < crashed, ENV : ENVSTACK, #crashed >
     if ENV[VAR] =/= undefined .
 
-   ceq [match] :
-    < REQLABEL, ENVSTACK, VAR = EX > =
-    < LABEL, ENVSTACK', VAR = EX' >
-    if < LABEL, ENVSTACK', EX' > :=
-       < REQLABEL, ENVSTACK, EX > .
-
    ceq [minus] :
-    < REQLABEL, ENVSTACK, int(INT) - int(INT') > =
-    < tau, ENVSTACK, int(RES) >
+    < REQLABEL, ENVSTACK, eint(INT) - eint(INT') > =
+    < tau, ENVSTACK, eint(RES) >
     if RES := downTerm(getTerm(metaReduce(upModule('INT, false), '_-_[upTerm(INT), upTerm(INT')])), INT) .
 
-   ceq [minus] :
-    < REQLABEL, ENVSTACK, int(INT) - EX > =
-    < LABEL, ENVSTACK', int(INT) - EX' >
-    if < LABEL, ENVSTACK', EX' > :=
-       < REQLABEL, ENVSTACK, EX > .
-
-   ceq [minus] :
-    < REQLABEL, ENVSTACK, EX1 - EX2 > =
-    < LABEL, ENVSTACK', EX1' - EX2 >
-    if < LABEL, ENVSTACK', EX1' > :=
-       < REQLABEL, ENVSTACK, EX1 > .
-
    ceq [mult] :
-    < REQLABEL, ENVSTACK, int(INT) * int(INT') > =
-    < tau, ENVSTACK, int(RES) >
+    < REQLABEL, ENVSTACK, eint(INT) * eint(INT') > =
+    < tau, ENVSTACK, eint(RES) >
     if RES := downTerm(getTerm(metaReduce(upModule('INT, false), '_*_[upTerm(INT), upTerm(INT')])), INT) .
 
-   ceq [mult] :
-    < REQLABEL, ENVSTACK, GVALUE * EX > =
-    < LABEL, ENVSTACK', GVALUE * EX' >
-    if < LABEL, ENVSTACK', EX' > :=
-       < REQLABEL, ENVSTACK, EX > .
-
-   ceq [mult] :
-    < REQLABEL, ENVSTACK, EX1 * EX2 > =
-    < LABEL, ENVSTACK', EX1' * EX2 >
-    if < LABEL, ENVSTACK', EX1' > :=
-       < REQLABEL, ENVSTACK, EX1 > .
-
    ceq [plus] :
-    < REQLABEL, ENVSTACK, int(INT) + int(INT') > =
-    < tau, ENVSTACK, int(RES) >
+    < REQLABEL, ENVSTACK, eint(INT) + eint(INT') > =
+    < tau, ENVSTACK, eint(RES) >
     if RES := downTerm(getTerm(metaReduce(upModule('INT, false), '_+_[upTerm(INT), upTerm(INT')])), INT) .
 
-   ceq [plus] :
-    < REQLABEL, ENVSTACK, int(INT) + EX > =
-    < LABEL, ENVSTACK', int(INT) + EX' >
-    if < LABEL, ENVSTACK', EX' > :=
-       < REQLABEL, ENVSTACK, EX > .
-
-   ceq [plus] :
-    < REQLABEL, ENVSTACK, EX1 + EX2 > =
-    < LABEL, ENVSTACK', EX1' + EX2 >
-    if < LABEL, ENVSTACK', EX1' > :=
-       < REQLABEL, ENVSTACK, EX1 > .
-
    ceq [comparison] :
-    < REQLABEL, ENVSTACK, int(INT) < int(INT') > =
+    < REQLABEL, ENVSTACK, eint(INT) < eint(INT') > =
     < tau, ENVSTACK, GVALUE >
     if BOOL := downTerm(getTerm(metaReduce(upModule('INT, false), '_<_[upTerm(INT), upTerm(INT')])), false) /\
        GVALUE := if BOOL
@@ -123,17 +83,23 @@ mod SEM_NORMALISATION is
                     else atom("false")
                  fi .
 
-   ceq [comparison] :
-    < REQLABEL, ENVSTACK, int(INT) < EX > =
-    < LABEL, ENVSTACK', int(INT) < EX' >
-    if < LABEL, ENVSTACK', EX' > :=
-       < REQLABEL, ENVSTACK, EX > .
+   ceq [binop2] :
+    < REQLABEL, ENVSTACK, BINOP > =
+    < LABEL, ENVSTACK', BINOP' >
+    if OP[T1, T2] := upTerm(BINOP) /\
+       EX := downTerm(T2, nil) /\
+       < LABEL, ENVSTACK', EX' > :=
+       < REQLABEL, ENVSTACK, EX > /\
+       BINOP' := downTerm(OP[T1, upTerm(EX')], nil) .
 
-   ceq [comparison] :
-    < REQLABEL, ENVSTACK, EX1 < EX2 > =
-    < LABEL, ENVSTACK', EX1' < EX2 >
-    if < LABEL, ENVSTACK', EX1' > :=
-       < REQLABEL, ENVSTACK, EX1 > .
+   ceq [binop2] :
+    < REQLABEL, ENVSTACK, BINOP > =
+    < LABEL, ENVSTACK', BINOP' >
+    if OP[T1, T2] := upTerm(BINOP) /\
+       EX := downTerm(T1, nil) /\
+       < LABEL, ENVSTACK', EX' > :=
+       < REQLABEL, ENVSTACK, EX > /\
+       BINOP' := downTerm(OP[upTerm(EX'), T2], nil) .
 
    ceq [list] :
     < REQLABEL, ENVSTACK, [EX1 | EX2] > =

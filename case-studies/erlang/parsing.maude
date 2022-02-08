@@ -317,7 +317,7 @@ fmod PARSING-SYNTAX-DOWN is
 
   eq #downAtom('token[T]) = atom(substr(string(getName(T)), 1, length(string(getName(T))) + (-1))) .
 	eq #downVar('token[T]) = var(substr(string(getName(T)), 1, length(string(getName(T))))) .
-	eq #downErlInt('token[T]) = int(rat(substr(string(getName(T)), 1, length(string(getName(T)))), 10)) .
+	eq #downErlInt('token[T]) = eint(rat(substr(string(getName(T)), 1, length(string(getName(T)))), 10)) .
 
 	ceq #downExp('token[T]) = #downErlInt('token[T])
 		if syntaxCheckInt('token[T]) .
@@ -349,9 +349,9 @@ fmod MAUDE-SYNTAX-DOWN is
 
 	eq #downAtom('atom[T]) = atom(#downString(T)) .
 	eq #downVar('var[T]) = var(#downString(T)) .
-	eq #downErlInt('int[T]) = int(#downInt(T)) .
+	eq #downErlInt('int[T]) = eint(#downInt(T)) .
 
 	eq #downExp('atom[T]) = atom(#downString(T)) .
 	eq #downExp('var[T]) = var(#downString(T)) .
-	eq #downExp('int[T]) = int(#downInt(T)) .
+	eq #downExp('int[T]) = eint(#downInt(T)) .
 endfm

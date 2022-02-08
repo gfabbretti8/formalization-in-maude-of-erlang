@@ -406,15 +406,34 @@ obtain a concrete rule that fits the format required by the general approach.
   \label{fig:square}
 \end{figure}
 
-\begin{lemma}\label{lemma:keys-equiv}
-  Given a set of ground rules $GR$ defining a system semantics the general
-  approach, $\rightsquigarrow_C$, can produce infinite many version of a
-  reversible version of $GR$ which are all equivalent and only differ for the use of keys.
-\end{lemma}
+Before showing that the square commutes we need to define an auxiliary function
+which serves us to map the keys of a rule to a general format to the format
+imposed by the schemas. Such function is defined as follow:
+\[
+  \begin{array}{l}
+    \phi(t \rightarrow t' | [ctx; t]):= \\
+    \hspace{1cm}\ms{let}~K=firstKey(t)~\ms{in}\\
+    \hspace{1cm}t \rightarrow \phi(t, K,0) | [\phi(ctx,K,0); t]\\
+    \phi(t' | [ctx; t]  \rightarrow t ):= \\
+    \hspace{1cm}\ms{let}~K=firstKey(t)~\ms{in}\\
+    \hspace{1cm}\phi(t',K,0) | [\phi(ctx,K,0);t]\rightarrow t\\
+    \phi(t, K, C ):= \\
+    \ms{match}~t~\ms{with}\\
+    \hspace{0.3cm}| e * k \rightarrow \langle e * key(C::K), C+1 \rangle\\
+    \hspace{0.3cm}| \bullet * k \rightarrow \langle e * key(C::K), C+1 \rangle \\
+    \hspace{0.3cm}| op[tlist] \rightarrow \\
+    \hspace{0.5cm} \ms{let}~\langle tlist', C\rangle = \ms{foldl}~tlist~([], C)~\phi~\ms{in}\\
+    \hspace{0.5cm} op[tlist']
+  \end{array}
+\]
+
+In words, $\phi$ is the function that given a reversible rule (either forward or
+backward) maps the keys of the term running in parallel with the memory from
+their old values to new values so that the format imposed by the schema is respected.
 
 \begin{lemma}
   The square, up-to keys, commutes, i.e., $\rightsquigarrow_r
-  \rightsquigarrow_{\mathcal{I},E} =_k \rightsquigarrow_{\mathcal{I},E}
+  \rightsquigarrow_{\mathcal{I},E} \stackrel{\phi}{=} \rightsquigarrow_{\mathcal{I},E}
   \rightsquigarrow_C $
 \end{lemma}
 \begin{proof}
@@ -428,13 +447,13 @@ obtain a concrete rule that fits the format required by the general approach.
   gr)\in \rightsquigarrow_C$, so we can conclude.\\
 
   Now, we need to prove that if $(s, gr) \in \rightsquigarrow_{\mathcal{I},E}
-  \rightsquigarrow_C $ then there is a $gr_k\equiv gr$ so that $(s,gr_k) \in \rightsquigarrow_r
-  \rightsquigarrow_{\mathcal{I},E}$. First, we know that it exists a reversible
-  version of the schema so we have $(s, s_r)\in \rightsquigarrow_k$. Then, we
+  \rightsquigarrow_C $ then there is a $gr_k$ so that $(s,gr_k) \in \rightsquigarrow_r
+  \rightsquigarrow_{\mathcal{I},E}$, where $\phi(gr)=gr_k$. First, we know that it exists a reversible
+  version of the schema, so we have $(s, s_r)\in \rightsquigarrow_k$. Then, we
   can proceed to instantiate $s_r$ to $gr_k$ where the ground values are equal
-  to $gr$ except (potentially) for the keys, due to the format imposed by the
-  schema. Nonetheless, thanks to lemma~\ref{lemma:keys-equiv} we know that $gr$
-  and $gr_k$ define the same semantics as they only differ for the use of keys, so we can conclude.
+  to $gr$ except (potentially) for the keys used on the term running in parallel
+  with the memory and hence also on the context. Nonetheless, by applying function $\phi$ to $gr$ we know that we can
+  always recover the format imposed by the schema, so we can conclude.
 
 \end{proof}
 

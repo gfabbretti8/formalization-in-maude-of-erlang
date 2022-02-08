@@ -1,4 +1,7 @@
 fmod SYNTAX-COMMON is
+
+  protecting QID .
+
   sort Program .
   subsort FunDefSeq < Program .
 
@@ -17,6 +20,7 @@ fmod SYNTAX-COMMON is
   op #crashed : -> Exp .
 
   sort BinOp .
+  subsort BinOp < Exp .
   sort GroundValues .
   subsorts Atom ErlInt < GroundValues .
 
@@ -61,28 +65,27 @@ fmod SYNTAX-COMMON is
   subsorts Pattern < Exp .
 
   sort Leq .
-  subsort Leq < Exp .
+  subsort Leq < Exp BinOp .
 
   op _<_ : Exp Exp -> Leq [ctor prec 15] .
 
   sort Mult .
-  subsort Mult < Exp .
-  subsort BinOp < Mult .
+  subsort Mult < Exp BinOp .
 
   op _*_ : Exp Exp -> Mult [ctor prec 15] .
 
   sort Minus .
-  subsort Minus < Exp .
+  subsort Minus < Exp BinOp .
 
   op _-_ : Exp Exp -> Minus [ctor prec 15] .
 
   sort Plus .
-  subsort Plus < Exp .
+  subsort Plus < Exp BinOp .
 
   op _+_ : Exp Exp -> Minus [ctor prec 15] .
 
   sort Match .
-  subsort Match < Exp .
+  subsort Match < Exp BinOp .
   op _=_ : Pattern Exp -> Match [ctor prec 35 format (o o m! o)] .
 
   sort Clause .
@@ -138,7 +141,7 @@ fmod SYNTAX is
 
   op var : String -> Var [ctor format (b o)] .
 	op atom : String -> Atom [ctor format (b o)] .
-	op int : Int -> ErlInt [ctor format (b o)] .
+	op eint : Int -> ErlInt [ctor format (b o)] .
 
 endfm
 
