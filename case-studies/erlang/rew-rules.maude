@@ -27,6 +27,12 @@
 
 ***)
 
+mod SEM_EQUATIONS is
+	protecting SYNTAX .
+	protecting SEM_NORMALISATION .
+  protecting SEM_COREBIB .
+endm
+
 mod TRANSITIONS is
 	protecting SYNTAX .
 	protecting SEM_LABEL .
@@ -36,12 +42,13 @@ mod TRANSITIONS is
   protecting SEM_PROCESS .
   protecting SEM_COREBIB .
   protecting HELP-SYNTAX .
+  protecting SEM_EQUATIONS .
 
 	var EX : Exp .
   vars EXSEQ EXSEQ' EXSEQ'' : NeExpSeq .
   vars ARGS ARGS' : Args .
 	var P : Pid .
-	var INT : Int .
+	var INT INT' : Int .
 	var ME : ModEnv .
 	var GVALUE : GroundValues .
   var A : Atom .
@@ -66,10 +73,11 @@ mod TRANSITIONS is
   crl [sys-spawn] :
       < P | exp: EXSEQ, env-stack: ENV, mod-env: ME, ASET > || pidGen(INT) =>
       < P | exp: EXSEQ', env-stack: ENV', mod-env: ME, ASET > ||
-      < pid(INT + 1) | exp: EXSEQ'', env-stack: ENV'', mod-env: ME > ||
-       pidGen(INT + 1)
-   		if < spawn(FUNNAME,ARGS), ENV', EXSEQ' > :=
-         < req-spawn(pid(INT + 1)), ENV, EXSEQ > /\
+      < pid(INT') | exp: EXSEQ'', env-stack: ENV'', mod-env: ME > ||
+       pidGen(INT')
+   		if INT' := INT + 1 /\
+         < spawn(FUNNAME,ARGS), ENV', EXSEQ' > :=
+         < req-spawn(pid(INT')), ENV, EXSEQ > /\
          EXSEQ'' := #get-function(FUNNAME, ME) /\
          ARGS' := #map-args(ARGS, ENV') /\
          ENV'' := #init-env(#get-formal-args(FUNNAME, ME), #flatten-list(ARGS')) .
@@ -107,11 +115,7 @@ mod TRANSITIONS is
 
 endm
 
-mod SEM_EQUATIONS is
-	protecting SYNTAX .
-	protecting SEM_NORMALISATION .
-  protecting SEM_COREBIB .
-endm
+
 
 mod THEORY is
 	protecting SYNTAX .

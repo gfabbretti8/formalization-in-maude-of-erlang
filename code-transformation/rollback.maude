@@ -1,0 +1,105 @@
+mod ROLLBACK is
+
+  protecting SYSTEM .
+  protecting TRANSITIONS .
+  protecting BWDTRANSITIONS .
+  protecting HELPER .
+
+  var KEY KEY' : Key .
+  var OP FWDACT FWDACT' BWDACT : Qid .
+  var T T1 T2 ACT ICONF CTX SYS REQ : Term .
+  var TERMS : TermList .
+  var E E' : Entity .
+  var R4Tuple : Result4Tuple? .
+  var L L' : NatList .
+  var KEYS : KeySet .
+  var REQSET REQSET' REQSET1 REQSET2 : ReqSet .
+  var REQUEST : Request .
+
+  sort Request ReqSet KeySet .
+  subsort ActKey < Request .
+  subsort Request < ReqSet .
+  subsort Key < KeySet .
+  op _,_ : ReqSet ReqSet -> ReqSet [ctor id: empty assoc comm] .
+  op _,_ : KeySet KeySet -> KeySet [ctor id: empty assoc comm] .
+  op empty : -> KeySet [ctor] .
+  op empty : -> ReqSet [ctor] .
+
+  eq REQUEST, REQUEST = REQUEST .
+
+  op #contains : Key Term -> Bool .
+  ceq #contains(KEY, OP[TERMS]) = #contains(KEY, TERMS)
+     if #declared-in(upModule('SYSTEM, false), OP) .
+  ceq #contains(KEY, (T, TERMS)) =
+      #contains(KEY, T) or #contains(KEY, TERMS)
+    if T =/= empty /\ TERMS =/= empty .
+  ceq #contains(KEY, '@:_[T]) = true
+    if KEY :=  downTerm(T, key -1) .
+  ceq #contains(KEY, '_*_[T1, T2]) = true
+    if KEY := downTerm(T2, key -1) .
+  eq #contains(KEY, T) = false  .
+
+  op #get-action : Key Term -> Qid .
+  ceq #get-action(KEY, '`[_;_;_`][REQ,ICONF,CTX]) = FWDACT
+     if #contains(KEY, ICONF) /\
+        FWDACT x L := downTerm(REQ, 'wrong x -9).
+  ceq #get-action(KEY, OP[TERMS]) = #get-action(KEY, TERMS)
+     if #declared-in(upModule('SYSTEM,false), OP) .
+  ceq #get-action(KEY, (T, TERMS)) =
+     qid(string(#get-action(KEY, T)) + string(#get-action(KEY, TERMS)))
+     if T =/= empty /\ TERMS =/= empty .
+  eq #get-action(KEY, T) = ' .
+
+  op #get-fst-key : Term -> Key .
+  eq #get-fst-key('@:_[T] ) = downTerm(T, key(- 9)) .
+  eq #get-fst-key(OP[T, TERMS]) =  #get-fst-key(T) .
+
+  op #get-keys : Term -> KeySet .
+  eq #get-keys('@:_[T]) = downTerm(T, key -9) .
+  eq #get-keys(OP[TERMS]) = #get-keys(TERMS) .
+  ceq #get-keys((T, TERMS)) =
+     #get-keys(T), #get-keys(TERMS)
+     if T =/= empty /\ TERMS =/= empty .
+  eq #get-keys(T) = empty [owise] .
+
+  op #get-new-req : Key Term Term -> ReqSet .
+  ceq #get-new-req(KEY, '`[_;_;_`][REQ,ICONF,CTX], SYS) =
+      downTerm(REQ, 'wrong x -11), REQSET
+     if #contains(KEY, ICONF) /\
+        KEY' := #get-fst-key(CTX) /\
+        KEYS := #get-keys(CTX) /\
+        REQSET := #iter-get-req(KEYS, SYS) .
+  ceq #get-new-req(KEY, OP[TERMS], SYS) = #get-new-req(KEY, TERMS, SYS)
+     if #declared-in(upModule('SYSTEM,false), OP) .
+  ceq #get-new-req(KEY, (T, TERMS), SYS) =
+      #get-new-req(KEY, T, SYS), #get-new-req(KEY, TERMS, SYS)
+     if T =/= empty /\ TERMS =/= empty  .
+  eq #get-new-req(KEY, T, SYS) = empty [owise] .
+
+  op #iter-get-req : KeySet Term -> ReqSet .
+  eq #iter-get-req((KEY, KEYS), SYS) =
+     #get-new-req(KEY, SYS, SYS), #iter-get-req(KEYS, SYS) .
+  eq #iter-get-req(empty, SYS) = empty .
+
+  op #changePrefix : Qid -> Qid .
+  eq #changePrefix(FWDACT) =
+     qid("bwd" + substr(string(FWDACT), 3, length(string(FWDACT)))) .
+
+  op #rollback : Key Term -> Term .
+  ceq #rollback(KEY, SYS) =
+      #rollback(SYS, REQSET)
+    if #contains(KEY, SYS) /\
+         FWDACT := #get-action(KEY, SYS) /\
+         REQSET := #get-new-req(KEY, SYS, SYS) [print REQSET] .
+  eq #rollback(KEY, SYS) = 'nil [owise] .
+
+  op #rollback : Term ReqSet -> Term .
+  eq #rollback(SYS, empty) = SYS .
+  ceq #rollback(SYS, ((FWDACT x L), REQSET)) =
+        #rollback(getTerm(R4Tuple), REQSET)
+     if BWDACT := #changePrefix(FWDACT) /\
+        R4Tuple := metaXapply(['BWDTRANSITIONS], SYS, BWDACT,
+                              none, 0, unbounded, 0) /\
+        R4Tuple :: Result4Tuple [print "reverted " FWDACT  " \t\t --  key(" L ")"] .
+
+endm

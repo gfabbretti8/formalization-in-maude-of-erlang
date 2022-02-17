@@ -105,7 +105,7 @@ mod ERLANG-LOOP is
         else
          [nil, < idle, #no-parse, SYS >, 'cannot 'apply downTerm(RULE, 'error)]
         fi
-     if ResultTriple := metaXapply(['TRANSITIONS], upTerm(SYS), downTerm(RULE, 'error), 'P:Pid <- 'pid[T1], 0, unbounded, 0) [print ResultTriple] .
+     if ResultTriple := metaXapply(['TRANSITIONS], upTerm(SYS), downTerm(RULE, 'error), 'P:Pid <- 'pid[T1], 0, unbounded, 0)  .
 
   rl [pprint-sys] : [nil, < parsed, 'pprint-sys.Command, SYS >, QIL' ] =>
    [nil, <  parsed, 'fwd-step.Command, SYS >, QIL' #pretty-print-sys(SYS) ] .

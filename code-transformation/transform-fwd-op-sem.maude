@@ -14,6 +14,6 @@ set show command off .
 set show advisories off .
 set show loop stats off .
 
-(show module CODE-MANIPULATION[TRANSITIONS, 'BWD] .)
+(show module CODE-MANIPULATION[FWDTRANSITIONS, 'BWD] .)
 
 quit

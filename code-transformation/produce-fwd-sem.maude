@@ -87,14 +87,14 @@ fmod PRODUCE-FWD-SEM is
      = #transform-crl(crl T1 => T2 if RLCOND [#updateLabel(ASET)] .) .
 
   op #transform-rl : Rule -> Rule .
-  ceq #transform-rl(rl T1 => T2 [ASET] .)
-     = rl RT1 => '_||_[TERMS, '`[_;_`][RT1,TERMS']] [ASET] .
+  ceq #transform-rl(rl T1 => T2 [label(NAME) ASET] .)
+     = rl RT1 => '_||_[TERMS, '`[_;_;_`]['_x_[upTerm(NAME), 'L:NatList],RT1,TERMS']] [label(NAME) ASET] .
      if RT1 * KEY := #transform-rl-left-term(T1, 'nil) /\
         TERMS x ID x TERMS' x KEY := #transform-rl-right-term(T2, 0, KEY) .
 
   op #transform-crl : Rule -> Rule .
-  ceq #transform-crl(crl T1 => T2 if RLCOND [ASET] .)
-     = crl RT1 => '_||_[TERMS, '`[_;_`][RT1,TERMS']] if RLCOND [ASET] .
+  ceq #transform-crl(crl T1 => T2 if RLCOND [label(NAME) ASET] .)
+     = crl RT1 => '_||_[TERMS, '`[_;_;_`]['_x_[upTerm(NAME), 'L:NatList],RT1,TERMS']] if RLCOND [label(NAME) ASET] .
      if RT1 * KEY := #transform-rl-left-term(T1, 'nil) /\
         TERMS x ID x TERMS' x KEY := #transform-rl-right-term(T2, 0, KEY) .
 

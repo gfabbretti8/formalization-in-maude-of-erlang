@@ -7,8 +7,10 @@ echo "Preparing new directory."
 cp -r ../case-studies/$1 rev-model
 cp -r ../case-studies/$1 fwd-model
 cp ./key-modules/* ./rev-model/
+cp ./rollback.maude ./rev-model/
+cp ./helper.maude ./rev-model/
 
-gsed -i '/^load entity.maude ./a load entity-with-key.maude .\n load context.maude .' ./rev-model/framework.maude
+gsed -i '/^load entity.maude ./a load entity-with-key.maude .\n load context.maude .\n load helper.maude .' ./rev-model/framework.maude
 
 rm rev-model/system.maude
 
@@ -36,5 +38,7 @@ maude -no-banner -no-advise -no-mixfix -no-tecla -no-wrap transform-fwd-op-sem.m
 echo "$(maude -no-banner -no-advise -no-ansi-color -no-mixfix -no-tecla transform-fwd-op-sem.maude )" >> rev-model/rew-rules.maude
 
 truncate -s -5 ./rev-model/rew-rules.maude
+
+gsed -i '/^load rew-rules.maude ./a load rollback.maude .' ./rev-model/framework.maude
 
 

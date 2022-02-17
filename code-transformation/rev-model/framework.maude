@@ -8,6 +8,7 @@
 
 ***)
 
+load model-checker.maude .
 load updown.maude .
 load syntax.maude .
 load help-syntax.maude .
@@ -15,6 +16,7 @@ load parsing.maude .
 load entity.maude .
 load entity-with-key.maude .
  load context.maude .
+ load helper.maude .
 load pid.maude .
 load environment.maude .
 load modenv.maude .
@@ -26,7 +28,9 @@ load process.maude .
 load system.maude .
 load corebib.maude .
 load rew-rules.maude .
+load rollback.maude .
 load print.maude .
+
 load loop.maude .
 
 loop init .

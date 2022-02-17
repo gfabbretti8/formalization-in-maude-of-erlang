@@ -8,6 +8,7 @@
 
 ***)
 
+load model-checker.maude .
 load updown.maude .
 load syntax.maude .
 load help-syntax.maude .
@@ -25,6 +26,7 @@ load system.maude .
 load corebib.maude .
 load rew-rules.maude .
 load print.maude .
+
 load loop.maude .
 
 loop init .

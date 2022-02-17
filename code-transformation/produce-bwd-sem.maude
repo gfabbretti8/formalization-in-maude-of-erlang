@@ -31,7 +31,7 @@ fmod PRODUCE-BWD-SEM is
      OPDS
      MAS
      EQS
-     (RLS #transform-fwd-rls( #set-to-list(RLS)))
+     (#transform-fwd-rls( #set-to-list(RLS)))
     endm .
 
   *** We iterate on the rules available and we transform each one of them.

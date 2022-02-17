@@ -57,19 +57,21 @@ fmod SYNTAX-TRANSFORM is
 
   op #updateOperatorDeclSet : OpDeclSet -> OpDeclSet .
   eq #updateOperatorDeclSet(OPDS)
-     = (op '`[_;_`] : ('Sys 'Sys) -> 'Memory
-         [ctor frozen(1 2) prec(40) format('sg! 'o 'g! 'o 'g! 'o) ] .
+     = (op '_x_ : ('Qid 'NatList) -> 'ActKey [ctor prec (10)] .
+        op '`[_;_;_`] : ('ActKey 'Sys 'Sys) -> 'Memory
+         [ctor frozen(1 2) prec(40) format('sg! 'o 'g! 'o 'g! 'o 'g! 'o) ] .
         op '#downMemory : 'Term -> 'Memory [memo] .
         OPDS) .
 
   op #addSort : SortSet -> SortSet .
   eq #addSort(SS)
-     = SS ; 'Memory .
+     = SS ; 'Memory ; 'ActKey .
 
   op #updateSubsortDeclSet : SubsortDeclSet -> SubsortDeclSet .
   eq #updateSubsortDeclSet(SSDS)
      = (subsort 'EntityWithKey < 'Sys .
         subsort 'Memory < 'Sys .
+        subsort 'Qid < 'Sys .
         subsort 'Memory < 'Entity .
         subsort 'SContext < 'Sys . SSDS) .
 

@@ -51,15 +51,7 @@
     var  QIL : QidList .
     var  VDS : VariableSet .
     var  Q : Qid .
-  *** As for TUPLE, the equation for the \texttt{evalModExp} is reduced to the
-  *** creation of a new module. A module expression POW[n]{Nat} produces a
-  *** module
-  ***
-  *** fmod POW[n]{X :: TRIV} is
-  ***   inc TUPLE[n]{X, X, ..., X} .
-  *** endfm
-  ***
-  *** which is then instantiated by the Nat view.
+    var  STRING : String .
 
   *** Some auxiliary functions are defined in order
   *** to generate the different declarations in the module.
@@ -72,17 +64,16 @@
         else < evalModule(
                  setName(
                    #transform-mod(upModule(ME',false), Q),
-                   qid(string(ME))),
+                   qid(string(downTerm(Q, 'nil)) + #removePrefix(string(ME)))),
                  none, DB') ;
-               qid(string(ME))>
+               qid(string(downTerm(Q, 'nil)) + #removePrefix(string(ME)))>
         fi
       if ME' := modExp(evalModExp(ME, PDL, DB))
-         /\ DB' := database(evalModExp(ME, PDL, DB)) .
+         /\ DB' := database(evalModExp(ME, PDL, DB)) [print Q] .
 
-  *** The equations for the \texttt{header2QidList},
-  *** \texttt{parseModExp}, \texttt{prepHeader}, and
-  *** \texttt{setUpModExpDeps} functions on the $n$-tuple module
-  *** expression are as follows:
+    op #removePrefix : String -> String .
+    eq #removePrefix("FWDTRANSITIONS") = "TRANSITIONS" .
+    eq #removePrefix(STRING) = STRING [owise] .
 
     eq parseModExp('CODE-MANIPULATION`[_`,_`][T, T'])
       = CODE-MANIPULATION[parseModExp(T), T'] .

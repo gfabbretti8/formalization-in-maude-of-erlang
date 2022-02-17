@@ -5,6 +5,7 @@ mod CONTEXT is
 
   sort SContext .
   subsort SContext < Entity .
+  subsort SContext < EntityWithKey .
 
   op @:_ : Key -> SContext [prec 10 ctor] .
 
