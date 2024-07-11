@@ -15,7 +15,7 @@ Samples Erlang program can be found in `/case-studies/erlang/tests`, to load a p
 ### Generating Reversible Semantics
 To generate a reversible semantics it suffices to navigate to `/code-transformation` and invoke the command `./produce-rev-sem.sh formalism`, where formalism must be replace by the intended semantics (currently it can only be replace by `erlang`). This extends the `rew-rules.maude` with a module for the forward reversible transitions and with a module for the backward reversible transitions.
 
-Then, before using the reversible semantics there are two changes that need to be done by hand. The first change requires to update the `setup-first-proc` function by tagging the entities with keys. The second change requires to extend the `loop.maude` file with commands to rollback and to do interactive steps with the reversible semantics. Examples of the modified files can be found in `/code-transformation/reversible-loop-system` 
+Then, before using the reversible semantics there are three changes that need to be done by hand. The first change requires to update the `setup-first-proc` function by tagging the entities with keys. The second change requires to extend the `loop.maude` file with commands to rollback and to do interactive steps with the reversible semantics. Finally, it is required to update the `print.maude` file to take into account keys. Examples of the modified files can be found in `/code-transformation/reversible-auxiliary-modules` 
 
 ### Using the Reversible Semantics
 The following is a tutorial on how to use the reversible semantics as well as the rollback semantics.
@@ -36,11 +36,11 @@ Load a test
 
 With the following command you can select a process by its pid and make it reduce forward.
 
-`(interactive-step(0, fwd))`
+`(interactive-step(0, 'fwd))`
 
 With the following command you can select a process by its pid and make it reduce backward.
 
-`(interactive-step(0, bwd))`
+`(interactive-step(0, 'bwd))`
 
 With the following command you can run the program to completion.
 
@@ -49,6 +49,10 @@ With the following command you can run the program to completion.
 With the following command you can rollback the program up to the specified key.
 
 `(roll(0))`
+
+With the following command you can print the system state.
+
+`(pprint-sys)`
 
 
 
