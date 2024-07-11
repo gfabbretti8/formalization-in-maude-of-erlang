@@ -23,24 +23,31 @@ The following is a tutorial on how to use the reversible semantics as well as th
 `cd /case-studies/rev-model`
 
 Launch maude
+
 `maude`
 
 Load the framework
+
 `load framework.maude`
 
 Load a test
+
 `load tests/meViolation.erl`
 
 With the following command you can select a process by its pid and make it reduce forward.
+
 `(interactive-step(0, fwd))`
 
 With the following command you can select a process by its pid and make it reduce backward.
+
 `(interactive-step(0, bwd))`
 
 With the following command you can run the program to completion.
+
 `(fwd-step)`
 
 With the following command you can rollback the program up to the specified key.
+
 `(roll(0))`
 
 
