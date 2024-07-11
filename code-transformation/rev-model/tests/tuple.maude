@@ -1,0 +1,8 @@
+(add-module(
+
+       start() ->
+               X = 5,
+               Z = X * X,
+               {X, 38, 40, Z, 42, X},
+               Y .
+, start, empty))

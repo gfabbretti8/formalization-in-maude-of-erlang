@@ -100,7 +100,7 @@ fmod PRODUCE-FWD-SEM is
 
   *** The following function updates the label of a rule by adding the prefix 'fwd' to it
   op #updateLabel : AttrSet -> AttrSet .
-  eq #updateLabel(label(NAME) ASET) = label( qid("fwd-" + string(NAME)) ) ASET .
+  eq #updateLabel(label(NAME) ASET) = label(qid("fwd")) ASET .
 
 	********************************
   *** LEFT TERM TRANSFORMATION ***
@@ -127,10 +127,6 @@ fmod PRODUCE-FWD-SEM is
   ceq #transform-rl-left-term(T, KEY)
      =  ('_*_[T,'key_[FKEY]]) * (FKEY)
     if FKEY := #freshKey(KEY) .
-
-  op #freshKey : Qid -> Qid .
-  eq #freshKey('nil) = 'L:NatList .
-  eq #freshKey(KEY) = qid( substr(string(KEY), 0, find(string(KEY), ":", 0)) + "'" + ":NatList") .
 
 	*********************************
   *** RIGHT TERM TRANSFORMATION ***

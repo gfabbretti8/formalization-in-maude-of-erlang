@@ -1,0 +1,139 @@
+***(
+
+	LOOP.MAUDE
+
+	In this module we define the LOOP-MODE interface for user interaction on the
+	command line of the Maude interpreter.
+
+	The ERLANG-LOOP module finally implements the interface to Maude's input/output
+	subsystem and defines rewriting rules that implement the commands.
+	Note: The model checker uses the equational theory and the rewriting theory of
+	      the module in which it is started; therefore our theory has to be included
+	      into the ERLANG-LOOP module (it starts the model-checking computation)
+***)
+
+fmod COMMAND-GRAMMAR is
+	protecting PARSING-SYNTAX .
+
+	*** The commands that may be issued to the system are terms of sort Command.
+	sort Command .
+
+	*** The add-module directive includes the function definitions from
+	*** the Erlang module that is given as an argument.
+
+	op add-module : Program Atom Args -> Command [ctor] .
+
+  op fwd-step : -> Command [ctor] .
+
+  op interactive-step : Int Qid -> Command [ctor] .
+
+  op pprint-sys : -> Command [ctor] .
+
+  op roll : Int -> Command [ctor] .
+
+endfm
+
+mod FORWARD-EXPLORATION is
+  protecting META-LEVEL .
+	protecting SYSTEM .
+
+  op #computeFwdSteps : Sys -> Sys [frozen] .
+
+  var RES : ResultPair .
+  var SYS : Sys .
+
+  eq #computeFwdSteps(SYS) = downTerm(getTerm(metaRewrite(['FWDTRANSITIONS], upTerm(SYS), unbounded)), #empty-system) .
+
+endm
+
+mod THEORY is
+	  protecting SYNTAX .
+	  protecting SEM_EQUATIONS .
+    protecting TRANSITIONS .
+    protecting FWDTRANSITIONS .
+    protecting BWDTRANSITIONS .
+endm
+
+mod ERLANG-LOOP is
+	  protecting QID .
+	  protecting META-LEVEL .
+	  including LOOP-MODE .
+	  protecting PARSING-SYNTAX-DOWN .
+	  protecting PRINT-SYNTAX-ERROR .
+    protecting SYSTEM .
+    protecting FORWARD-EXPLORATION .
+    protecting PRETTY_PRINT .
+    protecting TRANSITIONS .
+    protecting ROLLBACK .
+
+	  *** This system module is a simple interface to Maude's LOOP-MODE module.
+	  *** We use LOOP-MODE as the input/output facility. If a command according
+	  *** to the command grammar above is input in parenthesis (s.t. it is recognized
+	  *** as input to the loop), we execute the corresponding actions by rewriting.
+
+	  *** To distinguish different phases during command execution: We accept input
+	  *** in the idle phase. After parsing the quoted identifiers that were input,
+	  *** we end up in the parsed or error phase.
+	  sort Phase .
+	  op idle : -> Phase .
+	  op parsed : -> Phase .
+	  op error : -> Phase .
+
+	  sort ParseResult .
+	  subsort Term < ParseResult .
+	  op #no-parse : -> ParseResult .
+
+    op init : -> System .
+	  eq init = [nil, < idle, #no-parse, #empty-system >, nil] .
+
+	  *** the state-component of the loop-mode tuple
+	  op <_,_,_> : Phase ParseResult Sys -> State [frozen] .
+
+	  vars QIL QIL' : QidList .
+	  vars T T1 T2 T3 RULE : Term .
+	  var Result : ResultPair? .
+    var ResultTriple : Result4Tuple? .
+    var SYS SYS' : Sys .
+    var PID : Int .
+
+	  crl [in] : [QIL, < idle, #no-parse, SYS >, QIL']
+		  => if Result :: ResultPair
+		    then
+  			  [nil, < parsed, getTerm(Result), SYS >, 'command 'parsed 'complete]
+		    else
+   			  [nil, < error, #no-parse, SYS >, printSyntaxError(Result, QIL)]
+		    fi
+	    if QIL =/= nil /\
+	        Result := metaParse(GRAMMAR, QIL, 'Command) .
+
+	  crl [add-module] : [nil, < parsed, 'add-module[T1,T2,T3], SYS >, QIL']
+		  => [nil, < idle, #no-parse, #setup-first-proc(SYS, #downExp(T2), #downFunDefSeq(T1), #downExpSeq(T3)) >, QIL' 'module 'included '. '\n #pretty-print-sys(SYS')]
+      if SYS' := #setup-first-proc(SYS, #downExp(T2), #downFunDefSeq(T1), #downExpSeq(T3)) .
+
+    crl [interactive-step] : [nil, < parsed, 'interactive-step[T1, RULE], SYS >, QIL' ]
+      => if ResultTriple :: Result4Tuple
+        then
+          [nil, < idle, #no-parse, downTerm(getTerm(ResultTriple),#empty-system) >, 'rule RULE 'executed]
+        else
+          [nil, < idle, #no-parse, SYS >, 'cannot 'apply downTerm(RULE, 'error)]
+        fi
+      if ResultTriple := metaXapply(['THEORY], upTerm(SYS), downTerm(RULE, 'error), 'P:Pid <- 'pid[T1], 0, unbounded, 0) [print ResultTriple] .
+
+    rl [pprint-sys] : [nil, < parsed, 'pprint-sys.Command, SYS >, QIL' ] =>
+        [nil, <  idle, #no-parse, SYS >,  #pretty-print-sys(SYS) ] .
+
+    crl [fwd-step] : [nil, < parsed, 'fwd-step.Command, SYS >, QIL' ]
+      => [nil, < parsed, 'pprint-sys.Command, (#computeFwdSteps(SYS)) >, QIL' '\n #pretty-print-sys(SYS) ]
+      if SYS =/= #computeFwdSteps(SYS) .
+
+    var KEY : NatList .
+
+    crl [roll] : [nil, < parsed, 'roll[T1], SYS >, QIL' ]
+      => [nil, < idle, #no-parse, downTerm(T, #empty-system) >, 'tutto 'ok ]
+      if T := #rollback(key(downTerm(T1, 9)), upTerm(SYS)) [print T] .
+
+    crl [roll1] : [nil, < parsed, 'roll[T1], SYS >, QIL' ]
+      => [nil, < idle, #no-parse, SYS >, 'not 'ok ]
+      if not(#contains(key(downTerm(T1, 9)), upTerm(SYS))) .
+
+endm

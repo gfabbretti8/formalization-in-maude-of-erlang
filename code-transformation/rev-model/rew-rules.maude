@@ -63,14 +63,14 @@ mod TRANSITIONS is
   ******** SYSTEM RULES  ********
 	*******************************
 
-  crl [sys-receive] :
+  crl [sys] :
       < P | exp: EXSEQ, env-stack: ENV, ASET > ||
       < sender: SENDER, receiver: P, payload: GVALUE > =>
       < P | exp: EXSEQ', env-stack: ENV', ASET >
       if < received, ENV', EXSEQ' > :=
          < req-receive(GVALUE), ENV, EXSEQ > .
 
-  crl [sys-spawn] :
+  crl [sys] :
       < P | exp: EXSEQ, env-stack: ENV, mod-env: ME, ASET > || pidGen(INT) =>
       < P | exp: EXSEQ', env-stack: ENV', mod-env: ME, ASET > ||
       < pid(INT') | exp: EXSEQ'', env-stack: ENV'', mod-env: ME > ||
@@ -82,32 +82,32 @@ mod TRANSITIONS is
          ARGS' := #map-args(ARGS, ENV') /\
          ENV'' := #init-env(#get-formal-args(FUNNAME, ME), #flatten-list(ARGS')) .
 
-  crl [sys-self] :
+  crl [sys] :
       < P | exp: EXSEQ, env-stack: ENV, ASET > =>
       < P | exp: EXSEQ', env-stack: ENV', ASET >
       if < tau, ENV', EXSEQ' > :=
          < self(P), ENV, EXSEQ > .
 
-  crl [sys-send] :
+  crl [sys] :
       < P | exp: EXSEQ, env-stack: ENV, ASET > =>
       < P | exp: EXSEQ', env-stack: ENV', ASET > ||
       < sender: P, receiver: DEST, payload: GVALUE >
       if < DEST ! GVALUE, ENV', EXSEQ' > :=
          < req-gen, ENV, EXSEQ > .
 
-  crl [sys-tau] :
+  crl [sys] :
       < P | exp: EXSEQ, env-stack: ENV, ASET >  =>
       < P | exp: EXSEQ', env-stack: ENV', ASET >
       if < tau, ENV', EXSEQ' > :=
          < req-gen, ENV, EXSEQ > .
 
-  crl [sys-funcall] :
+  crl [sys] :
       < P | exp: EXSEQ, env-stack: ENV, mod-env: ME, ASET >  =>
       < P | exp: EXSEQ', env-stack: ENV', mod-env: ME, ASET >
       if < tau, ENV', EXSEQ' > :=
          < funcall(ME), ENV, EXSEQ > .
 
-  crl [sys-crash] :
+  crl [sys] :
       < P | exp: EXSEQ, env-stack: ENV, ASET >  =>
       < P | exp: #crashed, env-stack: ENV', ASET >
       if < crashed, ENV', EXSEQ' > :=
@@ -116,12 +116,6 @@ mod TRANSITIONS is
 endm
 
 
-
-mod THEORY is
-	protecting SYNTAX .
-	protecting SEM_EQUATIONS .
-  protecting TRANSITIONS .
-endm
 
 
 	          
@@ -142,57 +136,54 @@ mod FWDTRANSITIONS is
   crl < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack >
     * key L:NatList
     => < P:Pid | exp: #crashed,ASET:AttributeSet,env-stack: ENV':EnvStack > *
-    key(1 L:NatList) || ['fwd-sys-crash x L:NatList ; < P:Pid |
-    ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack > * key
-    L:NatList ; @: key(1 L:NatList)]
+    key(1 L:NatList) || ['fwd x L:NatList ; < P:Pid | ASET:AttributeSet,exp:
+    EXSEQ:NeExpSeq,env-stack: ENV:EnvStack > * key L:NatList ; @: key(1
+    L:NatList)]
     if < crashed,ENV':EnvStack,EXSEQ':NeExpSeq > := < req-gen,ENV:EnvStack,
-    EXSEQ:NeExpSeq > [label fwd-sys-crash] .
+    EXSEQ:NeExpSeq > [label fwd] .
   crl < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack >
     * key L:NatList
     => < P:Pid | exp: EXSEQ':NeExpSeq,ASET:AttributeSet,env-stack:
-    ENV':EnvStack > * key(1 L:NatList) || ['fwd-sys-self x L:NatList ; < P:Pid
-    | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack > * key
-    L:NatList ; @: key(1 L:NatList)]
-    if < tau,ENV':EnvStack,EXSEQ':NeExpSeq > := < self(P:Pid),ENV:EnvStack,
-    EXSEQ:NeExpSeq > [label fwd-sys-self] .
-  crl < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack >
-    * key L:NatList
-    => < P:Pid | exp: EXSEQ':NeExpSeq,ASET:AttributeSet,env-stack:
-    ENV':EnvStack > * key(1 L:NatList) || ['fwd-sys-tau x L:NatList ; < P:Pid |
+    ENV':EnvStack > * key(1 L:NatList) || ['fwd x L:NatList ; < P:Pid |
     ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack > * key
     L:NatList ; @: key(1 L:NatList)]
     if < tau,ENV':EnvStack,EXSEQ':NeExpSeq > := < req-gen,ENV:EnvStack,
-    EXSEQ:NeExpSeq > [label fwd-sys-tau] .
+    EXSEQ:NeExpSeq > [label fwd] .
+  crl < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack >
+    * key L:NatList
+    => < P:Pid | exp: EXSEQ':NeExpSeq,ASET:AttributeSet,env-stack:
+    ENV':EnvStack > * key(1 L:NatList) || ['fwd x L:NatList ; < P:Pid |
+    ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack > * key
+    L:NatList ; @: key(1 L:NatList)]
+    if < tau,ENV':EnvStack,EXSEQ':NeExpSeq > := < self(P:Pid),ENV:EnvStack,
+    EXSEQ:NeExpSeq > [label fwd] .
   crl < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack >
     * key L:NatList
     => (< sender: P:Pid,receiver: DEST:Pid,payload: GVALUE:GroundValues > *
     key(2 L:NatList) || < P:Pid | exp: EXSEQ':NeExpSeq,ASET:AttributeSet,
-    env-stack: ENV':EnvStack > * key(3 L:NatList)) || ['fwd-sys-send x
-    L:NatList ; < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack:
-    ENV:EnvStack > * key L:NatList ; @: key(2 L:NatList) || @: key(3
-    L:NatList)]
+    env-stack: ENV':EnvStack > * key(3 L:NatList)) || ['fwd x L:NatList ; <
+    P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack > *
+    key L:NatList ; @: key(2 L:NatList) || @: key(3 L:NatList)]
     if < DEST:Pid ! GVALUE:GroundValues,ENV':EnvStack,EXSEQ':NeExpSeq > := <
-    req-gen,ENV:EnvStack,EXSEQ:NeExpSeq > [label fwd-sys-send] .
+    req-gen,ENV:EnvStack,EXSEQ:NeExpSeq > [label fwd] .
   crl < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack,
     mod-env: ME:ModEnv > * key L:NatList
     => < P:Pid | exp: EXSEQ':NeExpSeq,env-stack: ENV':EnvStack,
-    ASET:AttributeSet,mod-env: ME:ModEnv > * key(1 L:NatList) || [
-    'fwd-sys-funcall x L:NatList ; < P:Pid | ASET:AttributeSet,exp:
-    EXSEQ:NeExpSeq,env-stack: ENV:EnvStack,mod-env: ME:ModEnv > * key L:NatList
-    ; @: key(1 L:NatList)]
+    ASET:AttributeSet,mod-env: ME:ModEnv > * key(1 L:NatList) || ['fwd x
+    L:NatList ; < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack:
+    ENV:EnvStack,mod-env: ME:ModEnv > * key L:NatList ; @: key(1 L:NatList)]
     if < tau,ENV':EnvStack,EXSEQ':NeExpSeq > := < funcall(ME:ModEnv),
-    ENV:EnvStack,EXSEQ:NeExpSeq > [label fwd-sys-funcall] .
+    ENV:EnvStack,EXSEQ:NeExpSeq > [label fwd] .
   crl < sender: SENDER:Pid,receiver: P:Pid,payload: GVALUE:GroundValues > * key
     L:NatList || < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack:
     ENV:EnvStack > * key L':NatList
     => < P:Pid | exp: EXSEQ':NeExpSeq,ASET:AttributeSet,env-stack:
-    ENV':EnvStack > * key(1 L':NatList) || ['fwd-sys-receive x L:NatList ; <
-    sender: SENDER:Pid,receiver: P:Pid,payload: GVALUE:GroundValues > * key
-    L:NatList || < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack:
-    ENV:EnvStack > * key L':NatList ; @: key(1 L':NatList)]
+    ENV':EnvStack > * key(1 L':NatList) || ['fwd x L:NatList ; < sender:
+    SENDER:Pid,receiver: P:Pid,payload: GVALUE:GroundValues > * key L:NatList
+    || < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack
+    > * key L':NatList ; @: key(1 L':NatList)]
     if < received,ENV':EnvStack,EXSEQ':NeExpSeq > := < req-receive(
-    GVALUE:GroundValues),ENV:EnvStack,EXSEQ:NeExpSeq > [label fwd-sys-receive]
-    .
+    GVALUE:GroundValues),ENV:EnvStack,EXSEQ:NeExpSeq > [label fwd] .
   crl pidGen(INT:Int)* key L:NatList || < P:Pid | ASET:AttributeSet,exp:
     EXSEQ:NeExpSeq,env-stack: ENV:EnvStack,mod-env: ME:ModEnv > * key
     L':NatList
@@ -200,7 +191,7 @@ mod FWDTRANSITIONS is
     ASET:AttributeSet,mod-env: ME:ModEnv > * key(2 L':NatList) || pidGen(
     INT':Int)* key(4 L':NatList) || < pid(INT':Int)| exp: EXSEQ'':NeExpSeq,
     env-stack: ENV'':EnvStack,mod-env: ME:ModEnv > * key(5 L':NatList)) || [
-    'fwd-sys-spawn x L:NatList ; pidGen(INT:Int)* key L:NatList || < P:Pid |
+    'fwd x L:NatList ; pidGen(INT:Int)* key L:NatList || < P:Pid |
     ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack,mod-env:
     ME:ModEnv > * key L':NatList ; @: key(2 L':NatList) || @: key(4 L':NatList)
     || @: key(5 L':NatList)]
@@ -209,7 +200,7 @@ mod FWDTRANSITIONS is
     EXSEQ:NeExpSeq > /\ EXSEQ'':NeExpSeq := #get-function(FUNNAME:FunName,
     ME:ModEnv)/\ ARGS':Args := #map-args(ARGS:Args,ENV':EnvStack)/\
     ENV'':EnvStack := #init-env(#get-formal-args(FUNNAME:FunName,ME:ModEnv),
-    #flatten-list(ARGS':Args)) [label fwd-sys-spawn] .
+    #flatten-list(ARGS':Args)) [label fwd] .
 endm
 
 
@@ -232,54 +223,48 @@ mod BWDTRANSITIONS is
   protecting HELP-SYNTAX .
   protecting SEM_EQUATIONS .
   rl < P:Pid | exp: #crashed,ASET:AttributeSet,env-stack: ENV':EnvStack > *
-    key(1 L:NatList) || ['fwd-sys-crash x L:NatList ; < P:Pid |
-    ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack > * key
-    L:NatList ; @: key(1 L:NatList)]
+    key(1 L:NatList) || ['fwd x L:NatList ; < P:Pid | ASET:AttributeSet,exp:
+    EXSEQ:NeExpSeq,env-stack: ENV:EnvStack > * key L:NatList ; @: key(1
+    L:NatList)]
     => < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack
-    > * key L:NatList [label bwd-sys-crash] .
+    > * key L:NatList [label bwd] .
   rl < P:Pid | exp: EXSEQ':NeExpSeq,ASET:AttributeSet,env-stack: ENV':EnvStack
-    > * key(1 L':NatList) || ['fwd-sys-receive x L:NatList ; < sender:
-    SENDER:Pid,receiver: P:Pid,payload: GVALUE:GroundValues > * key L:NatList
-    || < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack
-    > * key L':NatList ; @: key(1 L':NatList)]
+    > * key(1 L':NatList) || ['fwd x L:NatList ; < sender: SENDER:Pid,receiver:
+    P:Pid,payload: GVALUE:GroundValues > * key L:NatList || < P:Pid |
+    ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack > * key
+    L':NatList ; @: key(1 L':NatList)]
     => < sender: SENDER:Pid,receiver: P:Pid,payload: GVALUE:GroundValues > *
     key L:NatList || < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack:
-    ENV:EnvStack > * key L':NatList [label bwd-sys-receive] .
+    ENV:EnvStack > * key L':NatList [label bwd] .
   rl < P:Pid | exp: EXSEQ':NeExpSeq,ASET:AttributeSet,env-stack: ENV':EnvStack
-    > * key(1 L:NatList) || ['fwd-sys-self x L:NatList ; < P:Pid |
-    ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack > * key
-    L:NatList ; @: key(1 L:NatList)]
+    > * key(1 L:NatList) || ['fwd x L:NatList ; < P:Pid | ASET:AttributeSet,
+    exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack > * key L:NatList ; @: key(1
+    L:NatList)]
     => < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack
-    > * key L:NatList [label bwd-sys-self] .
-  rl < P:Pid | exp: EXSEQ':NeExpSeq,ASET:AttributeSet,env-stack: ENV':EnvStack
-    > * key(1 L:NatList) || ['fwd-sys-tau x L:NatList ; < P:Pid |
-    ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack > * key
-    L:NatList ; @: key(1 L:NatList)]
-    => < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack
-    > * key L:NatList [label bwd-sys-tau] .
+    > * key L:NatList [label bwd] .
   rl < P:Pid | exp: EXSEQ':NeExpSeq,env-stack: ENV':EnvStack,ASET:AttributeSet,
-    mod-env: ME:ModEnv > * key(1 L:NatList) || ['fwd-sys-funcall x L:NatList ;
-    < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack,
-    mod-env: ME:ModEnv > * key L:NatList ; @: key(1 L:NatList)]
+    mod-env: ME:ModEnv > * key(1 L:NatList) || ['fwd x L:NatList ; < P:Pid |
+    ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack,mod-env:
+    ME:ModEnv > * key L:NatList ; @: key(1 L:NatList)]
     => < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack,
-    mod-env: ME:ModEnv > * key L:NatList [label bwd-sys-funcall] .
+    mod-env: ME:ModEnv > * key L:NatList [label bwd] .
   rl (< sender: P:Pid,receiver: DEST:Pid,payload: GVALUE:GroundValues > * key(2
     L:NatList) || < P:Pid | exp: EXSEQ':NeExpSeq,ASET:AttributeSet,env-stack:
-    ENV':EnvStack > * key(3 L:NatList)) || ['fwd-sys-send x L:NatList ; < P:Pid
-    | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack > * key
+    ENV':EnvStack > * key(3 L:NatList)) || ['fwd x L:NatList ; < P:Pid |
+    ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack > * key
     L:NatList ; @: key(2 L:NatList) || @: key(3 L:NatList)]
     => < P:Pid | ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack
-    > * key L:NatList [label bwd-sys-send] .
+    > * key L:NatList [label bwd] .
   rl (< P:Pid | exp: EXSEQ':NeExpSeq,env-stack: ENV':EnvStack,
     ASET:AttributeSet,mod-env: ME:ModEnv > * key(2 L':NatList) || pidGen(
     INT':Int)* key(4 L':NatList) || < pid(INT':Int)| exp: EXSEQ'':NeExpSeq,
     env-stack: ENV'':EnvStack,mod-env: ME:ModEnv > * key(5 L':NatList)) || [
-    'fwd-sys-spawn x L:NatList ; pidGen(INT:Int)* key L:NatList || < P:Pid |
+    'fwd x L:NatList ; pidGen(INT:Int)* key L:NatList || < P:Pid |
     ASET:AttributeSet,exp: EXSEQ:NeExpSeq,env-stack: ENV:EnvStack,mod-env:
     ME:ModEnv > * key L':NatList ; @: key(2 L':NatList) || @: key(4 L':NatList)
     || @: key(5 L':NatList)]
     => pidGen(INT:Int)* key L:NatList || < P:Pid | ASET:AttributeSet,exp:
     EXSEQ:NeExpSeq,env-stack: ENV:EnvStack,mod-env: ME:ModEnv > * key
-    L':NatList [label bwd-sys-spawn] .
+    L':NatList [label bwd] .
 endm
 

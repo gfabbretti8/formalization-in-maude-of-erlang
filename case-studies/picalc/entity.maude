@@ -18,14 +18,8 @@ mod SEM_ENTITY is
   subsort Proc < Entity .
   op !_._ : Input Proc -> Proc [ctor prec 6] .
 
-  sort SumProc .
-  subsort SumProc < Proc .
+  op emptyproc : -> Proc [ctor] .
+  op _._ : Guard Proc -> Proc [ctor prec 5] .
 
-  op nil : -> SumProc [ctor] .
-  op _._ : Guard Proc -> SumProc [ctor prec 5] .
-  op _+_ : SumProc SumProc -> SumProc [ctor assoc comm prec 8 ] .
-
-  *** Substitution rules
-  op __ : Subst Proc -> Proc [ctor prec 1] .
 
 endm

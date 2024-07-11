@@ -1,0 +1,25 @@
+***(
+
+	PID.MAUDE
+
+	The sort Pid defines the process identifier. It is modelled as an ordinary integer.
+	The 2nd module specifies sequences of process identifiers; they are used to store
+	the set of all existing processes, for example.
+	Accordingly, we define some helper-functions that deal with
+
+		* finding new (unused) PIDs for	new processes.
+		* inserting a new PID in a sequence of PIDS
+***)
+
+mod SEM_PID is
+	protecting INT .
+  protecting SEM_ENTITY .
+
+	sort PidGen Pid .
+  subsort PidGen < Entity .
+	op pid : Int -> Pid [ctor] .
+  op pidGen : Int -> PidGen [ctor] .
+
+	op #empty-pid : -> PidGen [ctor] .
+
+endm

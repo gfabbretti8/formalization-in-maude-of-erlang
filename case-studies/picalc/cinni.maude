@@ -28,3 +28,6 @@ fmod CINNI is
   eq [lift a S] a{s(n)} = [shift a] S a{n} .
   ceq [lift a S] b{n} = [shift a] S b{n} if a =/= b .
 endfm
+
+
+

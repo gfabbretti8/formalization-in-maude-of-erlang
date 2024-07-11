@@ -54,6 +54,6 @@ fmod PRODUCE-BWD-SEM is
 
   *** The following function updates the label of a rule by adding the prefix 'bwd' to it
   op #updateLabelBwd : AttrSet -> AttrSet .
-  eq #updateLabelBwd(label(NAME) ASET) = label( qid("bwd" + substr(string(NAME), 3, length(string(NAME))))) ASET .
+  eq #updateLabelBwd(label(NAME) ASET) = label(qid("bwd")) ASET .
 
 endfm

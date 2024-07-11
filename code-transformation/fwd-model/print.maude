@@ -1,0 +1,41 @@
+mod PRETTY_PRINT is
+
+  protecting QID .
+  protecting SYSTEM .
+  protecting SEM_PROCESS .
+	protecting META-LEVEL .
+
+  op #pretty-print-sys : Sys -> Qid .
+  op #pretty-print-ent : Sys -> Qid .
+
+  var S : Sys .
+  var E : Entity .
+  var EX : Exp .
+  var EXSEQ : ExpSeq .
+  var ME : ModEnv .
+  vars P P' : Pid .
+  var MSG : GroundValues .
+  var PIDGEN : PidGen .
+  var ASET : AttributeSet .
+  var ENV : EnvStack .
+
+  ceq #pretty-print-sys(E || S) =
+     #pretty-print-ent(E) '\n
+     #pretty-print-sys(S) '\n
+     if E =/= #empty-system /\ S =/= #empty-system .
+
+  eq #pretty-print-sys(E) = #pretty-print-ent(E) [owise] .
+
+  eq #pretty-print-sys(#empty-system) = ' .
+
+  eq #pretty-print-ent(< P | exp: EXSEQ, env-stack: ENV, ASET > ) =
+      '< metaPrettyPrint(['SEM_PROCESS], upTerm(P)) '|
+         metaPrettyPrint(['SEM_PROCESS], upTerm(EXSEQ))  '> .
+
+  eq #pretty-print-ent(< sender: P, receiver: P', payload: MSG > ) =
+      '< metaPrettyPrint(['SEM_MESSAGE], upTerm(P)) '|
+         metaPrettyPrint(['SEM_MESSAGE], upTerm(P')) '|
+         metaPrettyPrint(['SEM_MESSAGE], upTerm(MSG)) '> .
+
+  eq #pretty-print-ent(PIDGEN) = ' .
+endm

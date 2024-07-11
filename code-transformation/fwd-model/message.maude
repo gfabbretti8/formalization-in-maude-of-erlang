@@ -1,0 +1,17 @@
+mod SEM_MESSAGE is
+  protecting SEM_PID .
+  protecting SEM_ENTITY .
+  protecting SYNTAX .
+  inc CONFIGURATION .
+
+  sort Message .
+
+  op <_> : AttributeSet -> Message [ctor] .
+
+  op sender:_ :  Pid -> Attribute [ctor gather (&)] .
+  op receiver:_ :  Pid -> Attribute [ctor gather (&)] .
+  op payload:_ : GroundValues -> Attribute [ctor gather (&)] .
+
+  subsort Message < Entity .
+
+endm

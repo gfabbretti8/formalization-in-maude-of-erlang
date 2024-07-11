@@ -1,0 +1,68 @@
+***(
+
+	LABEL.MAUDE
+
+	The whole system comprises two levels:
+	The equational theory that evaluates expressions inside of the process's context and
+	the rewriting rules that model inter-process communication (message passing, exit signals, etc.)
+	Labels are used to abstract the current state. In case of
+	  (a) the equational theory, the process's label indicates by
+	        - the label tau, that the normalisation within the equational theory is continued
+	        - any other label indicates a normal form w.r.t. the equational theory. The
+	          label then gives more details why normalisation stopped.
+	      These labels are defined in the functional module SEM_LABEL.
+
+	  (b) the rewriting rules of the transition level operate on equivalence classes w.r.t.
+	      the underlying equational theory. They non-deterministically select one of the
+	      (normalised) processes and model the behaviour of the side-effect according to
+	      its description in the process's label.
+	      Which process was picked and the side-effect that took place is reflected by the
+	      second kind of labels: System level labels.
+	      They are defined in the second functional module SEM_SYSLABEL .
+
+***)
+
+mod SEM_LABEL is
+	protecting SYNTAX .
+	protecting SEM_PID .
+  protecting SEM_MODENV .
+
+	*** We distinguish between two types of expression level labels.
+	*** First we have labels that signal a side-effect change of the whole system state.
+	*** They indicate that a normal form w.r.t. the equational theory is reached.
+	sort Label .
+	sort StopLabel .
+  sort RequestLabel .
+
+  subsort StopLabel < Label .
+  subsort RequestLabel < Label .
+
+  op req-gen : -> RequestLabel [ctor] .
+
+	*** An expression label "tau" is an "unobservable" action.
+	*** This means that the process normalisation within the equational theory continues.
+	op tau : -> StopLabel [ctor] .
+
+  op funcall(_) : ModEnv -> RequestLabel [ctor] .
+
+  op self(_) : Pid -> RequestLabel [ctor] .
+
+	*** The send expression-level label is used to signal that the corresponding process
+	*** sends a message. The first argument is the receiving PID, the second argument the
+	*** constant sent.
+	*** Because sending messages to another process is a side-effect, this label indicates
+	*** a normal form w.r.t. the equational theory.
+	op _!_ : Pid GroundValues -> StopLabel [ctor] .
+
+	*** To model the reception on the system level, we switch to the "receive"
+	*** expression level label as soon as we find a matching message in the process's mailbox.
+	op req-receive(_) : GroundValues -> RequestLabel [ctor] .
+  op received : -> StopLabel .
+
+	op spawn(_,_) : Atom Args -> StopLabel [ctor] .
+  op req-spawn(_) : Pid -> RequestLabel [ctor] .
+
+  op crashed : -> StopLabel [ctor] .
+
+endm
+

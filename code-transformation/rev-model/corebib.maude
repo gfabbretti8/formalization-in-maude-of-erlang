@@ -1,0 +1,54 @@
+mod SEM_COREBIB is
+	protecting NAT .
+	protecting STRING .
+	protecting SYSTEM .
+  protecting SEM_ENV .
+  protecting SEM_MODENV .
+  protecting SEM_LABEL .
+  protecting SEM_NORMALISATION .
+
+  var ARGS : GroundValues .
+  var ENVSTACK ENVSTACK' : EnvStack .
+  var ME : ModEnv .
+  var FUNNAME : FunName .
+  var INT : Int .
+  var REQLABEL : RequestLabel .
+  var LABEL : StopLabel .
+  vars EX1 EX2 EX1' EX EX' : Exp .
+  var PID : ErlInt .
+  var PAT : Pattern .
+  vars ENV ENV' : Env .
+  var PAYLOAD : GroundValues .
+  var CLSEQ : ClauseSeq .
+  var EXSEQ : NeExpSeq .
+
+  eq [spawn] :
+    < req-spawn(pid(INT)), ENVSTACK, atom("erlang") : atom("spawn") ((FUNNAME, ARGS)) > =
+    < spawn(FUNNAME,ARGS), ENVSTACK, eint(INT) > .
+
+  eq [send] :
+    < REQLABEL, ENV : ENVSTACK, eint(INT) ! PAYLOAD > =
+    < pid(INT) ! PAYLOAD, ENV : ENVSTACK, PAYLOAD > .
+
+  eq [self] :
+    < self(pid(INT)), ENVSTACK, atom("self")() > =
+    < tau, ENVSTACK, eint(INT) > .
+
+  ceq [send] :
+    < REQLABEL, ENVSTACK, PID ! EX > =
+    < LABEL, ENVSTACK', PID ! EX' >
+    if < LABEL, ENVSTACK', EX' > :=
+       < REQLABEL, ENVSTACK, EX > .
+
+  ceq [send] :
+    < REQLABEL, ENVSTACK, EX1 ! EX2 > =
+    < LABEL, ENVSTACK, EX1' ! EX2 >
+    if < LABEL, ENVSTACK, EX1' > :=
+       < REQLABEL, ENVSTACK, EX1 > .
+
+  ceq [receive] :
+    < req-receive(PAYLOAD), ENV : ENVSTACK, receive CLSEQ end > =
+    < received, ENV' : (ENV : ENVSTACK), begin EXSEQ end >
+    if #entityMatchSuccess(EXSEQ | ENV') := #entityMatch(CLSEQ | PAYLOAD | ENV ) .
+
+endm

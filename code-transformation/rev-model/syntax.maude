@@ -1,0 +1,159 @@
+fmod SYNTAX-COMMON is
+
+  protecting QID .
+
+  sort Program .
+  subsort FunDefSeq < Program .
+
+  sorts Exp ExpSeq NeExpSeq .
+
+  subsorts Exp < NeExpSeq < ExpSeq .
+
+  op nil : -> ExpSeq [ctor] .
+  op _,_ : ExpSeq ExpSeq -> ExpSeq [ctor id: nil assoc prec 51 format (o m! o o)] .
+  op _,_ : NeExpSeq ExpSeq  -> NeExpSeq [ditto] .
+  op _,_ : ExpSeq NeExpSeq -> NeExpSeq [ditto] .
+
+  op begin_end : NeExpSeq -> Exp [ctor prec 35 format (o m! o m!)] .
+
+  op #bottom : -> Exp .
+  op #crashed : -> Exp .
+
+  sort BinOp .
+  subsort BinOp < Exp .
+  sort GroundValues .
+  subsorts Atom ErlInt < GroundValues .
+
+  sorts List ListOfGroundValues ListOfPatterns Nil .
+  subsort Nil < List ListOfGroundValues .
+  subsort List < Exp Pattern .
+  subsort ListOfGroundValues < GroundValues .
+  subsort ListOfGroundValues < List .
+
+  op [] : -> Nil [ctor].
+
+  op [_] : Exp -> List [ctor prec 15 format (m! o m! o)] .
+  op [_|_] : Exp Exp -> List [ctor prec 20 format (m! o m! o m! o)] .
+
+  op [_] : GroundValues -> ListOfGroundValues [ctor prec 15 format (m! o m! o)] .
+  op [_|_] : GroundValues GroundValues -> ListOfGroundValues [ctor prec 20 format (m! o m! o m! o)] .
+
+  sorts Tuple GroundTuple Empty .
+  subsort Empty < Tuple .
+  subsort Tuple < Exp .
+  subsort Tuple < Pattern .
+  subsort GroundTuple < Tuple .
+  subsort GroundTuple < GroundValues .
+
+  subsort GroundValues < NeExpSeq .
+  subsort GroundValues < ExpSeq .
+
+  op _,_ : GroundValues GroundValues -> GroundValues [ctor id: nil assoc prec 51 format (o m! o o)] .
+
+  op {} : -> GroundTuple [ctor].
+  op {_} : NeExpSeq -> Tuple [ctor prec 15 gather (&) format (m! o m! o) ] .
+  op {_} : GroundValues -> GroundTuple [ctor prec 15 gather (&) format (m! o m! o) ] .
+
+  sort Atom .
+  sort ErlInt .
+
+  sort Var .
+  subsort Var < Exp .
+
+  sort Pattern .
+  subsorts GroundValues Var < Pattern .
+  subsorts Pattern < Exp .
+
+  sort Leq .
+  subsort Leq < Exp BinOp .
+
+  op _<_ : Exp Exp -> Leq [ctor prec 15] .
+
+  sort Mult .
+  subsort Mult < Exp BinOp .
+
+  op _*_ : Exp Exp -> Mult [ctor prec 15] .
+
+  sort Minus .
+  subsort Minus < Exp BinOp .
+
+  op _-_ : Exp Exp -> Minus [ctor prec 15] .
+
+  sort Plus .
+  subsort Plus < Exp BinOp .
+
+  op _+_ : Exp Exp -> Minus [ctor prec 15] .
+
+  sort Match .
+  subsort Match < Exp BinOp .
+  op _=_ : Pattern Exp -> Match [ctor prec 35 format (o o m! o)] .
+
+  sort Clause .
+  sort ClauseSeq .
+  subsort Clause < ClauseSeq .
+
+  op _->_ : Pattern ExpSeq -> Clause [ctor prec 51 format (o m! o o)] .
+  op _;_ : ClauseSeq ClauseSeq -> ClauseSeq [ctor assoc prec 52 format (o o m! o)].
+
+  sort Case .
+  subsort Case < Exp .
+
+  op case_of_end : Exp ClauseSeq -> Case [ctor prec 50 format (m! o m! o m! o)] .
+
+  sorts FunDef FunName FunDefSeq FunCall .
+  subsort Atom < FunName .
+  subsort FunDef < FunDefSeq .
+  subsort FunCall < Exp .
+  op nil : -> FunDef .
+  sort Args .
+  subsort Args < ExpSeq NeExpSeq .
+  subsort Pattern GroundValues < Args .
+
+  op #empty : -> Args .
+
+  op _,_ : Args Args -> Args [ctor id: nil assoc prec 30 format (o m! o o)] .
+
+  op _()->_. : FunName NeExpSeq -> FunDef [ctor prec 70 format (o m! m! m! o m! o)] .
+  op _(_)->_. : FunName Args NeExpSeq -> FunDef [ctor prec 70 format (o m! o m! m! o m! o)] .
+  op _() : Exp -> FunCall [ctor prec 10 format (o m! m! o)] .
+  op _(_) : Exp Args -> FunCall [ctor prec 30 gather(E &) format (o m! o m! o)] .
+  op _:_(_) : Exp Exp Args -> FunCall [ctor prec 32 gather (E E &) format (o o m! m! o m! o )] .
+  op __ : FunDefSeq FunDefSeq -> FunDefSeq [ctor assoc prec 71 format(o o o)] .
+
+  sort Send .
+  subsort Send < Exp .
+
+  op _!_ : Exp Exp -> Send [ctor prec 35 format (o m! o o)] .
+
+  sort Receive ReceiveClause ReceiveClauseSeq .
+  subsort Receive < Exp .
+  subsort ReceiveClause < Clause .
+  subsort ReceiveClauseSeq < ClauseSeq .
+
+  op receive_end : ClauseSeq -> Receive [ctor prec 35 format (m! o m! o)].
+
+endfm
+
+fmod SYNTAX is
+	extending SYNTAX-COMMON .
+	protecting STRING .
+	protecting INT .
+
+  op var : String -> Var [ctor format (b o)] .
+	op atom : String -> Atom [ctor format (b o)] .
+	op eint : Int -> ErlInt [ctor format (b o)] .
+
+endfm
+
+fmod PARSING-SYNTAX is
+	protecting META-LEVEL .
+	extending SYNTAX .
+	sort Token .
+
+	subsort NeTokenList Token < Atom ErlInt Var .
+
+	sort NeTokenList .
+	subsort Token < NeTokenList .
+	op _,_ : NeTokenList NeTokenList -> NeTokenList [ctor id: nil assoc prec 65  format (o m! o o)] .
+
+endfm

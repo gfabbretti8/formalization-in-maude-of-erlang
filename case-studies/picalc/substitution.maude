@@ -1,0 +1,7 @@
+mod SUBSTITUTION is
+  protecting SEM_ENTITY .
+
+  *** Substitution rules
+
+
+endm

@@ -1,0 +1,69 @@
+***(
+
+	MODENV.MAUDE
+
+	In Core-Erlang, functions are normally defined within the context of a module.
+	The module consists mainly of a function definition list (i.e. a whitespace
+	separated list of function definitions) and some attributes that specify, for
+	example, which functions may be called from outside the module.
+	Note: We do not enforce this when evaluating an inter-module call as such a
+	      call would lead to a compile time error.
+	The functional (Maude) module SEM_MODENV defines the operations needed to
+	deal with the set of functions that are known to the system when evaluating
+	processes.
+	Functions can be included in this set by loading Core-Erlang modules into
+	the Maude system using the add-module command.
+	Additionally, we define operations to extract functions from the set and
+	to convert the set representation back to a list of function definitions
+	(corresponding to the Core-Erlang syntax).
+
+***)
+
+fmod SEM_MODENV is
+	protecting SYNTAX .
+	protecting SYNTAX-COMMON .
+
+	sort ModEnvMap .
+	op _==>_ : FunName NeExpSeq -> ModEnvMap [ctor prec 70] .
+	op _[_]==>_ : FunName Args NeExpSeq -> ModEnvMap [ctor prec 70] .
+
+  sort ModEnv .
+	subsort ModEnvMap < ModEnv .
+
+	op #empty-modenv : -> ModEnv [ctor] .
+	op _,_ : ModEnv ModEnv -> ModEnv [ctor assoc comm prec 71 id: #empty-modenv] .
+
+	var FUNBODY : NeExpSeq .
+  var FDEF : FunDef .
+	var FDLIST : FunDefSeq .
+	var FD : FunDef .
+	var FNAME FNAME1 FNAME2 : Atom .
+	var FN : FunName .
+	var MAP : ModEnv .
+  var EX : Exp .
+  var ARGS : Args .
+  var PAT : Pattern .
+
+	op #extract-functions : FunDefSeq -> ModEnv .
+
+	eq #extract-functions(FDEF FDLIST)
+     = #extract-functions(FDEF), #extract-functions(FDLIST) .
+	eq #extract-functions(FNAME ()-> FUNBODY .)
+		= FNAME ==> FUNBODY .
+	eq #extract-functions(FNAME (ARGS) -> FUNBODY .)
+		= FNAME[ARGS] ==> FUNBODY .
+
+	op #get-function : Atom ModEnv -> NeExpSeq .
+
+  eq #get-function(FNAME, FNAME ==> FUNBODY, MAP) = FUNBODY .
+  eq #get-function(FNAME, FNAME[ARGS] ==> FUNBODY, MAP) = FUNBODY .
+  eq #get-function(FNAME1, FNAME2 ==> FUNBODY, MAP)
+     = #get-function(FNAME1, MAP) [owise] .
+
+  op #get-formal-args : Atom ModEnv -> NeExpSeq .
+  eq #get-formal-args(FNAME, FNAME ==> FUNBODY, MAP) = #empty .
+  eq #get-formal-args(FNAME, FNAME[ARGS]==> FUNBODY, MAP) = ARGS .
+  eq #get-formal-args(FNAME1, FNAME2 ==> FUNBODY, MAP)
+     = #get-function(FNAME1, MAP) .
+
+endfm

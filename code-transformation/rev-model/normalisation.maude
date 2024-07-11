@@ -1,0 +1,198 @@
+mod SEM_NORMALISATION is
+	protecting SYNTAX .
+  protecting HELP-SYNTAX .
+  protecting SEM_MATCH_ENTITY .
+  protecting SEM_MODENV .
+  protecting SEM_LABEL .
+
+  var FUNNAME MODULENAME : Atom .
+  var REQLABEL : RequestLabel .
+  vars LABEL LABEL' : StopLabel .
+  vars ENV ENV' : Env .
+  var EXPSEQ : NeExpSeq .
+  var GVALUE GVALUE' : GroundValues .
+  vars T1 T2 T3 T4 T5 T6 : Term .
+  var VAR : Var .
+  vars EXSEQ EXSEQ' : NeExpSeq .
+  vars EXGVALUE RESTEXP : ExpSeq .
+  var EX EX' EX'' EX1 EX2 EX1' : Exp .
+  var CLSEQ : ClauseSeq .
+  var ME : ModEnv .
+  var PAT : Pattern .
+  var BINOP BINOP' : BinOp .
+  var OP : Qid .
+  var INT INT' RES : Int .
+  var BOOL : Bool .
+  var ARGS : Args .
+  var ENVSTACK ENVSTACK' : EnvStack .
+
+  sort ExpConf .
+  op <_,_,_> : Label Env ExpSeq -> ExpConf [ctor frozen] .
+
+   ceq [var] :
+    < REQLABEL, ENV : ENVSTACK, VAR > =
+    < crashed, ENV : ENVSTACK, VAR >
+    if ENV[VAR] == undefined .
+
+   ceq [var] :
+    < req-gen, ENV : ENVSTACK, VAR > =
+    < tau, ENV : ENVSTACK, ENV[VAR] >
+    if ENV[VAR] =/= undefined .
+
+    eq [match] :
+     < req-gen, ENVSTACK, GVALUE = GVALUE > =
+     < tau, ENVSTACK, GVALUE > .
+
+   ceq [match] :
+     < req-gen, ENVSTACK, GVALUE = GVALUE' > =
+     < crashed, ENVSTACK, #crashed >
+     if GVALUE =/= GVALUE' .
+
+   ceq [match] :
+    < req-gen, ENV : ENVSTACK, VAR = GVALUE > =
+    < tau, ENV' : ENVSTACK, GVALUE >
+    if ENV[VAR] == undefined /\
+       ENV' := insert(VAR, GVALUE, ENV) .
+
+   ceq [match] :
+    < REQLABEL, ENV : ENVSTACK, VAR = GVALUE > =
+    < crashed, ENV : ENVSTACK, #crashed >
+    if ENV[VAR] =/= undefined .
+
+   ceq [minus] :
+    < req-gen, ENVSTACK, eint(INT) - eint(INT') > =
+    < tau, ENVSTACK, eint(RES) >
+    if RES := downTerm(getTerm(metaReduce(upModule('INT, false), '_-_[upTerm(INT), upTerm(INT')])), INT) .
+
+   ceq [mult] :
+    < req-gen, ENVSTACK, eint(INT) * eint(INT') > =
+    < tau, ENVSTACK, eint(RES) >
+    if RES := downTerm(getTerm(metaReduce(upModule('INT, false), '_*_[upTerm(INT), upTerm(INT')])), INT) .
+
+   ceq [plus] :
+    < req-gen, ENVSTACK, eint(INT) + eint(INT') > =
+    < tau, ENVSTACK, eint(RES) >
+    if RES := downTerm(getTerm(metaReduce(upModule('INT, false), '_+_[upTerm(INT), upTerm(INT')])), INT) .
+
+   ceq [comparison] :
+    < req-gen, ENVSTACK, eint(INT) < eint(INT') > =
+    < tau, ENVSTACK, GVALUE >
+    if BOOL := downTerm(getTerm(metaReduce(upModule('INT, false), '_<_[upTerm(INT), upTerm(INT')])), false) /\
+       GVALUE := if BOOL
+                    then atom("true")
+                    else atom("false")
+                 fi .
+
+   ceq [binop1] :
+    < REQLABEL, ENVSTACK, BINOP > =
+    < LABEL, ENVSTACK', BINOP' >
+    if OP[T1, T2] := upTerm(BINOP) /\
+       EX := downTerm(T2, nil) /\
+       < LABEL, ENVSTACK', EX' > :=
+       < REQLABEL, ENVSTACK, EX > /\
+       BINOP' := downTerm(OP[T1, upTerm(EX')], nil) .
+
+   ceq [binop2] :
+    < REQLABEL, ENVSTACK, BINOP > =
+    < LABEL, ENVSTACK', BINOP' >
+    if OP[T1, T2] := upTerm(BINOP) /\
+       EX := downTerm(T1, nil) /\
+       if BINOP :: Match
+          then  not(EX :: Pattern)
+          else true
+       fi /\
+       < LABEL, ENVSTACK', EX' > :=
+       < REQLABEL, ENVSTACK, EX > /\
+       BINOP' := downTerm(OP[upTerm(EX'), T2], nil) .
+
+   ceq [list] :
+    < REQLABEL, ENVSTACK, [EX1 | EX2] > =
+    < LABEL, ENVSTACK', [EX1' | EX2] >
+    if < LABEL, ENVSTACK', EX1' > :=
+       < REQLABEL, ENVSTACK, EX1 > .
+
+   ceq [list] :
+    < REQLABEL, ENVSTACK, [GVALUE | EX] > =
+    < LABEL, ENVSTACK', [GVALUE | EX'] >
+    if < LABEL, ENVSTACK', EX' > :=
+       < REQLABEL, ENVSTACK, EX > .
+
+   ceq [list] :
+    < REQLABEL, ENVSTACK, [EX] > =
+    < LABEL, ENVSTACK', [EX'] >
+    if < LABEL, ENVSTACK', EX' > :=
+       < REQLABEL, ENVSTACK, EX > .
+
+   ceq [tuple] :
+    < REQLABEL, ENVSTACK, { EXSEQ } > =
+    < LABEL, ENVSTACK, { EXGVALUE, EX', RESTEXP } >
+    if EXGVALUE * EX * RESTEXP := #getExp(EXSEQ) /\
+       < LABEL, ENVSTACK', EX' > :=
+       < REQLABEL, ENVSTACK, EX > .
+
+   ceq [case-succ] :
+    < REQLABEL, ENV : ENVSTACK, case GVALUE of CLSEQ end > =
+    < tau, ENV' : (ENV : ENVSTACK), begin EXSEQ end >
+     if #entityMatchSuccess(EXSEQ | ENV') := #entityMatch(CLSEQ | GVALUE | ENV ) .
+
+   eq [case-fail] :
+    < REQLABEL, ENVSTACK, case GVALUE of CLSEQ end > =
+    < crashed, ENVSTACK, #crashed > [owise] .
+
+   ceq [case] :
+    < REQLABEL, ENVSTACK, case EX of CLSEQ end > =
+    < LABEL, ENVSTACK', case EX' of CLSEQ end >
+    if < LABEL, ENVSTACK', EX' > :=
+       < REQLABEL, ENVSTACK, EX > .
+
+   ceq [funcall] :
+    < funcall(ME), ENV : ENVSTACK, FUNNAME() > =
+    < tau, ENV : (ENV : ENVSTACK), begin EXSEQ end >
+    if EXSEQ := #get-function(FUNNAME, ME) .
+
+   ceq [funcall] :
+    < funcall(ME), ENV : ENVSTACK, FUNNAME(GVALUE) > =
+    < tau, ENV' : (ENV : ENVSTACK), begin EXSEQ end >
+    if ENV' := #init-env(#get-formal-args(FUNNAME, ME),GVALUE) /\
+        EXSEQ := #get-function(FUNNAME, ME) .
+
+   ceq [funcall] :
+    < REQLABEL, ENVSTACK, FUNNAME(EXSEQ) > =
+    < LABEL, ENVSTACK', FUNNAME(EXGVALUE, EX', RESTEXP) >
+    if EXGVALUE * EX * RESTEXP := #getExp(EXSEQ) /\
+       < LABEL, ENVSTACK', EX' > :=
+       < REQLABEL, ENVSTACK, EX > .
+
+   ceq [funcall] :
+    < REQLABEL, ENVSTACK, MODULENAME : FUNNAME(EXSEQ) > =
+    < LABEL, ENVSTACK', MODULENAME : FUNNAME(EXGVALUE, EX', RESTEXP) >
+    if EXGVALUE * EX * RESTEXP := #getExp(EXSEQ) /\
+       < LABEL, ENVSTACK', EX' > :=
+       < REQLABEL, ENVSTACK, EX > .
+
+   eq [begin] :
+    < req-gen, ENV : (ENV' : ENVSTACK), begin begin EXSEQ end end > =
+    < tau, ENV : ENVSTACK, begin EXSEQ end > .
+
+   eq [begin] :
+    < req-gen, ENV : ENVSTACK, begin GVALUE end > =
+    < tau, ENVSTACK, GVALUE > .
+
+   ceq [begin] :
+    < REQLABEL, ENVSTACK, begin EXSEQ end > =
+    < LABEL, ENVSTACK', begin EXSEQ' end >
+    if < LABEL, ENVSTACK', EXSEQ' > :=
+       < REQLABEL, ENVSTACK, EXSEQ > .
+
+   ceq [seq] :
+    < REQLABEL, ENVSTACK, EX, EXSEQ > =
+    < LABEL, ENVSTACK', EX', EXSEQ >
+    if < LABEL, ENVSTACK', EX' > :=
+       < REQLABEL, ENVSTACK, EX > /\
+       not(EX :: GroundValues ).
+
+   eq [seq] :
+    < req-gen, ENVSTACK, GVALUE, EXPSEQ > =
+    < tau, ENVSTACK, EXPSEQ > .
+
+endm

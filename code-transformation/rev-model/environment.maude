@@ -1,0 +1,53 @@
+view Var from TRIV to SYNTAX is
+  sort Elt to Var .
+endv
+
+view GroundValues from TRIV to SYNTAX-COMMON is
+  sort Elt to GroundValues .
+endv
+
+fmod SEM_ENV is
+
+  protecting META-LEVEL .
+  protecting SYNTAX .
+
+  protecting MAP{Var, GroundValues} * (sort Entry{Var, GroundValues} to Entry,
+                                       sort Map{Var, GroundValues} to Env ) .
+  var ENV ENV' : Env .
+
+  eq ENTRY, ENTRY = ENTRY .
+
+  vars EX EX' : Exp .
+  vars EXSEQ EXSEQ' : NeExpSeq .
+  var PAT TAIL : Pattern .
+  var VAR : Var .
+  var ARGS : Args .
+  var ENTRY : Entry .
+  vars ENV-STACK ENV-STACK' : EnvStack .
+  var GVALUE : GroundValues .
+
+  op #init-env : NeExpSeq NeExpSeq -> Env .
+  eq #init-env(#empty, EXSEQ) = empty .
+  eq #init-env((EX, EXSEQ), (EX', EXSEQ')) = EX |-> EX', #init-env(EXSEQ, EXSEQ') .
+  eq #init-env(EX, EX') = EX |-> EX' .
+
+  op #map-args : Args Env -> List .
+
+  eq #map-args([], ENV-STACK) = [] .
+  eq #map-args([PAT], ENV) = [#map-arg(PAT, ENV)] .
+  eq #map-args([PAT | TAIL], ENV) = [#map-arg(PAT, ENV)| #map-args(TAIL, ENV)] .
+  eq #map-args(PAT, ARGS, ENV) = #map-args(PAT, ENV), #map-args(ARGS, ENV) .
+  eq #map-args(PAT, ENV) = #map-arg(PAT, ENV) .
+
+  op #map-arg : Pattern Env -> GroundValues .
+  eq #map-arg(VAR, ENV) = ENV[VAR] .
+  eq #map-arg(GVALUE, ENV) = GVALUE .
+
+  sorts Stack EnvStack .
+  subsort Env < EnvStack .
+
+  op _:_ : EnvStack EnvStack -> EnvStack [ctor id: empty-stack] .
+  op empty-stack : -> EnvStack .
+
+endfm
+

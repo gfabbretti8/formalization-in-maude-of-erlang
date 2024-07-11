@@ -1,0 +1,12 @@
+mod CONTEXT is
+
+  protecting SEM_ENTITY_WITH_KEY .
+  protecting NAT .
+
+  sort SContext .
+  subsort SContext < Entity .
+  subsort SContext < EntityWithKey .
+
+  op @:_ : Key -> SContext [prec 10 ctor] .
+
+endm

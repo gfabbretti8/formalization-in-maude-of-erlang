@@ -1,0 +1,24 @@
+mod SEM_PROCESS is
+	protecting SEM_LABEL .
+  protecting SEM_ENV .
+	protecting SYNTAX .
+  protecting SEM_MODENV .
+  protecting SEM_ENTITY .
+  protecting SEM_NORMALISATION .
+  protecting QID .
+
+	sort Process .
+  subsort Process < Entity .
+
+  op <_|_> : Pid AttributeSet -> Process [ctor frozen] .
+
+  sorts ExpAtt ModEnvAtt EnvAtt StackAtt .
+  subsorts ExpAtt ModEnvAtt EnvAtt < Attribute .
+
+  sort EmptyExp .
+
+  op exp:_ : NeExpSeq -> ExpAtt [ctor gather (&)] .
+  op env-stack:_ : EnvStack -> EnvAtt [ctor gather (&)] .
+  op mod-env:_ : ModEnv -> ModEnvAtt [ctor gather (&)] .
+
+endm

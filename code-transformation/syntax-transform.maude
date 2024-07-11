@@ -24,7 +24,6 @@ fmod SYNTAX-TRANSFORM is
   var OPDS : OpDeclSet .
   var MAS : MembAxSet .
   var EQ : Equation .
-  var EQL : EquationList .
   vars EQS : EquationSet .
   vars EQCOND EQCOND' EQCOND'' : EqCondition .
   var RLS : RuleSet .
@@ -46,7 +45,7 @@ fmod SYNTAX-TRANSFORM is
      #updateSubsortDeclSet(SSDS)
      #updateOperatorDeclSet(OPDS)
      MAS
-     EQS
+     #updateEquations(EQS)
      RLS
     endm .
 
@@ -60,7 +59,6 @@ fmod SYNTAX-TRANSFORM is
      = (op '_x_ : ('Qid 'NatList) -> 'ActKey [ctor prec (10)] .
         op '`[_;_;_`] : ('ActKey 'Sys 'Sys) -> 'Memory
          [ctor frozen(1 2) prec(40) format('sg! 'o 'g! 'o 'g! 'o 'g! 'o) ] .
-        op '#downMemory : 'Term -> 'Memory [memo] .
         OPDS) .
 
   op #addSort : SortSet -> SortSet .
@@ -74,5 +72,69 @@ fmod SYNTAX-TRANSFORM is
         subsort 'Qid < 'Sys .
         subsort 'Memory < 'Entity .
         subsort 'SContext < 'Sys . SSDS) .
+
+  op #updateEquations : EquationSet -> EquationSet .
+  eq #updateEquations(EQ) = #updateEquation(EQ) .
+  ceq #updateEquations(EQ EQS) = #updateEquation(EQ) #updateEquations(EQS)
+      if EQS =/= none .
+
+  var CONDITION : Condition .
+  var ATTRSET : AttrSet .
+  var OP : Qid .
+  var T T' TAGGED SX KEY VARIABLE : Term .
+  var CONSTOP : Constant .
+  var ENTITYVAR : Variable .
+
+  op #updateTermSX : Term Term -> Term .
+
+  ceq #updateTermSX(OP[TERMS], KEY) = '_*_[OP[TERMS], #freshKey(KEY)]
+    if #declared-in(upModule('SEM_ENTITY, false), OP) .
+  ceq #updateTermSX(CONSTOP, KEY) = '_*_[CONSTOP, #freshKey(KEY)]
+    if #declared-in(upModule('SEM_ENTITY, false), getName(CONSTOP)) .
+  ceq #updateTermSX(ENTITYVAR, KEY) = '_*_[ENTITYVAR, #freshKey(KEY)]
+    if #declared-in(upModule('SEM_ENTITY, false), getType(ENTITYVAR)) .
+  ceq #updateTermSX(OP[TERMS], KEY) = OP[#updateTermSX(TERMS, #freshKey(KEY))]
+    if #declared-in(upModule('SYSTEM, false), OP) .
+  ceq #updateTermSX((T, TERMS), KEY) = #updateTermSX(T, KEY), #updateTermSX(TERMS, #freshKey(KEY))
+    if TERMS =/= empty .
+  eq #updateTermSX(T, KEY) = T .
+
+
+  op #updateTermDX : Term Term -> Term .
+
+  ceq #updateTermDX(SX, OP[TERMS]) = '_*_[OP[TERMS], KEY]
+    if #declared-in(upModule('SEM_ENTITY, false), OP) /\
+       KEY := #get-key(SX, OP[TERMS]) .
+  ceq #updateTermDX(SX, CONSTOP) = '_*_[CONSTOP, KEY]
+    if KEY := #get-key(SX, CONSTOP) .
+  ceq #updateTermDX(SX, T) = '_*_[T, KEY]
+    if KEY := #get-key(SX, T) .
+  eq #updateTermDX(SX, OP[TERMS]) = OP[#updateTermDX(SX, TERMS)] .
+  eq #updateTermDX(SX, '__[TERMS]) = '__[#updateTermDX(SX, TERMS)] .
+  ceq #updateTermDX(SX, (T, TERMS)) =
+       #updateTermDX(SX, T), #updateTermDX(SX, TERMS)
+    if TERMS =/= empty .
+  eq #updateTermDX(SX, T) = T [print SX "    " T "\n"] .
+
+  op #get-key : Term Term -> TermList .
+  eq #get-key('_*_[OP[TERMS], KEY], OP[TERMS']) = KEY .
+  eq #get-key('_*_[CONSTOP, KEY], CONSTOP) = KEY .
+  eq #get-key('_*_[VARIABLE, KEY], VARIABLE) = KEY .
+  eq #get-key(OP[TERMS], KEY) = #get-key(TERMS, KEY) .
+  ceq #get-key((T, TERMS), KEY) =
+      #get-key(T, KEY), #get-key(TERMS, KEY)
+    if TERMS =/= empty .
+  eq #get-key(T, T') = empty [print T "  " T'].
+
+  op #updateEquation : Equation -> Equation .
+
+  ceq #updateEquation( eq T1 = T2 [ATTRSET] . ) =
+     eq SX = #updateTermDX(SX, T2) [ATTRSET] .
+     if SX := #updateTermSX(T1, 'K:Key) .
+  ceq #updateEquation( ceq T1 = T2 if EQCOND [ATTRSET] . ) =
+     ceq SX = #updateTermDX(SX, T2) if EQCOND [ATTRSET] .
+     if SX := #updateTermSX(T1, 'K:Key) .
+
+
 
 endfm

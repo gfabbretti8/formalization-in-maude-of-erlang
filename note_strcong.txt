@@ -1,0 +1,12 @@
+x \in fn(P)
+
+   v x ( x.y.Q | x ) | y.P                       | comm x
+-> v x ( y.Q | [x.y.Q | x ; ...] ) | y.P         | scope x
+-> v x ( y.Q | x.y.Q | x ) | y.P                 | unbox mem
+-> v h ( y.Q | h.y.Q | h ) | y.P                 | rename
+-> v h ( y.Q | h | h.y.Q ) | y.P                 | swap(?)
+-> v h ( y.Q | h | h.y.Q | y.P )                 | how to reclose?
+
+
+
+Se la struttura dentro la memoria si perde, quindi di conseguenza non abbiamo piu' un termine, allora tanto vale non averlo del tutto?
